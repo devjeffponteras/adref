@@ -11,11 +11,23 @@ class DashboardController extends Controller
 {
     public function asidDashboard(): Response
     {   
-        $assetStatuses = AssetStatus::with(['asset', 'approver'])
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver'])
             ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('asid/dashboard', [
+            'assetStatuses' => $assetStatuses
+        ]);
+    }
+
+    public function accountingDashboard(): Response
+    {
+
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+        // dd($assetStatuses->toArray());
+        return Inertia::render('accounting/dashboard', [
             'assetStatuses' => $assetStatuses
         ]);
     }

@@ -27,7 +27,16 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 // Add routes here for ASID account
 Route::middleware(['auth', 'verified', 'role:asid'])->group(function () {
     Route::get('asid-dashboard', [DashboardController::class, 'asidDashboard'])->name('asid-dashboard');
+    Route::get('asid-view/{id}', [AssetController::class, 'asidViewAsset'])->name('asid-view-asset');
+    Route::post('asid-view/{id}/action', [AssetController::class, 'asidViewAssetAction'])->name('asid-view-asset-action');
     Route::get('asid-evaluate/{id}', [AssetController::class, 'asidEvaluate'])->name('asid-evaluate');
+});
+
+// Add routes here for Accounting account
+Route::middleware(['auth', 'verified', 'role:accounting'])->group(function () {
+    Route::get('accounting-dashboard', [DashboardController::class, 'accountingDashboard'])->name('accounting-dashboard');
+    Route::get('accounting-evaluate/{id}', [AssetController::class, 'accountingEvaluate'])->name('accounting-evaluate');
+    Route::post('accounting-evaluate/{id}/action', [AssetController::class, 'accountingEvaluateAction'])->name('accounting-evaluate-action');
 });
 
 // Add routes here for MCD account

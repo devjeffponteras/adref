@@ -1,15 +1,20 @@
 import { Head } from '@inertiajs/react';
-import { useState } from 'react';
-import { asidDashboard } from '@/routes';
-import { Folder } from 'lucide-react';
+import { Folder, FolderCheck, SearchCheckIcon } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { WelcomeNoteMini } from '@/components/welcome-note-mini';
 import { Link } from '@inertiajs/react';
+
+interface User {
+    id: number;
+    name: string;
+}
 
 interface Asset {
     id: number;
     control_number: string;
     accountable_personnel: string;
+    department?: string;
+    user?: User;
 }
 
 interface Approver {
@@ -23,7 +28,8 @@ interface AssetStatusData {
     is_current: boolean;
     status: string;
     remarks: string | null;
-    approval_date: string | null;
+    created_at: string;
+    asset_id: number;
     asset: Asset | null;
     approver: Approver | null;
 }
@@ -33,38 +39,115 @@ interface DashboardProps {
 }
 
 export default function AsidDashboard({ assetStatuses }: DashboardProps) {
+    // Client Side Filter Optimization: Pull out pending tasks for the top summary table
+    const pendingTransactions = assetStatuses?.filter(item => item.status === 'Pending') || [];
 
-    
     return (
         <>
             <Head title="Asid Dashboard" />
 
             {/* sub header */}
-            <WelcomeNote></WelcomeNote>
+            <WelcomeNote />
             
             {/* main content */}
             <div className="container-fluid p-4">
 
                 {/* mini sub header */}
-                <WelcomeNoteMini></WelcomeNoteMini>
+                <WelcomeNoteMini />
                 
                 <div className="flex flex-col md:flex-row gap-4 mb-5">
-                    <div className="w-full md:w-1/3">
-                        <div className="stat-card bg-emerald text-white border-0 shadow-sm h-20 hover:-translate-y-1.5 cursor-pointer">
+                    <div className="w-full md:w-1/4">
+                        <div className="stat-card bg-emerald-700 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="mb-1 opacity-75 text-sm">Pending Transactions</p>
-                                    {/* 🟢 DYNAMIC COUNT: Counts total rows sent from the controller */}
-                                    <h2 className="font-bold text-2xl">{assetStatuses?.length || 0}</h2>
+                                    <h2 className="font-bold text-2xl">{pendingTransactions.length}</h2>
                                 </div>
-                                <Folder className='h-8 w-8 opacity-80'></Folder>
+                                <Folder className='h-8 w-8 opacity-80' />
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {/* --- TABLE 1: PENDING TRANSACTIONS ONLY --- */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
-                    {/* Card Body & Responsive Data Table */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
+                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                                <tr>
+                                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Applicant</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Department</th>
+                                    <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Action</th>
+                                </tr>
+                            </thead>
+                            
+                            <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                {pendingTransactions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="text-center py-10 text-gray-400 font-medium bg-white">
+                                            No pending asset evaluations waiting.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    pendingTransactions.map((item) => {
+                                        const formattedDate = item.created_at 
+                                            ? new Date(item.created_at).toLocaleString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })
+                                            : 'No Date Recorded';
+
+                                        return (
+                                            <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
+                                                    {formattedDate}
+                                                </td>
+                                                <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent capitalize">
+                                                    {item.asset?.user?.name || 'N/A'}
+                                                </td>
+                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
+                                                    <div className="font-medium text-gray-800">{item.asset?.department || 'The Users Department'}</div>
+                                                </td>
+                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
+                                                    <Link 
+                                                        href={`/asid-view/${item.asset_id}`} 
+                                                        className="inline-flex items-center gap-1.5 text-sm text-green-500 hover:text-green-700 font-medium transition-colors outline-1 outline-green-300 px-3 py-2 rounded hover:bg-green-50"
+                                                    >
+                                                        <SearchCheckIcon className='w-5 h-5' />
+                                                        View
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <hr className="border-gray-100" />
+
+                <div className="flex flex-col md:flex-row gap-4 my-6">
+                    <div className="w-full md:w-1/4">
+                        <div className="stat-card bg-emerald-800 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="mb-1 opacity-75 text-sm">Total History Log Entries</p>
+                                    <h2 className="font-bold text-2xl">{assetStatuses?.length || 0}</h2>
+                                </div>
+                                <FolderCheck className='h-8 w-8 opacity-80' />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- TABLE 2: ENTIRE HISTORICAL STAGES PIPELINE --- */}
+                <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
                             <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
@@ -79,7 +162,6 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                             </thead>
                             
                             <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {/* 🟢 DYNAMIC RENDER START */}
                                 {!assetStatuses || assetStatuses.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
@@ -87,8 +169,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                         </td>
                                     </tr>
                                 ) : (
-                                    assetStatuses.map((item: any) => {
-                                        // Format the Eloquent datetime string beautifully
+                                    assetStatuses.map((item) => {
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {
                                                 month: 'short',
@@ -129,7 +210,6 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                         );
                                     })
                                 )}
-                                {/* 🟢 DYNAMIC RENDER END */}
                             </tbody>
                         </table>
                     </div>
@@ -144,7 +224,7 @@ AsidDashboard.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: asidDashboard(),
+            href: '/asid-dashboard',
         },
     ],
 };

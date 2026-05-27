@@ -25,7 +25,7 @@ export default function CreateAsset({ classifications }: Props) {
         serial_plate_id_number: '',
         end_user_department: '',
         asset_classification_id: '', 
-        reason_disposal: '', 
+        reasons_for_disposal: '', 
         asset_location: '',
         assessment_report_path: null as File | null,
         asset_photo_path: null as File | null,
@@ -173,14 +173,14 @@ export default function CreateAsset({ classifications }: Props) {
 
                             {/* Reasons for disposal */}
                             <div className="flex flex-col gap-2">
-                                <label htmlFor="reason_disposal" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                <label htmlFor="reasons_for_disposal" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                                     Reason/s for Disposal
                                 </label>
                                 <input
                                     type="text"
-                                    id="reason_disposal"
-                                    value={data.reason_disposal}
-                                    onChange={e => setData('reason_disposal', e.target.value)}
+                                    id="reasons_for_disposal"
+                                    value={data.reasons_for_disposal}
+                                    onChange={e => setData('reasons_for_disposal', e.target.value)}
                                     className="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                                 />
                             </div>
