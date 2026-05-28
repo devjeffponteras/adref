@@ -274,11 +274,12 @@ class AssetController extends Controller
     }
 
     public function accountingEvaluate($id) {
-        $asset = Asset::with(['user', 'classification'])->findOrFail($id);
+        $asset = Asset::with(['user', 'classification', 'accounting_information'])->findOrFail($id);
 
         return Inertia::render('accounting/evaluate', [
             'asset' => $asset
         ]);
+       
     }
 
     public function accountingevaluateAction(Request $request, $id)

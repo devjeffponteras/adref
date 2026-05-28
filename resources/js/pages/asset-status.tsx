@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, usePage} from '@inertiajs/react';
 import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User } from 'lucide-react';
 
 interface assetStatus {
@@ -11,7 +11,6 @@ interface assetStatus {
     status: 'Approved' | 'On-going' | 'Pending' | 'Rejected'; // Adjusted according to your status logic
     approval_date: string | null;
     remarks: string | null;
-    // Helper field passed via backend to show department title on UI
     department_name?: string; 
 }
 
@@ -29,6 +28,8 @@ interface Props {
 }
 
 export default function AssetTimeline({ asset, currentUserId }: Props) {
+    const { auth, flash } = usePage().props as any;
+
     const { data, setData, post, processing, errors } = useForm({
         remarks: '',
     });
@@ -93,7 +94,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                 
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
-                    <Link href="/disposals" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">
+                    <Link href="/my-assets" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">
                         <ArrowLeft className="h-4 w-4" /> Back to List
                     </Link>
                     <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full uppercase tracking-wider">
@@ -211,7 +212,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                     </div>
 
                                     {/* Action Submittal Layer for Active Step Row */}
-                                    {step.is_current && (
+                                    {step.is_current && auth?.user?.role === 'admin' && (
                                         <div className="mt-4 pt-4 border-t border-dashed border-amber-200 space-y-3">
                                             <div className="flex flex-col gap-1.5">
                                                 <label htmlFor="remarks" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -249,3 +250,15 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
         </>
     );
 }
+
+AssetTimeline.layout = {
+    breadcrumbs: [
+        {
+            title: 'Dashboard',
+            href: '/my-assets'
+        },
+        {
+            title: 'Asset Status Timeline',
+        },
+    ],
+};

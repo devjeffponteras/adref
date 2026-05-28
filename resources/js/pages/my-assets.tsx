@@ -41,7 +41,8 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
     };
 
     const getStatusStyles = (status: string = '') => {
-        if (status.includes('Pending')) return 'bg-amber-50 text-amber-700 border-amber-200';
+        if (status.includes('On-going')) return 'bg-amber-50 text-amber-700 border-amber-200';
+        if (status.includes('Pending')) return 'bg-gray-50 text-gray-700 border-gray-200';
         if (status.includes('Returned')) return 'bg-orange-50 text-orange-700 border-orange-200';
         if (status.includes('Approved')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
         return 'bg-rose-50 text-rose-700 border-rose-200'; 

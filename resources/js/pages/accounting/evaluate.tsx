@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { WelcomeNote } from '@/components/welcome-note';
-import { XIcon, CircleCheck, SquareArrowRightIcon } from 'lucide-react';
+import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowLeftCircle } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 
 interface User {
@@ -11,6 +11,17 @@ interface User {
 interface AssetClassification {
     id: number;
     name: string;
+}
+
+interface AccountingInformation {
+    id: number;
+    name: string;
+    asset_id: number;
+    asset_number: string;
+    acquisition_date: string;
+    acquisition_cost: string;
+    book_value: string;
+    remarks: string;
 }
 
 interface AssetData {
@@ -32,21 +43,31 @@ interface AssetData {
     created_at: string;
     user?: User;
     classification?: AssetClassification;
+    accounting_information?: AccountingInformation | null;
 }
 
 interface EvaluateProps {
     asset: AssetData;
 }
 
+const formatDateForInput = (dateString: string | undefined | null): string => {
+    if (!dateString) return '';
+    return dateString.split(' ')[0].split('T')[0];
+};
+
 export default function AccountingEvaluate({ asset }: EvaluateProps) {
+
+    // locking all data fields if exist
+    const isLocked = !!asset.accounting_information;
+
     // Initialize Inertia form hook with your fields
     const { data, setData, post, processing, errors } = useForm({
-        asset_number: '',
-        acquisition_date: '',
-        acquisition_cost: '',
-        book_value: '',
-        remarks: '',
-        checked_by: 'Lou Agusin', // Pre-filled
+        asset_number: asset.accounting_information?.asset_number || '',
+        acquisition_date: formatDateForInput(asset.accounting_information?.acquisition_date || ''),
+        acquisition_cost: asset.accounting_information?.acquisition_cost ? String(asset.accounting_information.acquisition_cost) : '',
+        book_value: asset.accounting_information?.book_value ? String(asset.accounting_information.book_value) : '',
+        remarks: asset.accounting_information?.remarks || '',
+        checked_by: 'Lou Agusin',
         conformed_by: '',
     });
 
@@ -69,7 +90,14 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                 <AssetProfileCard asset={asset} />
 
                 <form onSubmit={handleSubmit} className="w-full bg-white border border-gray-100 rounded-xl shadow-xs p-6 my-6">
-                    <h2 className="text-lg font-bold text-gray-800 mb-6">Accounting Information</h2>
+                    <h2 className="text-lg font-bold text-gray-800 mb-6">Accounting Information
+                        {isLocked ? 
+                        <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
+                            <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
+                            Submitted to MCD for PAR Information Evaluation
+                        </span>
+                        : ''}
+                    </h2>
                     
                     {/* First Row Grid Layout */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -80,8 +108,13 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 type="text"
                                 placeholder="e.g. AD-26-01"
                                 value={data.asset_number}
+                                disabled={isLocked}
                                 onChange={e => setData('asset_number', e.target.value)}
-                                className="w-full p-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg shadow-2xs focus:outline-emerald-500 focus:border-emerald-500"
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${asset.accounting_information 
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                        }`}
                             />
                             {errors.asset_number && <p className="text-xs text-red-500 mt-1">{errors.asset_number}</p>}
                         </div>
@@ -92,8 +125,13 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                             <input 
                                 type="date"
                                 value={data.acquisition_date}
+                                disabled={isLocked}
                                 onChange={e => setData('acquisition_date', e.target.value)}
-                                className="w-full p-2 text-sm text-gray-500 bg-white border border-gray-300 rounded-lg shadow-2xs focus:outline-emerald-500 focus:border-emerald-500"
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${asset.accounting_information 
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                        }`}
                             />
                             {errors.acquisition_date && <p className="text-xs text-red-500 mt-1">{errors.acquisition_date}</p>}
                         </div>
@@ -107,9 +145,14 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                     type="number"
                                     step="0.01"
                                     placeholder="0.00"
+                                    disabled={isLocked}
                                     value={data.acquisition_cost}
                                     onChange={e => setData('acquisition_cost', e.target.value)}
-                                    className="w-full p-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-r-lg focus:outline-emerald-500 focus:border-emerald-500"
+                                    className={`w-full p-2 text-sm border shadow-2xs transition-colors duration-150 rounded-r-lg
+                                            ${asset.accounting_information 
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                            }`}
                                 />
                             </div>
                             {errors.acquisition_cost && <p className="text-xs text-red-500 mt-1">{errors.acquisition_cost}</p>}
@@ -125,8 +168,13 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                     step="0.01"
                                     placeholder="0.00"
                                     value={data.book_value}
+                                    disabled={isLocked}
                                     onChange={e => setData('book_value', e.target.value)}
-                                    className="w-full p-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-r-lg focus:outline-emerald-500 focus:border-emerald-500"
+                                    className={`w-full p-2 text-sm border shadow-2xs transition-colors duration-150 rounded-r-lg
+                                            ${asset.accounting_information 
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                            }`}
                                 />
                             </div>
                             {errors.book_value && <p className="text-xs text-red-500 mt-1">{errors.book_value}</p>}
@@ -141,8 +189,13 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                             <input 
                                 type="text"
                                 value={data.remarks}
+                                disabled={isLocked}
                                 onChange={e => setData('remarks', e.target.value)}
-                                className="w-full p-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg shadow-2xs focus:outline-emerald-500 focus:border-emerald-500"
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${asset.accounting_information 
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                        }`}
                             />
                             {errors.remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
                         </div>
@@ -167,6 +220,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 readOnly
                                 onChange={e => setData('conformed_by', e.target.value)}
                                 className="w-full p-2 text-sm text-gray-600 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed shadow-2xs"
+                                placeholder='N/A for now..'
                             />
                             {errors.conformed_by && <p className="text-xs text-red-500 mt-1">{errors.conformed_by}</p>}
                         </div>
@@ -179,10 +233,10 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 href="/accounting-dashboard" 
                                 className="inline-flex items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-hidden"
                             >
-                                <XIcon className='h-4 w-4 mr-1'></XIcon>
-                                Cancel
+                                {isLocked ? <ArrowLeftCircle className='h-4 w-4 mr-1'></ArrowLeftCircle> : <XIcon className='h-4 w-4 mr-1'></XIcon> }
+                                {isLocked ? 'Back to Dashboard' : 'Cancel' }
                             </Link>
-                            
+                            {!isLocked ? 
                             <button 
                                 type="submit"
                                 disabled={processing}
@@ -191,14 +245,16 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 <CircleCheck className='h-5 w-5 mr-2'></CircleCheck>
                                 Approve
                             </button>
+                            : ''}
                         </div>
-                        {/* <button 
+                        <button 
                             type="button" 
+                            disabled
                             className="inline-flex items-center cursor-pointer px-4 py-2 bg-amber-700 text-sm font-semibold text-white rounded-lg hover:bg-amber-800 disabled:opacity-50 focus:outline-hidden"
                         >
                             <SquareArrowRightIcon className='h-5 w-5 mr-2'></SquareArrowRightIcon>
                             Save and Submit to Ivan Moreno's Workflow for the Approval
-                        </button> */}
+                        </button>
                     </div>
                 </form>
             </div>

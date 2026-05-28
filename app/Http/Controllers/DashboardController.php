@@ -23,7 +23,7 @@ class DashboardController extends Controller
     public function accountingDashboard(): Response
     {
 
-        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver'])
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information'])
             ->orderBy('created_at', 'desc')
             ->get();
         // dd($assetStatuses->toArray());

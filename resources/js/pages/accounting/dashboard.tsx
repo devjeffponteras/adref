@@ -8,6 +8,14 @@ interface User {
     name: string;
 }
 
+interface AccountingInformation {
+    id: number;
+    asset_number: string;
+    acquisition_date: string;
+    acquisition_cost: string;
+    book_value: string;
+}
+
 interface Asset {
     id: number;
     control_number: string | null;
@@ -19,6 +27,7 @@ interface Asset {
     description: string | null;
     status: string;
     user?: User;
+    accounting_information?: AccountingInformation | null;
 }
 
 interface Approver {
@@ -108,6 +117,9 @@ export default function AccountingDashboard({ assetStatuses }: DashboardProps) {
                                     </tr>
                                 ) : (
                                     assetStatuses.map((item) => {
+
+                                        const isLogged = !!item.asset?.accounting_information;
+
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {
                                                 month: 'short',
@@ -136,9 +148,13 @@ export default function AccountingDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
                                                         href={`/accounting-evaluate/${item.asset_id}`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-amber-500 hover:text-amber-700 font-medium transition-colors outline-1 outline-amber-300 px-3 py-2 rounded hover:bg-amber-50"
+                                                        className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors px-3 py-2 rounded-lg
+                                                            ${isLogged 
+                                                                ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 border border-gray-200 shadow-sm' 
+                                                                : 'text-amber-500 hover:text-amber-700 outline-1 outline-amber-300 hover:bg-amber-50'
+                                                            }`}
                                                     >
-                                                        Evaluate
+                                                        {isLogged ? 'View' : 'Evaluate'}
                                                     </Link>
                                                 </td>
                                             </tr>
