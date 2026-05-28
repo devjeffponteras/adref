@@ -42,6 +42,8 @@ Route::middleware(['auth', 'verified', 'role:accounting'])->group(function () {
 // Add routes here for MCD account
 Route::middleware(['auth', 'verified', 'role:mcd'])->group(function () {
     Route::get('mcd-dashboard', [DashboardController::class, 'mcdDashboard'])->name('mcd-dashboard');
+    Route::get('mcd-evaluate/{id}', [AssetController::class, 'mcdEvaluate'])->name('mcd-evaluate');
+    Route::post('mcd-evaluate/{id}/action', [AssetController::class, 'mcdEvaluateAction'])->name('mcd-evaluate-action');
 });
 
 // Add routes here for standard user account

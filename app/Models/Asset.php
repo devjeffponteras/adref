@@ -57,4 +57,9 @@ class Asset extends Model
     {
         return $this->hasOne(AccountingInformation::class, 'asset_id');
     }
+
+    public function mcd_information(): HasOne
+    {
+        return $this->hasOne(McdInformation::class, 'asset_id');
+    }
 }

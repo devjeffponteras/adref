@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AssetClassification;
 use App\Models\Asset;
 use App\Models\AssetApproval;
-use App\Models\assetStatus;
+use App\Models\AssetStatus;
 use App\Models\AccountingInformation;
+use App\Models\McdInformation;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
@@ -155,7 +156,6 @@ class AssetController extends Controller
             ->where('is_current', true)
             ->firstOrFail();
 
-        // 1. Finalize the active step using your precise schema columns
         $currentApproval->update([
             'is_current'    => false,
             'status'        => 'Approved',
@@ -164,7 +164,6 @@ class AssetController extends Controller
             'remarks'       => $request->remarks
         ]);
 
-        // 2. Identify the subsequent step row based on sequential routing numbers
         $nextApproval = AssetApproval::where('asset_id', $id)
             ->where('seq_no', $currentApproval->seq_no + 1)
             ->first();
@@ -179,6 +178,16 @@ class AssetController extends Controller
             // No more stages left in sequence; flag primary global asset profile complete
             Asset::where('id', $id)->update(['status' => 'Completed']);
         }
+
+        // update individual asset status
+        AssetStatus::where('asset_id', $id)->update([
+            'seq_no'        => $currentApproval->seq_no + 1,
+            'is_current'    => true,
+            'status'        => 'On-going', 
+            'approver_id'   => null,
+            'approval_date' => now(),
+            'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending Assignment.',
+        ]);
 
         return redirect()->back()->with('success', 'Stage authorization processed successfully.');
     }
@@ -222,7 +231,7 @@ class AssetController extends Controller
             $assetUpdate = ['status' => $validated['status']];
             
             // Persist control number if passing approval checkpoints
-            if ($validated['status'] === 'Approved') {
+            if ($validated['status'] === 'Approved' && array_key_exists('control_number', $validated)) {
                 $assetUpdate['control_number'] = $validated['control_number'];
             }
             $asset->update($assetUpdate);
@@ -235,20 +244,23 @@ class AssetController extends Controller
                 'remarks'       => $validated['remarks'],
             ]);
 
+            $targetActiveSeq = $currentSeq;
+
             if ($validated['status'] === 'Approved' && $currentSeq < 8) {
-                // Push Stage Forward
-                $nextSeq = $currentSeq + 1;
-                $asset->approvals()->where('seq_no', $nextSeq)->update([
+                $targetActiveSeq = $currentSeq + 1;
+                
+                $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
                     'is_current'    => true,                     
                     'status'        => 'On-going', 
                     'approver_id'   => null,
                     'approval_date' => null,
                     'remarks'       => null,
                 ]);
-            } 
+            }
             elseif ($validated['status'] === 'Returned') {
-                // Return Workflow: Revert sequence back to stage 1 for author modifications
-                $asset->approvals()->where('seq_no', 1)->update([
+                $targetActiveSeq = 1; // Revert sequence back to stage 1
+                
+                $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
                     'is_current'    => true,
                     'status'        => 'On-going',
                     'approver_id'   => null,
@@ -260,14 +272,21 @@ class AssetController extends Controller
             AssetStatus::where('asset_id', $asset->id)->update(['is_current' => false]);
 
             AssetStatus::where('asset_id', $asset->id)
-                ->where('seq_no', $currentSeq)
-                ->update([
-                    'is_current'    => true,
-                    'status'        => $validated['status'],
-                    'approver_id'   => Auth::id(),
-                    'approval_date' => now(),
-                    'remarks'       => $validated['remarks'],
-                ]);
+                        ->where('seq_no', $currentSeq)
+                        ->update([
+                            'status'        => $validated['status'],
+                            'approver_id'   => Auth::id(),
+                            'approval_date' => now(),
+                            'remarks'       => $validated['remarks'],
+                        ]);
+
+            AssetStatus::where('asset_id', $asset->id)
+                        ->where('seq_no', $targetActiveSeq)
+                        ->update([
+                            'is_current' => true,
+                            'status'     => ($targetActiveSeq !== $currentSeq) ? 'On-going' : $validated['status']
+                        ]);
+
         });
 
         return redirect()->route('asid-dashboard')->with('success', "Asset application state updated to: {$validated['status']}.");
@@ -349,7 +368,8 @@ class AssetController extends Controller
                 ]);
 
                 $asset->update([
-                    'status' => 'pending_workflow_approval' 
+                    'status' => 'On-going' 
+                    // 'status' => 'pending_workflow_approval' // mao ni if goods na ang WORKFLOW vice versa connection! eyy!!
                 ]);
 
                 $message = "Accounting details recorded. Asset evaluation successfully advanced to the next sequence.";
@@ -376,5 +396,18 @@ class AssetController extends Controller
                 'error' => 'An operational database issue halted processing your asset updates. Please try again.'
             ]);
         }
+    }
+
+    public function mcdEvaluate($id) {
+        $asset = Asset::with(['user', 'classification', 'accounting_information', 'mcd_information'])->findOrFail($id);
+
+        return Inertia::render('mcd/evaluate', [
+            'asset' => $asset
+        ]);
+       
+    }
+
+    public function mcdEvaluateAction(Request $request, $id) {
+        // dria nako..
     }
 }

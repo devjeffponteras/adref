@@ -22,7 +22,6 @@ class DashboardController extends Controller
 
     public function accountingDashboard(): Response
     {
-
         $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -34,7 +33,13 @@ class DashboardController extends Controller
 
     public function mcdDashboard(): Response
     {
-        return Inertia::render('mcd/dashboard');
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information', 'asset.accounting_information'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('mcd/dashboard', [
+            'assetStatuses' => $assetStatuses
+        ]);
     }
 
     public function userDashboard(): Response

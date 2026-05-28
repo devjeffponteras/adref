@@ -200,10 +200,10 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                         </div>
                                         
                                         <div className="md:col-span-2 text-gray-500 font-medium">
-                                            <strong>Status Flag:</strong> <span className={`capitalize py-1 px-2 shadow rounded-lg ${styles.line}`}>{step.status}</span>
+                                            <strong>Status Flag:</strong> <span className={`capitalize py-1 px-2 shadow rounded-lg text-gray-700 ${styles.line}`}>{step.status}</span>
                                         </div>
 
-                                        {step.remarks && (
+                                        {!!step.remarks && (
                                             <div className="md:col-span-2 flex items-start gap-1 bg-white/60 p-2.5 rounded border border-gray-200/60 text-gray-700">
                                                 <MessageSquare className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />
                                                 <p><strong>Remarks:</strong> {step.remarks}</p>
@@ -212,7 +212,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                     </div>
 
                                     {/* Action Submittal Layer for Active Step Row */}
-                                    {step.is_current && auth?.user?.role === 'admin' && (
+                                    {!!step.is_current && auth?.user?.role === 'admin' && (
                                         <div className="mt-4 pt-4 border-t border-dashed border-amber-200 space-y-3">
                                             <div className="flex flex-col gap-1.5">
                                                 <label htmlFor="remarks" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
