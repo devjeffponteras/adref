@@ -52,7 +52,7 @@ class AssetController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return Inertia::render('create-asset', [
+        return Inertia::render('user/create-asset', [
             'classifications' => $classifications
         ]);
     }
