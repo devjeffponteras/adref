@@ -8,7 +8,7 @@ interface User {
     name: string;
 }
 
-interface McdInformation {
+interface AccountingInformation {
     id: number;
     asset_number: string;
     acquisition_date: string;
@@ -27,7 +27,7 @@ interface Asset {
     description: string | null;
     status: string;
     user?: User;
-    mcd_information?: McdInformation | null;
+    accounting_information?: AccountingInformation | null;
 }
 
 interface Approver {
@@ -51,7 +51,7 @@ interface DashboardProps {
     assetStatuses: AssetStatusData[];
 }
 
-export default function McdDashboard({ assetStatuses }: DashboardProps) {
+export default function AccountingDashboard({ assetStatuses }: DashboardProps) {
 
     const { flash } = usePage().props as any;
 
@@ -118,7 +118,7 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
                                 ) : (
                                     assetStatuses.map((item) => {
 
-                                        const isLogged = !!item.asset?.mcd_information;
+                                        const isLogged = !!item.asset?.accounting_information;
 
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {
@@ -147,7 +147,7 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
                                                 </td>
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
-                                                        href={`/mcd-evaluate/${item.asset_id}`} 
+                                                        href={`/accounting-evaluate/${item.asset_id}`} 
                                                         className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors px-3 py-2 rounded-lg
                                                             ${isLogged 
                                                                 ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 border border-gray-200 shadow-sm' 
@@ -171,7 +171,7 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
     );
 }
 
-McdDashboard.layout = {
+AccountingDashboard.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',

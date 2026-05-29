@@ -4,16 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class AssetStatus extends Model
+class AccountingInformation extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'asset_statuses';
+    protected $table = 'accounting_information';
 
     /**
      * The attributes that are mass assignable.
@@ -22,12 +21,16 @@ class AssetStatus extends Model
      */
     protected $fillable = [
         'asset_id',
-        'seq_no',
-        'is_current',
+        'role',
+        'asset_number',
+        'acquisition_date',
+        'acquisition_cost',
+        'book_value',
+        'remarks',
+        'checked_by',
+        'conformed_by',
         'approver_id',
         'status',
-        'approval_date',
-        'remarks',
     ];
 
     /**
@@ -38,14 +41,14 @@ class AssetStatus extends Model
     protected function casts(): array
     {
         return [
-            'is_current' => 'boolean',
-            'seq_no' => 'integer',
-            'approval_date' => 'datetime',
+            'acquisition_date' => 'date',
+            'acquisition_cost' => 'decimal:2',
+            'book_value'       => 'decimal:2',
         ];
     }
 
     /**
-     * Get the asset that owns this status log record.
+     * Get the core asset profile record tied to this accounting entry.
      */
     public function asset(): BelongsTo
     {
@@ -53,7 +56,7 @@ class AssetStatus extends Model
     }
 
     /**
-     * Get the user who acts as the approver for this status step.
+     * Get the system user record registered as the formal approver for this step.
      */
     public function approver(): BelongsTo
     {

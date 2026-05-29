@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag } from 'lucide-react';
+import { WelcomeNote } from '@/components/welcome-note';
 import * as XLSX from 'xlsx';
 
 interface Classification {
@@ -40,7 +41,9 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
     };
 
     const getStatusStyles = (status: string = '') => {
-        if (status.includes('Pending')) return 'bg-amber-50 text-amber-700 border-amber-200';
+        if (status.includes('On-going')) return 'bg-amber-50 text-amber-700 border-amber-200';
+        if (status.includes('Pending')) return 'bg-gray-50 text-gray-700 border-gray-200';
+        if (status.includes('Returned')) return 'bg-orange-50 text-orange-700 border-orange-200';
         if (status.includes('Approved')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
         return 'bg-rose-50 text-rose-700 border-rose-200'; 
     };
@@ -125,12 +128,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
             <Head title="My Assets" />
 
             {/* sub header */}
-            <div className="row bg-emerald-700 p-4">
-                <div className="flex flex-col text-white">
-                    <h3 className="font-bold text-2xl">Hello, Authorized User!</h3>
-                    <p className="text-xs">Welcome to Automated Asset for Disposal System</p>
-                </div>
-            </div>
+            <WelcomeNote />
 
             <div className="container mx-auto p-6 space-y-6">
             

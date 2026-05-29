@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Asset extends Model
 {
@@ -50,5 +51,15 @@ class Asset extends Model
     public function assetStatuses(): HasMany
     {
         return $this->hasMany(AssetStatus::class, 'asset_id');
+    }
+
+    public function accounting_information(): HasOne
+    {
+        return $this->hasOne(AccountingInformation::class, 'asset_id');
+    }
+
+    public function mcd_information(): HasOne
+    {
+        return $this->hasOne(McdInformation::class, 'asset_id');
     }
 }

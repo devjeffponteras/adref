@@ -49,7 +49,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
 
                         {/* Section 1: Remarks & Checked By */}
                         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
-                            <div className="xl:col-span-5 flex flex-col gap-1.5">
+                            <div className="xl:col-span-6 flex flex-col gap-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Remarks
                                 </label>
@@ -63,7 +63,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 {errors.remarks && <span className="text-red-500 text-xs">{errors.remarks}</span>}
                             </div>
 
-                            <div className="xl:col-span-5 flex flex-col gap-1.5">
+                            <div className="xl:col-span-6 flex flex-col gap-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Checked by
                                 </label>
@@ -76,14 +76,6 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 />
                             </div>
 
-                            <div className="xl:col-span-2">
-                                <button 
-                                    type="button" 
-                                    className="w-full h-11.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-lg shadow-sm transition-all hover:shadow-md cursor-pointer active:scale-[0.98]"
-                                >
-                                    Update Document
-                                </button>
-                            </div>
                         </div>
 
                         <hr className="border-gray-100" />
@@ -121,14 +113,6 @@ export default function AsidEvaluate({ asset }: AssetProps) {
 
                             <div className="xl:col-span-5 hidden xl:block"></div>
 
-                            <div className="xl:col-span-2">
-                                <button 
-                                    type="button" 
-                                    className="w-full h-11.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-lg shadow-sm transition-all hover:shadow-md cursor-pointer active:scale-[0.98]"
-                                >
-                                    Update Document
-                                </button>
-                            </div>
                         </div>
 
                         {/* Bottom Footer Actions */}

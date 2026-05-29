@@ -4,16 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class AssetStatus extends Model
+class McdInformation extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'asset_statuses';
+    protected $table = 'mcd_information';
 
     /**
      * The attributes that are mass assignable.
@@ -22,30 +21,15 @@ class AssetStatus extends Model
      */
     protected $fillable = [
         'asset_id',
-        'seq_no',
-        'is_current',
+        'role',
+        'par_number',
+        'remarks',
         'approver_id',
         'status',
-        'approval_date',
-        'remarks',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'is_current' => 'boolean',
-            'seq_no' => 'integer',
-            'approval_date' => 'datetime',
-        ];
-    }
-
-    /**
-     * Get the asset that owns this status log record.
+     * Get the core asset profile record tied to this MCD entry.
      */
     public function asset(): BelongsTo
     {
@@ -53,7 +37,7 @@ class AssetStatus extends Model
     }
 
     /**
-     * Get the user who acts as the approver for this status step.
+     * Get the system user record registered as the formal approver for this MCD step.
      */
     public function approver(): BelongsTo
     {

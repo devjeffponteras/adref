@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\AssetClassification;
 use App\Models\Asset;
 use App\Models\AssetApproval;
-use App\Models\assetStatus;
+use App\Models\AssetStatus;
+use App\Models\AccountingInformation;
+use App\Models\McdInformation;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AssetController extends Controller
 {
@@ -72,14 +76,11 @@ class AssetController extends Controller
             'asset_photo_path'        => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
+        // dd($request->toArray());
+
         $validated['user_id'] = auth()->id();
         $validated['status'] = 'Pending';
-
-        // 1. GENERATE DYNAMIC CONTROL NUMBER
-        // Format: AD-26-XXXXX (AD + 2-digit Year + 5-digit daily microtime seed)
-        $prefix = 'AD-' . date('y') . '-';
-        $uniqueSeed = substr(time(), -5) . sprintf('%02d', rand(0, 99)); // Highly unique, compact time suffix
-        $validated['control_number'] = $prefix . $uniqueSeed;
+        $validated['control_number'] = null;
 
         // File handler mapping
         if ($request->hasFile('assessment_report_path')) {
@@ -92,10 +93,8 @@ class AssetController extends Controller
         // Use a database transaction to ensure data consistency across tables
         DB::transaction(function () use ($validated) {
             
-            // 2. Create the primary asset record entry row (now includes control_number)
             $asset = Asset::create($validated);
 
-            // 3. Automatically seed the 8 pipeline stages sequentially for this asset instance
             for ($i = 1; $i <= 8; $i++) {
                 $asset->approvals()->create([
                     'seq_no'        => $i,
@@ -107,15 +106,13 @@ class AssetController extends Controller
                 ]);
             }
 
-            // 4. PARALLEL SAVE: Initialize the first tracking record in the asset_statuses table
             AssetStatus::create([
                 'asset_id'      => $asset->id,
                 'seq_no'        => 1,
-                'is_current'    => true,
                 'status'        => 'Pending', 
                 'approver_id'   => null,
                 'approval_date' => null,
-                'remarks'       => 'Asset initialized in the inventory tracking system with Control No: ' . $asset->control_number,
+                'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
             ]);
         });
 
@@ -131,9 +128,9 @@ class AssetController extends Controller
             'approvals' => function ($query) {
                 $query->orderBy('seq_no', 'asc');
             },
-            'assetStatuses' => function ($query) {
-                $query->orderBy('seq_no', 'desc'); // Often useful to see the newest status updates first
-            },
+            // 'assetStatuses' => function ($query) {
+            //     $query->orderBy('seq_no', 'desc'); // Often useful to see the newest status updates first
+            // },
             'user' // Connects the User model data via the asset's user_id foreign key
         ])->findOrFail($id);
 
@@ -158,7 +155,6 @@ class AssetController extends Controller
             ->where('is_current', true)
             ->firstOrFail();
 
-        // 1. Finalize the active step using your precise schema columns
         $currentApproval->update([
             'is_current'    => false,
             'status'        => 'Approved',
@@ -167,7 +163,6 @@ class AssetController extends Controller
             'remarks'       => $request->remarks
         ]);
 
-        // 2. Identify the subsequent step row based on sequential routing numbers
         $nextApproval = AssetApproval::where('asset_id', $id)
             ->where('seq_no', $currentApproval->seq_no + 1)
             ->first();
@@ -183,6 +178,17 @@ class AssetController extends Controller
             Asset::where('id', $id)->update(['status' => 'Completed']);
         }
 
+        // update individual asset status
+        AssetStatus::where('asset_id', $id)->update([
+            'seq_no'        => $currentApproval->seq_no + 1,
+            // 'is_current'    => true,
+            'role'          => 'asid', 
+            'status'        => 'On-going', 
+            'approver_id'   => Auth::id(),
+            'approval_date' => now(),
+            'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending Assignment.',
+        ]);
+
         return redirect()->back()->with('success', 'Stage authorization processed successfully.');
     }
 
@@ -193,5 +199,287 @@ class AssetController extends Controller
         return Inertia::render('asid/evaluate', [
             'asset' => $asset
         ]);
+    }
+
+    public function asidViewAsset($id)
+    {
+        $asset = Asset::with(['user', 'classification'])->findOrFail($id);
+        // dd($asset->toArray());
+        return Inertia::render('asid/view', [
+            'asset' => $asset
+        ]);
+        
+    }
+
+    public function asidViewAssetAction(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'status'         => 'required|in:Approved,Returned,Rejected',
+            'remarks'        => 'required|string|min:5|max:1000',
+            'control_number' => 'required_if:status,Approved|nullable|string|max:255',
+        ]);
+
+        $asset = Asset::findOrFail($id);
+
+        DB::transaction(function () use ($asset, $validated) {
+            
+            $currentApproval = $asset->approvals()->where('is_current', true)->first();
+            $currentSeq = $currentApproval ? $currentApproval->seq_no : 1;
+
+            $assetUpdate = ['status' => $validated['status']];
+            if ($validated['status'] === 'Approved' && array_key_exists('control_number', $validated)) {
+                $assetUpdate['control_number'] = $validated['control_number'];
+            }
+            $asset->update($assetUpdate);
+
+            $asset->approvals()->where('seq_no', $currentSeq)->update([
+                'is_current'    => false,                     
+                'status'        => $validated['status'], 
+                'approver_id'   => Auth::id(),
+                'approval_date' => now(),
+                'remarks'       => $validated['remarks'],
+            ]);
+
+            $targetActiveSeq = $currentSeq;
+
+            if ($validated['status'] === 'Approved' && $currentSeq < 8) {
+                $targetActiveSeq = $currentSeq + 1;
+                
+                $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
+                    'is_current'    => true,
+                    'status'        => 'On-going', 
+                    'approver_id'   => null,
+                    'approval_date' => null,
+                    'remarks'       => null,
+                ]);
+            }
+            elseif ($validated['status'] === 'Returned') {
+                $targetActiveSeq = 1; // Send back to step 1
+                
+                $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
+                    'is_current'    => true,
+                    'status'        => 'On-going',
+                    'approver_id'   => null,
+                    'approval_date' => null,
+                    'remarks'       => null,
+                ]);
+            } 
+            elseif ($validated['status'] === 'Rejected') {
+                $targetActiveSeq = $currentSeq;
+            }
+
+            // Log details explicitly onto the row the user just interacted with
+            AssetStatus::where('asset_id', $asset->id)
+                ->update([
+                    'seq_no'        => $targetActiveSeq,
+                    'status'        => $validated['status'],
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $validated['remarks'],
+                ]);
+        });
+
+        return redirect()->route('asid-dashboard')->with('success', "Asset application state updated to: {$validated['status']}.");
+    }
+
+    public function accountingEvaluate($id) {
+        $asset = Asset::with(['user', 'classification', 'accounting_information'])->findOrFail($id);
+
+        return Inertia::render('accounting/evaluate', [
+            'asset' => $asset
+        ]);
+       
+    }
+
+    public function accountingevaluateAction(Request $request, $id)
+    {
+        $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'asset_number'     => 'required|string|max:100|unique:accounting_information,asset_number,' . $asset->id . ',asset_id',
+            'acquisition_date' => 'required|date',
+            'acquisition_cost' => 'required|numeric|min:0',
+            'book_value'       => 'required|numeric|min:0',
+            'remarks'          => 'nullable|string|max:1000',
+            'checked_by'       => 'required|string|max:255',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            AccountingInformation::updateOrCreate(
+                ['asset_id' => $asset->id],
+                [
+                    'role'             => 'accounting',
+                    'asset_number'     => $validatedData['asset_number'],
+                    'acquisition_date' => $validatedData['acquisition_date'],
+                    'acquisition_cost' => $validatedData['acquisition_cost'],
+                    'book_value'       => $validatedData['book_value'],
+                    'remarks'          => $validatedData['remarks'],
+                    'checked_by'       => $validatedData['checked_by'],
+                    'conformed_by'     => 'N/A',
+                    'status'           => 'Approved',
+                    'approver_id'      => Auth::id(),
+                ]
+            );
+
+            $currentApproval = AssetApproval::where('asset_id', $id)
+                ->where('is_current', true)
+                ->firstOrFail();
+
+            $currentApproval->update([
+                'is_current'    => false,
+                'status'        => 'Approved',
+                'approver_id'   => Auth::id(), 
+                'approval_date' => now(),
+                'remarks'       => $validatedData['remarks']
+            ]);
+
+            $nextApproval = AssetApproval::where('asset_id', $id)
+                ->where('seq_no', $currentApproval->seq_no + 1)
+                ->first();
+
+            if ($nextApproval) {
+                $nextApproval->update([
+                    'is_current' => true,
+                    'status'     => 'On-going'
+                ]);
+
+                $asset->update([
+                    'status' => 'On-going' 
+                    // 'status' => 'pending_workflow_approval' // mao ni if goods na ang WORKFLOW vice versa connection! eyy!! then add og algo for WORKFLOW app
+                ]);
+
+                $message = "Accounting details recorded. Asset evaluation successfully advanced to the next sequence.";
+            } else {
+                $asset->update([
+                    'status' => 'Completed'
+                ]);
+
+                $message = "Accounting details recorded. All tracking sequence steps complete; asset pipeline marked as Completed.";
+            }
+
+            AssetStatus::where('asset_id', $asset->id)
+                        ->update([
+                            'seq_no'        => $currentApproval->seq_no + 1,
+                            'status'        => 'On-going',
+                            'approver_id'   => Auth::id(),
+                            'approval_date' => now(),
+                            'remarks'       => $validatedData['remarks'],
+                        ]);
+
+            DB::commit();
+
+            return redirect()->route('accounting-dashboard')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            // Discard all table queries cleanly if anything goes wrong
+            DB::rollBack();
+
+            Log::error("Failed transaction sequence processing accounting evaluation for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An operational database issue halted processing your asset updates. Please try again.'
+            ]);
+        }
+    }
+
+    public function mcdEvaluate($id) {
+        $asset = Asset::with(['user', 'classification', 'accounting_information', 'mcd_information'])->findOrFail($id);
+
+        return Inertia::render('mcd/evaluate', [
+            'asset' => $asset
+        ]);
+       
+    }
+
+    public function mcdEvaluateAction(Request $request, $id) {
+
+        // dria nako..
+        $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'par_number'          => 'nullable|string|max:1000',
+            'par_remarks'          => 'nullable|string|max:1000',
+        ]);
+
+        // dd(auth()->user()?->role?->name);
+
+        DB::beginTransaction();
+
+        try {
+
+            McdInformation::updateOrCreate(
+                ['asset_id' => $asset->id],
+                [
+                    'role'        => 'mcd',
+                    'par_number'  => $validatedData['par_number'],
+                    'remarks'     => $validatedData['par_remarks'],
+                    'approver_id' => Auth::id(),
+                    'status'      => 'Approved',
+                ]
+            );
+
+            $currentApproval = AssetApproval::where('asset_id', $id)
+                ->where('is_current', true)
+                ->firstOrFail();
+
+            $currentApproval->update([
+                'is_current'    => false,
+                'status'        => 'Approved',
+                'approver_id'   => Auth::id(), 
+                'approval_date' => now(),
+                'remarks'       => $validatedData['par_remarks']
+            ]);
+
+            AssetStatus::where('asset_id', $asset->id)
+                ->update([
+                    'seq_no'        => $currentApproval->seq_no,
+                    'status'        => 'Approved', 
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $validatedData['par_remarks'],
+                ]);
+
+            $nextApproval = AssetApproval::where('asset_id', $id)
+                ->where('seq_no', $currentApproval->seq_no + 1)
+                ->first();
+
+            if ($nextApproval) {
+                $nextApproval->update([
+                    'is_current' => true,
+                    'status'     => 'On-going'
+                ]);
+
+                $asset->update([
+                    'status' => 'On-going' 
+                ]);
+
+                $message = "MCD Phase tracking details logged. Asset evaluation advanced to the next milestone sequence.";
+            } else {
+                $asset->update([
+                    'status' => 'Completed'
+                ]);
+
+                $message = "MCD Phase tracking details logged. All tracking sequence steps complete; asset pipeline marked as Completed.";
+            }
+
+            DB::commit();
+
+            return redirect()->route('mcd-dashboard')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            // Rollback all pending queries clean if something crashes mid-execution
+            DB::rollBack();
+
+            Log::error("Failed transaction sequence processing MCD evaluation for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An operational database issue halted processing your MCD updates. Please try again.'
+            ]);
+        }
+
     }
 }

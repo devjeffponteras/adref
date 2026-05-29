@@ -11,16 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('asset_statuses', function (Blueprint $table) {
+        Schema::create('mcd_information', function (Blueprint $table) {
             $table->id();
+
             $table->foreignId('asset_id')
                   ->constrained('assets')
                   ->cascadeOnDelete();
-                  
-            $table->integer('seq_no');
-            
-            // $table->boolean('is_current')->default(false); // remove kay murag dili needed
-            
+
+            $table->string('role')->nullable();
+            $table->string('par_number')->nullable();
+            $table->text('remarks')->nullable();
+
             $table->foreignId('approver_id')
                   ->nullable()
                   ->constrained('users')
@@ -28,13 +29,8 @@ return new class extends Migration
             
             $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
                   ->default('Pending');
-                  
-            $table->dateTime('approval_date')->nullable();
-            $table->text('remarks')->nullable();
-            $table->timestamps();
 
-            $table->index(['asset_id', 'is_current']);
-            $table->unique(['asset_id', 'seq_no']);
+            $table->timestamps();
         });
     }
 
@@ -43,6 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('asset_statuses');
+        Schema::dropIfExists('mcd_information');
     }
 };
