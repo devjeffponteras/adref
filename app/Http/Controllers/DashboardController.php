@@ -33,7 +33,7 @@ class DashboardController extends Controller
 
     public function mcdDashboard(): Response
     {
-        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information', 'asset.accounting_information'])
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information', 'asset.mcd_information'])
             ->orderBy('created_at', 'desc')
             ->get();
 

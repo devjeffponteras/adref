@@ -27,7 +27,7 @@ interface Asset {
     description: string | null;
     status: string;
     user?: User;
-    accounting_information?: McdInformation | null;
+    mcd_information?: McdInformation | null;
 }
 
 interface Approver {
@@ -118,7 +118,7 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
                                 ) : (
                                     assetStatuses.map((item) => {
 
-                                        const isLogged = !!item.asset?.accounting_information;
+                                        const isLogged = !!item.asset?.mcd_information;
 
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {

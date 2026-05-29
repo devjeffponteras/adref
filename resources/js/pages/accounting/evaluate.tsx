@@ -89,7 +89,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
 
                 <AssetProfileCard asset={asset} />
 
-                <form onSubmit={handleSubmit} className="w-full bg-white border border-gray-100 rounded-xl shadow-xs p-6 my-6">
+                <form onSubmit={handleSubmit} className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
                     <h2 className="text-lg font-bold text-gray-800 mb-6">Accounting Information
                         {isLocked ? 
                         <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">

@@ -96,11 +96,11 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
 
                 <AssetProfileCard asset={asset} />
 
-                <div className="w-full bg-white border border-gray-100 rounded-xl shadow-xs p-6 my-6">
+                <div className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
                     <h2 className="text-lg font-bold text-gray-800 mb-6">Accounting Information
                         <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                             <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
-                            Aprroved
+                            Approved
                         </span>
                     </h2>
                     {/* First Row Grid Layout */}
@@ -225,8 +225,17 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
                     </div>
                 </div>
 
-                <form onClick={handleSubmit} className="w-full bg-white border border-gray-100 rounded-xl shadow-xs p-6 my-6">
-                    <h2 className="text-lg font-bold text-gray-800 mb-6">PAR Information</h2>
+                <form onSubmit={handleSubmit} className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
+                     {isLocked ? 
+                    <h2 className="text-lg font-bold text-gray-800 mb-6">
+                       
+                        <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
+                            <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
+                            Approved
+                        </span>
+                        PAR Information
+                    </h2>
+                    : '' }
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
@@ -265,7 +274,7 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
                     <div className="flex items-center justify-between mt-6">
                         <div className='inline-flex items-cente gap-3'>
                             <Link 
-                                href="/accounting-dashboard" 
+                                href="/mcd-dashboard" 
                                 className="inline-flex items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-hidden"
                             >
                                 {isLocked ? <ArrowLeftCircle className='h-4 w-4 mr-1'></ArrowLeftCircle> : <XIcon className='h-4 w-4 mr-1'></XIcon> }

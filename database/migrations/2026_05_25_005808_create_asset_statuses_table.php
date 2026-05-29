@@ -19,7 +19,7 @@ return new class extends Migration
                   
             $table->integer('seq_no');
             
-            $table->boolean('is_current')->default(false);
+            // $table->boolean('is_current')->default(false); // remove kay murag dili needed
             
             $table->foreignId('approver_id')
                   ->nullable()
