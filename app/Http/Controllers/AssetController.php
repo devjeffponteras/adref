@@ -8,6 +8,9 @@ use App\Models\AssetApproval;
 use App\Models\AssetStatus;
 use App\Models\AccountingInformation;
 use App\Models\McdInformation;
+use App\Models\MepeoInformation;
+use App\Models\WasteClassification;
+use App\Models\WasteCharacteristic;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
@@ -396,15 +399,12 @@ class AssetController extends Controller
 
     public function mcdEvaluateAction(Request $request, $id) {
 
-        // dria nako..
         $asset = Asset::findOrFail($id);
 
         $validatedData = $request->validate([
             'par_number'          => 'nullable|string|max:1000',
             'par_remarks'          => 'nullable|string|max:1000',
         ]);
-
-        // dd(auth()->user()?->role?->name);
 
         DB::beginTransaction();
 
@@ -482,4 +482,115 @@ class AssetController extends Controller
         }
 
     }
+
+    public function mepeoEvaluate($id) {
+        $asset = Asset::with(['user', 
+                            'classification',  
+                            'accounting_information',  
+                            'mcd_information', 
+                            'mepeo_information', 
+                            'mepeo_information.wasteClassification', 
+                            'mepeo_information.wasteCharacteristic'])
+                    ->findOrFail($id);
+
+        $wasteClassifications = WasteClassification::all(['id', 'name']);
+        $wasteCharacteristics = WasteCharacteristic::all(['id', 'name']);
+
+        return Inertia::render('mepeo/evaluate', [
+            'asset' => $asset,
+            'wasteClassifications' => $wasteClassifications,
+            'wasteCharacteristics' => $wasteCharacteristics,
+        ]);
+    }
+
+    public function mepeoEvaluateAction(Request $request, $id) {
+
+        // dd($request->toArray());
+
+        // dria nako..
+        $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'waste_classification_id'   => 'required|numeric|min:0',
+            'waste_characteristic_id'   => 'required|numeric|min:0',
+            'mepeo_remarks'   => 'required|string|min:2|max:1000',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            MepeoInformation::updateOrCreate(
+                ['asset_id' => $asset->id],
+                [
+                    'approver_id' => Auth::id(),
+                    'waste_classification_id'  => $validatedData['waste_classification_id'],
+                    'waste_characteristic_id'  => $validatedData['waste_characteristic_id'],
+                    'remarks'     => $validatedData['mepeo_remarks'],
+                    'status'      => 'Approved',
+                ]
+            );
+
+            $currentApproval = AssetApproval::where('asset_id', $id)
+                ->where('is_current', true)
+                ->firstOrFail();
+
+            $currentApproval->update([
+                'is_current'    => false,
+                'status'        => 'Approved',
+                'approver_id'   => Auth::id(), 
+                'approval_date' => now(),
+                'remarks'       => $validatedData['mepeo_remarks']
+            ]);
+
+            AssetStatus::where('asset_id', $asset->id)
+                ->update([
+                    'seq_no'        => $currentApproval->seq_no,
+                    'status'        => 'Approved', 
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $validatedData['mepeo_remarks'],
+                ]);
+
+            $nextApproval = AssetApproval::where('asset_id', $id)
+                ->where('seq_no', $currentApproval->seq_no + 1)
+                ->first();
+
+            if ($nextApproval) {
+                $nextApproval->update([
+                    'is_current' => true,
+                    'status'     => 'On-going'
+                ]);
+
+                $asset->update([
+                    'status' => 'On-going' 
+                ]);
+
+                $message = "MEPEO Phase tracking details logged. Asset evaluation advanced to the next milestone sequence.";
+            } else {
+                $asset->update([
+                    'status' => 'Completed'
+                ]);
+
+                $message = "MEPEO Phase tracking details logged. All tracking sequence steps complete; asset pipeline marked as Completed.";
+            }
+
+            DB::commit();
+
+            return redirect()->route('mepeo-dashboard')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            // Rollback all pending queries clean if something crashes mid-execution
+            DB::rollBack();
+
+            Log::error("Failed transaction sequence processing MEPEO evaluation for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An operational database issue halted processing your MEPEO updates. Please try again.'
+            ]);
+        }
+
+    }
+    
 }

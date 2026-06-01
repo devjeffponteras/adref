@@ -62,4 +62,9 @@ class Asset extends Model
     {
         return $this->hasOne(McdInformation::class, 'asset_id');
     }
+
+    public function mepeo_information(): HasOne
+    {
+        return $this->hasOne(MepeoInformation::class, 'asset_id');
+    }
 }

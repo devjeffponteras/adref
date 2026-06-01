@@ -36,6 +36,9 @@ return new class extends Migration
             $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
                   ->default('Pending');
 
+            $table->enum('workflow_status', ['Approved', 'Pending', 'Rejected'])
+                  ->default('Pending');
+
             $table->timestamps();
         });
     }
