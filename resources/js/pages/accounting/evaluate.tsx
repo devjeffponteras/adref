@@ -8,6 +8,13 @@ interface User {
     name: string;
 }
 
+interface Workflow {
+    id: number;
+    asset_id: number;
+    workflow_step: number;
+    status: string;
+}
+
 interface AssetClassification {
     id: number;
     name: string;
@@ -44,6 +51,7 @@ interface AssetData {
     user?: User;
     classification?: AssetClassification;
     accounting_information?: AccountingInformation | null;
+    workflow?: Workflow[] | null;
 }
 
 interface EvaluateProps {
@@ -58,9 +66,11 @@ const formatDateForInput = (dateString: string | undefined | null): string => {
 export default function AccountingEvaluate({ asset }: EvaluateProps) {
 
     // locking all data fields if exist
+    const latestWorkflow = asset?.workflow?.[0];
     const isLocked = !!asset.accounting_information;
+    const inWorkflow = latestWorkflow?.asset_id === asset.id;
 
-    // Initialize Inertia form hook with your fields
+    // Initialize Inertia form hook
     const { data, setData, post, processing, errors } = useForm({
         asset_number: asset.accounting_information?.asset_number || '',
         acquisition_date: formatDateForInput(asset.accounting_information?.acquisition_date || ''),
@@ -71,10 +81,12 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
         conformed_by: '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Adjust this endpoint URL according to your web.php routes configuration
-        post(`/accounting-evaluate/${asset.id}/action`);
+    const handleActionSubmit = (actionType: 'submit-workflow' | 'approve-workflow') => {
+        if (actionType === 'submit-workflow') {
+            post(`/accounting-evaluate/${asset.id}/workflow-action`);
+        } else {
+            post(`/accounting-evaluate/${asset.id}/action`);
+        }
     };
 
     return (
@@ -89,7 +101,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
 
                 <AssetProfileCard asset={asset} />
 
-                <form onSubmit={handleSubmit} className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
+                <form onSubmit={(e) => e.preventDefault()} className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
                     <h2 className="text-lg font-bold text-gray-800 mb-6">Accounting Information
                         {isLocked ? 
                         <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
@@ -112,8 +124,8 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 onChange={e => setData('asset_number', e.target.value)}
                                 className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                         ${asset.accounting_information 
-                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
-                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' 
                                         }`}
                             />
                             {errors.asset_number && <p className="text-xs text-red-500 mt-1">{errors.asset_number}</p>}
@@ -129,8 +141,8 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 onChange={e => setData('acquisition_date', e.target.value)}
                                 className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                         ${asset.accounting_information 
-                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
-                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' 
                                         }`}
                             />
                             {errors.acquisition_date && <p className="text-xs text-red-500 mt-1">{errors.acquisition_date}</p>}
@@ -150,8 +162,8 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                     onChange={e => setData('acquisition_cost', e.target.value)}
                                     className={`w-full p-2 text-sm border shadow-2xs transition-colors duration-150 rounded-r-lg
                                             ${asset.accounting_information 
-                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
-                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' 
                                             }`}
                                 />
                             </div>
@@ -172,8 +184,8 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                     onChange={e => setData('book_value', e.target.value)}
                                     className={`w-full p-2 text-sm border shadow-2xs transition-colors duration-150 rounded-r-lg
                                             ${asset.accounting_information 
-                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
-                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' 
                                             }`}
                                 />
                             </div>
@@ -193,14 +205,14 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 onChange={e => setData('remarks', e.target.value)}
                                 className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                         ${asset.accounting_information 
-                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
-                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' 
                                         }`}
                             />
                             {errors.remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
                         </div>
 
-                        {/* Checked By Input (Disabled/Read-only display placeholder) */}
+                        {/* Checked By Input */}
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1">Checked by</label>
                             <input 
@@ -228,7 +240,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
 
                     {/* Form Controls Action Block */}
                     <div className="flex items-center justify-between">
-                        <div className='inline-flex items-cente gap-3'>
+                        <div className='inline-flex items-center gap-3'>
                             <Link 
                                 href="/accounting-dashboard" 
                                 className="inline-flex items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-hidden"
@@ -236,25 +248,31 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 {isLocked ? <ArrowLeftCircle className='h-4 w-4 mr-1'></ArrowLeftCircle> : <XIcon className='h-4 w-4 mr-1'></XIcon> }
                                 {isLocked ? 'Back to Dashboard' : 'Cancel' }
                             </Link>
-                            {!isLocked ? 
-                            <button 
-                                type="submit"
-                                disabled={processing}
-                                className="inline-flex items-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-hidden"
-                            >
-                                <CircleCheck className='h-5 w-5 mr-2'></CircleCheck>
-                                Submit and Approve
-                            </button>
-                            : ''}
+
+                            {isLocked && !inWorkflow && (
+                                <button 
+                                    type="button" 
+                                    disabled={processing}
+                                    onClick={() => handleActionSubmit('submit-workflow')}
+                                    className="inline-flex items-center cursor-pointer px-4 py-2 bg-amber-700 text-sm font-semibold text-white rounded-lg hover:bg-amber-800 disabled:opacity-50 focus:outline-hidden"
+                                >
+                                    <SquareArrowRightIcon className='h-5 w-5 mr-2'></SquareArrowRightIcon>
+                                    Submit to Ivan Moreno's Workflow for the Approval
+                                </button>
+                            )}
+
+                            {!inWorkflow && !isLocked && (
+                                <button 
+                                    type="button"
+                                    disabled={processing}
+                                    onClick={() => handleActionSubmit('approve-workflow')}
+                                    className="inline-flex items-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-hidden"
+                                >
+                                    <CircleCheck className='h-5 w-5 mr-2'></CircleCheck>
+                                    Submit and Approve
+                                </button>
+                            )}
                         </div>
-                        <button 
-                            type="button" 
-                            disabled
-                            className="inline-flex items-center cursor-pointer px-4 py-2 bg-amber-700 text-sm font-semibold text-white rounded-lg hover:bg-amber-800 disabled:opacity-50 focus:outline-hidden"
-                        >
-                            <SquareArrowRightIcon className='h-5 w-5 mr-2'></SquareArrowRightIcon>
-                            Submit to Ivan Moreno's Workflow for the Approval
-                        </button>
                     </div>
                 </form>
             </div>

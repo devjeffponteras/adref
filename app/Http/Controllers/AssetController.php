@@ -6,11 +6,13 @@ use App\Models\AssetClassification;
 use App\Models\Asset;
 use App\Models\AssetApproval;
 use App\Models\AssetStatus;
+use App\Models\AsidInformation;
 use App\Models\AccountingInformation;
 use App\Models\McdInformation;
 use App\Models\MepeoInformation;
 use App\Models\WasteClassification;
 use App\Models\WasteCharacteristic;
+use App\Models\Workflow;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
@@ -197,11 +199,97 @@ class AssetController extends Controller
 
     public function asidEvaluate($id): Response
     {
-        $asset = \App\Models\Asset::findOrFail($id);
+        $asset = Asset::findOrFail($id);
+        $asidInformation = AsidInformation::where('asset_id', $id)->first();
+        
+        $asset->asid_information = $asidInformation;
 
         return Inertia::render('asid/evaluate', [
             'asset' => $asset
         ]);
+    }
+
+    public function asidEvaluateAction(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'remarks'      => 'required|string|min:2|max:1000',
+            'disposition'  => 'required|string|min:2|max:1000',
+            'reviewed_by'  => 'required|string|min:2|max:1000',
+            'checked_by'   => 'required|string|min:2|max:1000',
+        ]);
+
+        $validated['status'] = 'Approved';
+        
+        $asset = Asset::findOrFail($id);
+
+        try {
+            
+            DB::transaction(function () use ($asset, $validated) {
+                
+                $currentApproval = $asset->approvals()->where('is_current', true)->first();
+                $currentSeq = $currentApproval ? $currentApproval->seq_no : 1;
+
+                $asset->update(['status' => 'On-going']);
+
+                $asset->approvals()->where('seq_no', $currentSeq)->update([
+                    'is_current'    => false,                     
+                    'status'        => $validated['status'], 
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $validated['remarks'],
+                ]);
+
+                $targetActiveSeq = $currentSeq;
+
+                $nextApprovalExists = $asset->approvals()->where('seq_no', $currentSeq + 1)->exists();
+
+                if ($nextApprovalExists) {
+                    $targetActiveSeq = $currentSeq + 1;
+                    
+                    $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
+                        'is_current'    => true,
+                        'status'        => 'On-going', 
+                        'approver_id'   => null,
+                        'approval_date' => null,
+                        'remarks'       => null,
+                    ]);
+                } else {
+                    $asset->update(['status' => 'Completed']);
+                }
+
+                AsidInformation::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    [
+                        'role'             => 'asid',
+                        'remarks'          => $validated['remarks'],
+                        'disposition'      => $validated['disposition'],
+                        'checked_by'       => $validated['checked_by'],
+                        'reviewed_by'      => $validated['reviewed_by'],
+                        'status'           => $validated['status'],
+                        'approver_id'      => Auth::id(),
+                    ]
+                );
+
+                // Log details explicitly onto the row the user just interacted with
+                AssetStatus::where('asset_id', $asset->id)
+                    ->update([
+                        'seq_no'        => $targetActiveSeq,
+                        'status'        => $validated['status'],
+                        'approver_id'   => Auth::id(),
+                        'approval_date' => now(),
+                        'remarks'       => $validated['remarks'],
+                    ]);
+            });
+
+            return redirect()->route('asid-dashboard')->with('success', "Asset application state updated to: {$validated['status']}.");
+        } catch (\Exception $e) {
+            // Log the exact issue behind the scenes if something goes wrong
+            Log::error("ASID Evaluation pipeline failure for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An internal database issue prevented completing the approval. Please re-submit.'
+            ]);
+        }
     }
 
     public function asidViewAsset($id)
@@ -217,7 +305,7 @@ class AssetController extends Controller
     public function asidViewAssetAction(Request $request, $id)
     {
         $validated = $request->validate([
-            'status'         => 'required|in:Approved,Returned,Rejected',
+            'status'         => 'required|in:Approved,Returned,Rejected,On-going,Pending',
             'remarks'        => 'required|string|min:5|max:1000',
             'control_number' => 'required_if:status,Approved|nullable|string|max:255',
         ]);
@@ -230,9 +318,12 @@ class AssetController extends Controller
             $currentSeq = $currentApproval ? $currentApproval->seq_no : 1;
 
             $assetUpdate = ['status' => $validated['status']];
+
             if ($validated['status'] === 'Approved' && array_key_exists('control_number', $validated)) {
                 $assetUpdate['control_number'] = $validated['control_number'];
+                $assetUpdate['status'] = 'On-going';
             }
+
             $asset->update($assetUpdate);
 
             $asset->approvals()->where('seq_no', $currentSeq)->update([
@@ -286,12 +377,12 @@ class AssetController extends Controller
     }
 
     public function accountingEvaluate($id) {
-        $asset = Asset::with(['user', 'classification', 'accounting_information'])->findOrFail($id);
+
+        $asset = Asset::with(['user', 'classification', 'accounting_information', 'workflow'])->findOrFail($id);
 
         return Inertia::render('accounting/evaluate', [
-            'asset' => $asset
+            'asset'      => $asset
         ]);
-       
     }
 
     public function accountingevaluateAction(Request $request, $id)
@@ -349,8 +440,8 @@ class AssetController extends Controller
                 ]);
 
                 $asset->update([
-                    'status' => 'On-going' 
-                    // 'status' => 'pending_workflow_approval' // mao ni if goods na ang WORKFLOW vice versa connection! eyy!! then add og algo for WORKFLOW app
+                    // 'status' => 'On-going' 
+                    'status' => 'pending_workflow_approval' // mao ni if goods na ang WORKFLOW vice versa connection! eyy!! then add og algo for WORKFLOW app. try lang muna :)
                 ]);
 
                 $message = "Accounting details recorded. Asset evaluation successfully advanced to the next sequence.";
@@ -371,8 +462,15 @@ class AssetController extends Controller
                             'remarks'       => $validatedData['remarks'],
                         ]);
 
+            // save ta dria sa temp table for workflow
+            Workflow::create([
+                'asset_id'      => $id, 
+                'workflow_step' => 1,
+            ]);
+
             DB::commit();
 
+            // return back()->with($message);
             return redirect()->route('accounting-dashboard')
                 ->with('success', $message);
 
@@ -386,6 +484,21 @@ class AssetController extends Controller
                 'error' => 'An operational database issue halted processing your asset updates. Please try again.'
             ]);
         }
+    }
+
+    public function accountingEvaluateWorkflowAction(Request $request, $id) {
+        // dd($request);
+        // no $request use for now.. kay temporary lang ni..
+        Workflow::create([
+            'asset_id'      => $id, 
+            'workflow_step' => 1,
+            'status' => 'Pending',
+        ]);
+
+        return redirect()->route('accounting-dashboard')
+                ->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
+
+        // return back()->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
     }
 
     public function mcdEvaluate($id) {

@@ -8,6 +8,13 @@ interface User {
     name: string;
 }
 
+interface inWorkflow {
+    id: number;
+    asset_id: number;
+    workflow_step: number;
+    status: string;
+}
+
 interface AccountingInformation {
     id: number;
     asset_number: string;
@@ -28,6 +35,7 @@ interface Asset {
     status: string;
     user?: User;
     accounting_information?: AccountingInformation | null;
+    inWorkflow?: inWorkflow | null;
 }
 
 interface Approver {
@@ -55,7 +63,9 @@ export default function AccountingDashboard({ assetStatuses }: DashboardProps) {
 
     const { flash } = usePage().props as any;
 
-    const pendingTransactions = assetStatuses?.filter(item => item.status === 'Pending') || [];
+    const pendingTransactions = assetStatuses?.filter(item => item.status === 'On-going') || [];
+
+    // const onWorkflow = assetStatuses?.filter(item => item.asset?.inWorkflow) || [];
 
     return (
         <>

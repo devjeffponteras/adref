@@ -1,26 +1,38 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { WelcomeNote } from '@/components/welcome-note';
-import { WelcomeNoteMini } from '@/components/welcome-note-mini';
+import { CircleCheck, ArrowLeftCircle, XIcon } from 'lucide-react';
+
+interface AsidInformation {
+    id: number;
+    remarks: string;
+    checked_by: string;
+    disposition: string;
+    reviewed_by: string;
+}
 
 interface AssetProps {
     asset: {
         id: number;
         control_number: string;
         department?: string;
+        asid_information?: AsidInformation | null;
     };
 }
 
 export default function AsidEvaluate({ asset }: AssetProps) {
 
+    const isLockedAsid = !!asset?.asid_information;
+
     const { data, setData, post, processing, errors } = useForm({
-        remarks: '',
-        checked_by: '',
-        disposition: '',
-        reviewed_by: '',
+        remarks: asset.asid_information?.remarks || (asset as any).asidInformation?.remarks || '',
+        checked_by: asset.asid_information?.checked_by || '',
+        disposition: asset.asid_information?.disposition || '',
+        reviewed_by: asset.asid_information?.reviewed_by || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        post(`/asid-evaluate/${asset.id}/action`);
     };
 
     return (
@@ -45,6 +57,10 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                         
                         <h3 className="text-gray-900 font-bold text-lg tracking-tight">
                             Evaluation Information
+                            <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
+                                <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
+                                Submitted to Workflow
+                            </span>
                         </h3>
 
                         {/* Section 1: Remarks & Checked By */}
@@ -54,10 +70,14 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                     Remarks
                                 </label>
                                 <textarea 
-                                    rows={2} 
+                                    rows={2}
                                     value={data.remarks}
                                     onChange={(e) => setData('remarks', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-hidden transition-all resize-none"
+                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                            ${isLockedAsid
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                            }`}
                                     placeholder="Enter evaluation remarks..."
                                 />
                                 {errors.remarks && <span className="text-red-500 text-xs">{errors.remarks}</span>}
@@ -71,7 +91,11 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                     type="text" 
                                     value={data.checked_by}
                                     onChange={(e) => setData('checked_by', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 h-14.5 px-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-hidden transition-all"
+                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                            ${isLockedAsid
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                            }`}
                                     placeholder="Name of inspector"
                                 />
                             </div>
@@ -90,7 +114,11 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                     rows={2} 
                                     value={data.disposition}
                                     onChange={(e) => setData('disposition', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-hidden transition-all resize-none"
+                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                            ${isLockedAsid
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                            }`}
                                     placeholder="Recommended disposal action..."
                                 />
                             </div>
@@ -104,9 +132,14 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 </label>
                                 <input 
                                     type="text" 
+                                    disabled
                                     value={data.reviewed_by}
                                     onChange={(e) => setData('reviewed_by', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 h-11.5 px-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-hidden transition-all"
+                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                            ${isLockedAsid
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                            }`}
                                     placeholder="Name of manager"
                                 />
                             </div>
@@ -119,18 +152,28 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                         <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
                             {/* Redirect back to dashboard safely on cancel */}
                             <Link 
-                                href="/asid-dashboard"
-                                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm rounded-lg border border-gray-300 shadow-xs transition-all text-center"
-                            >
-                                Cancel
+                                    href="/asid-dashboard" 
+                                    className="inline-flex items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-hidden"
+                                >
+                                    {isLockedAsid ? <ArrowLeftCircle className='h-4 w-4 mr-1'></ArrowLeftCircle> : <XIcon className='h-4 w-4 mr-1'></XIcon> }
+                                    {isLockedAsid ? 'Back to Dashboard' : 'Cancel' }
                             </Link>
+                            {!isLockedAsid ? 
                             <button 
                                 type="submit" 
                                 disabled={processing}
-                                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-lg shadow-sm shadow-emerald-900/10 transition-all hover:shadow-md disabled:opacity-50 cursor-pointer"
+                                className="inline-flex items-center px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-lg shadow-sm shadow-emerald-900/10 transition-all hover:shadow-md disabled:opacity-50 cursor-pointer"
                             >
-                                {processing ? 'Saving...' : 'Save & Submit'}
+                                <CircleCheck className='h-5 w-5 mr-2'></CircleCheck>
+                                {processing ? (
+                                    'Saving...'
+                                ) : (
+                                    <>
+                                        Approve & Submit to <span className="text-yellow-400 font-bold ml-1">Workflow</span>
+                                    </>
+                                )}
                             </button>
+                            : ''}
                         </div>
 
                     </div>

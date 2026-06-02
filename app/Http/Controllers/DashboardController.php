@@ -23,8 +23,13 @@ class DashboardController extends Controller
     public function accountingDashboard(): Response
     {
         $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+                        ->whereHas('asset', function ($query) {
+                            $query->whereNotNull('control_number')
+                                ->where('control_number', '!=', '');
+                        })
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+                        
         // dd($assetStatuses->toArray());
         return Inertia::render('accounting/dashboard', [
             'assetStatuses' => $assetStatuses

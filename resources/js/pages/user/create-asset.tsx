@@ -254,7 +254,7 @@ export default function CreateAsset({ classifications }: Props) {
                         <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-gray-100">
                             <Link 
                                 href="/my-assets" 
-                                className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                                className="inline-flex items-center cursor-pointer gap-1 px-4 py-2 text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                             >
                                 <X className="h-4 w-4" /> Cancel
                             </Link>
@@ -262,7 +262,7 @@ export default function CreateAsset({ classifications }: Props) {
                             <button 
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition-colors disabled:opacity-50"
+                                className="inline-flex items-center cursor-pointer gap-1.5 px-5 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition-colors disabled:opacity-50"
                             >
                                 <Plus className="h-4 w-4" /> Create Document
                             </button>
