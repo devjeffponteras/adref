@@ -39,8 +39,9 @@ interface DashboardProps {
 }
 
 export default function AsidDashboard({ assetStatuses }: DashboardProps) {
-    // Client Side Filter Optimization: Pull out pending tasks for the top summary table
     const pendingTransactions = assetStatuses?.filter(item => item.status === 'Pending') || [];
+
+    const historyTransactions = assetStatuses?.filter(item => item.asset?.control_number && item.asset.control_number.trim() !== '' && item.seq_no > 4) || [];
 
     return (
         <>
@@ -69,7 +70,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 </div>
 
-                {/* --- TABLE 1: PENDING TRANSACTIONS ONLY --- */}
+                {/* --- TABLE 1: PENDING TRANSACTIONS ONLY (REMAINS UNTOUCHED) --- */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
@@ -138,7 +139,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="mb-1 opacity-75 text-sm">Total History Log Entries</p>
-                                    <h2 className="font-bold text-2xl">{assetStatuses?.length || 0}</h2>
+                                    <h2 className="font-bold text-2xl">{historyTransactions.length || 0}</h2>
                                 </div>
                                 <FolderCheck className='h-8 w-8 opacity-80' />
                             </div>
@@ -146,7 +147,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 </div>
 
-                {/* --- TABLE 2: ENTIRE HISTORICAL STAGES PIPELINE --- */}
+                {/* --- TABLE 2: ENTIRE HISTORICAL STAGES PIPELINE (FILTERED ONLY HERE) --- */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
@@ -156,20 +157,20 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Department / Remarks</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Created / Approved By</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Stage</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status / Action</th>
                                 </tr>
                             </thead>
                             
                             <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {!assetStatuses || assetStatuses.length === 0 ? (
+                                {historyTransactions.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
                                             No active asset disposal data found.
                                         </td>
                                     </tr>
                                 ) : (
-                                    assetStatuses.map((item) => {
+                                    historyTransactions.map((item) => {
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {
                                                 month: 'short',
@@ -186,7 +187,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                     {formattedDate}
                                                 </td>
                                                 <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.control_number || 'N/A'}
+                                                    {item.asset?.control_number}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
                                                     <div className="font-medium text-gray-800">{item.asset?.department || 'Asset Department'}</div>
@@ -196,7 +197,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                     {item.approver?.name || 'System Auto'}
                                                 </td>
                                                 <td className="px-4 py-4 text-xs font-semibold text-emerald-800">
-                                                    Stage {item.seq_no}
+                                                    Step {item.seq_no}
                                                 </td>
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 

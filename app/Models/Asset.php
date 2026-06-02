@@ -53,6 +53,11 @@ class Asset extends Model
         return $this->hasMany(AssetStatus::class, 'asset_id');
     }
 
+    public function asid_information(): HasOne
+    {
+        return $this->hasOne(AsidInformation::class, 'asset_id');
+    }
+
     public function accounting_information(): HasOne
     {
         return $this->hasOne(AccountingInformation::class, 'asset_id');
@@ -66,5 +71,10 @@ class Asset extends Model
     public function mepeo_information(): HasOne
     {
         return $this->hasOne(MepeoInformation::class, 'asset_id');
+    }
+
+    public function workflow(): HasMany
+    {
+        return $this->hasMany(Workflow::class, 'asset_id');
     }
 }
