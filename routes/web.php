@@ -46,6 +46,13 @@ Route::middleware(['auth', 'verified', 'role:mcd'])->group(function () {
     Route::post('mcd-evaluate/{id}/action', [AssetController::class, 'mcdEvaluateAction'])->name('mcd-evaluate-action');
 });
 
+// Add routes here for MEPEO account
+Route::middleware(['auth', 'verified', 'role:mepeo'])->group(function () {
+    Route::get('mepeo-dashboard', [DashboardController::class, 'mepeoDashboard'])->name('mepeo-dashboard');
+    Route::get('mepeo-evaluate/{id}', [AssetController::class, 'mepeoEvaluate'])->name('mepeo-evaluate');
+    Route::post('mepeo-evaluate/{id}/action', [AssetController::class, 'mepeoEvaluateAction'])->name('mepeo-evaluate-action');
+});
+
 // Add routes here for standard user account
 Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::inertia('scan-log-asset', 'scan-log-asset')->name('scan-log-asset');

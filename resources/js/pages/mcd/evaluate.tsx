@@ -287,7 +287,7 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
                                 className="inline-flex items-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-hidden"
                             >
                                 <CircleCheck className='h-5 w-5 mr-2'></CircleCheck>
-                                Approve
+                                Submit and Approve
                             </button>
                             : ''}
                         </div>
