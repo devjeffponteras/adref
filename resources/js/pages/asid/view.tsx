@@ -366,7 +366,7 @@ export default function AsidEvaluate({ asset }: EvaluateProps) {
                                     onClick={() => handleWorkflowAction('Approved')}
                                     className="cursor-pointer inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-700 text-white rounded-xl text-sm font-bold hover:bg-emerald-800 transition-all shadow-md shadow-emerald-900/10 active:scale-98 disabled:opacity-50"
                                 >
-                                    <CheckCircle className="w-4 h-4" /> Submit &amp; Push Stage
+                                    <CheckCircle className="w-4 h-4" /> Submit and Approve
                                 </button>
                             )}
 

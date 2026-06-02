@@ -21,9 +21,11 @@ class MepeoInformation extends Model
      */
     protected $fillable = [
         'asset_id',
+        'approver_id',
         'waste_classification_id',
         'waste_characteristic_id',
         'remarks',
+        'status',
     ];
 
     /**
@@ -32,6 +34,14 @@ class MepeoInformation extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    /**
+     * Get the system user record registered as the formal approver for this MEPEO step.
+     */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_id');
     }
 
     /**

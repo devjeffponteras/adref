@@ -42,6 +42,17 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function mepeoDashboard(): Response
+    {
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.mcd_information'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('mepeo/dashboard', [
+            'assetStatuses' => $assetStatuses
+        ]);
+    }
+
     public function userDashboard(): Response
     {
         return Inertia::render('user/dashboard');
