@@ -2,10 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\DashboardController;
 
-Route::inertia('/', 'welcome')->name('home');
+// Route::inertia('/', 'welcome')->name('home');
+Route::inertia('/', 'auth/login')->name('home');
 
 // Add routes here for GLOBAL account
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -22,6 +24,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::inertia('reports', 'reports')->name('reports');
 
     Route::get('disposals', [AssetController::class, 'disposals'])->name('disposals');
+
+    Route::get('user-management', [AdminController::class, 'userManagement'])->name('user-management');
+    Route::get('user-management-create', [AdminController::class, 'userManagementCreate'])->name('user-management-create');
 });
 
 // Add routes here for ASID account
@@ -38,6 +43,8 @@ Route::middleware(['auth', 'verified', 'role:accounting'])->group(function () {
     Route::get('accounting-dashboard', [DashboardController::class, 'accountingDashboard'])->name('accounting-dashboard');
     Route::get('accounting-evaluate/{id}', [AssetController::class, 'accountingEvaluate'])->name('accounting-evaluate');
     Route::post('accounting-evaluate/{id}/action', [AssetController::class, 'accountingEvaluateAction'])->name('accounting-evaluate-action');
+
+    Route::post('accounting-evaluate/{id}/save-only', [AssetController::class, 'accountingEvaluateSaveOnly'])->name('accounting-evaluate-save-only');
     Route::post('accounting-evaluate/{id}/workflow-action', [AssetController::class, 'accountingEvaluateWorkflowAction'])->name('accounting-evaluate-workflow-action');
 });
 

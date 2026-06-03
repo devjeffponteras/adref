@@ -6,7 +6,7 @@ export function WelcomeNote() {
 
     return (
         <>
-            <div className="flex flex-row bg-emerald-700 p-5 rounded-xl shadow-sm mr-2">
+            <div className="flex flex-row bg-linear-to-tr from-emerald-800 to-emerald-500 p-5 rounded-xl shadow-sm mr-2">
                 <div className="flex flex-col text-white">
                     <h3 className="font-bold text-2xl tracking-tight capitalize">
                         Hello, {auth.user?.name || 'User'}!

@@ -8,7 +8,9 @@ import {
     ClipboardPen,
     SquareUserRound,
     ScanSearch,
-    BriefcaseBusiness
+    BriefcaseBusiness,
+    LucideUserCog2,
+    UsersRound
 } from 'lucide-react';
 
 import AppLogo from '@/components/app-logo';
@@ -87,6 +89,12 @@ const mainNavItems: NavItem[] = [
         title: 'My Profile',
         href: profile(),
         icon: SquareUserRound,
+    },
+    {
+        title: 'User Management',
+        href: '/user-management',
+        icon: LucideUserCog2,
+        roles: ['admin'],
     },
 ];
 

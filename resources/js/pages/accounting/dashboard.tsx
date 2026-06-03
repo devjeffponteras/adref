@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { Link } from '@inertiajs/react';
-import { Folder, CircleCheck, XIcon } from 'lucide-react';
+import { Folder, CircleCheck, XIcon, FolderCheck } from 'lucide-react';
 
 interface User {
     id: number;
@@ -64,6 +64,7 @@ export default function AccountingDashboard({ assetStatuses }: DashboardProps) {
     const { flash } = usePage().props as any;
 
     const pendingTransactions = assetStatuses?.filter(item => item.status === 'On-going') || [];
+    const evaluatedTransactions = assetStatuses?.filter(item => item.asset?.accounting_information).length || 0;
 
     // const onWorkflow = assetStatuses?.filter(item => item.asset?.inWorkflow) || [];
 
@@ -100,6 +101,17 @@ export default function AccountingDashboard({ assetStatuses }: DashboardProps) {
                                     <h2 className="font-bold text-2xl">{pendingTransactions.length}</h2>
                                 </div>
                                 <Folder className='h-8 w-8 opacity-80' />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="w-full md:w-1/4">
+                        <div className="stat-card bg-emerald-900 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="mb-1 opacity-75 text-sm">Evaluated Transactions</p>
+                                    <h2 className="font-bold text-2xl">{evaluatedTransactions}</h2>
+                                </div>
+                                <FolderCheck className='h-8 w-8 opacity-80' />
                             </div>
                         </div>
                     </div>

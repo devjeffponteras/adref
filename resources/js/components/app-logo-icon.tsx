@@ -18,10 +18,13 @@ export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
         //         d="M18 18V6h-5v12h5Zm0 0h2M4 18h2.5m3.5-5.5V12M6 6l7-2v16l-7-2V6Z"
         //     />
         // </svg>
-        <img 
-            src="/images/logo/pmc-logo-solo.png" 
-            alt="ads-logo" 
-            className="size-full rounded-md object-contain" 
-        />
+        <div className='flex flex-col justify-center items-center text-center h-48'>
+            <img 
+                src="/images/logo/pmc-logo-solo.png" 
+                alt="ads-logo" 
+                className="size-full rounded-md object-contain" 
+            />
+        </div>
+        
     );
 }
