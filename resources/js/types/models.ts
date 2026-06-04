@@ -1,0 +1,44 @@
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    password: string;
+    status: string;
+    role?: Role | null;
+}
+
+export interface Role {
+    id: number;
+    name: string;
+}
+
+export interface Asset {
+    id: number;
+    control_number: string | null;
+    accountable_personnel: string;
+    model: string | null;
+    brand_make: string | null;
+    serial_plate_id_number: string | null;
+    end_user_department: string;
+    description: string | null;
+    status: string;
+    user?: User;
+}
+
+export interface Approver {
+    id: number;
+    name: string;
+}
+
+export interface AssetStatusData {
+    id: number;
+    seq_no: number;
+    is_current: boolean;
+    status: string;
+    remarks: string | null;
+    created_at: string;
+    asset_id: number;
+    asset: Asset | null;
+    approver: Approver | null;
+}
+

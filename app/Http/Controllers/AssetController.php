@@ -13,12 +13,15 @@ use App\Models\MepeoInformation;
 use App\Models\WasteClassification;
 use App\Models\WasteCharacteristic;
 use App\Models\Workflow;
+use App\Models\Bidding;
+use App\Models\AssetBidding;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class AssetController extends Controller
 {
@@ -376,6 +379,7 @@ class AssetController extends Controller
         return redirect()->route('asid-dashboard')->with('success', "Asset application state updated to: {$validated['status']}.");
     }
 
+    
     public function accountingEvaluate($id) {
 
         $asset = Asset::with(['user', 'classification', 'accounting_information', 'workflow'])->findOrFail($id);
@@ -385,12 +389,87 @@ class AssetController extends Controller
         ]);
     }
 
-    public function accountingevaluateAction(Request $request, $id)
+    // Accounting flow -- Step 1 dria muagi una..
+    public function accountingEvaluateSaveOnly(Request $request, $id) {
+
+         $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'asset_number'     => 'required|string|max:100|unique:accounting_information,asset_number,' . $asset->id . ',asset_id',
+            'acquisition_date' => 'required|date',
+            'acquisition_cost' => 'required|numeric|min:0',
+            'book_value'       => 'required|numeric|min:0',
+            'remarks'          => 'nullable|string|max:1000',
+            'checked_by'       => 'required|string|max:255',
+        ]);
+        // dd($request); // gi-atay kalibog sa utok!
+        DB::transaction(function () use ($asset, $validatedData, $id) {
+            AccountingInformation::updateOrCreate(
+                ['asset_id' => $asset->id],
+                [
+                    'role'             => 'accounting',
+                    'asset_number'     => $validatedData['asset_number'],
+                    'acquisition_date' => $validatedData['acquisition_date'],
+                    'acquisition_cost' => $validatedData['acquisition_cost'],
+                    'book_value'       => $validatedData['book_value'],
+                    'remarks'          => $validatedData['remarks'],
+                    'checked_by'       => $validatedData['checked_by'],
+                    'conformed_by'     => 'N/A',
+                    'status'           => 'On-going',
+                    'approver_id'      => Auth::id(),
+                ]
+            );
+
+            Workflow::updateOrCreate(
+                ['asset_id' => $id],
+                [
+                    'workflow_step' => 1,
+                    'status'        => 'On-going',
+                ]
+            );
+        });
+
+        // return redirect()->route('accounting-dashboard')
+        //         ->with('success', 'Document Saved, ');
+        return back()->with('success', 'Accounting records saved successfully.');
+        
+    }
+
+    // Accounting flow -- Step 2 mauna ni next kay para ma process kunohay sa workflow..
+    public function accountingEvaluateWorkflowAction(Request $request, $id) {
+        // dd($request);
+        // no $request use for now.. kay temporary lang ni..
+        $asset = Asset::findOrFail($id);
+
+       DB::transaction(function () use ($asset, $id) {
+            $asset->accounting_information()->updateOrCreate(
+                [], 
+                ['conformed_by' => 'Ivan Moreno']
+            );
+
+            Workflow::updateOrCreate(
+                ['asset_id' => $id], 
+                [
+                    'workflow_step' => 1,
+                    'status'        => 'Approved',
+                ]
+            );
+        });
+
+        // return back()->with('success', 'Accounting records saved successfully.');
+        return redirect()->route('accounting-dashboard')
+                ->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
+
+        // return back()->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
+    }
+
+    // Accounting flow -- Step 3 mauna ni last part para ma sequence.. HAHAYZZZZZZZ!
+    public function accountingEvaluateAction(Request $request, $id)
     {
         $asset = Asset::findOrFail($id);
 
         $validatedData = $request->validate([
-            'asset_number'     => 'required|string|max:100|unique:accounting_information,asset_number,' . $asset->id . ',asset_id',
+            'asset_number'     => ['required', 'string', 'max:100', Rule::unique('accounting_information', 'asset_number')->ignore($asset->id, 'asset_id')],
             'acquisition_date' => 'required|date',
             'acquisition_cost' => 'required|numeric|min:0',
             'book_value'       => 'required|numeric|min:0',
@@ -440,8 +519,8 @@ class AssetController extends Controller
                 ]);
 
                 $asset->update([
-                    // 'status' => 'On-going' 
-                    'status' => 'pending_workflow_approval' // mao ni if goods na ang WORKFLOW vice versa connection! eyy!! then add og algo for WORKFLOW app. try lang muna :)
+                    'status' => 'On-going' 
+                    // 'status' => 'pending_workflow_approval' // mao ni if goods na ang WORKFLOW vice versa connection! eyy!! then add og algo for WORKFLOW app. try lang muna :)
                 ]);
 
                 $message = "Accounting details recorded. Asset evaluation successfully advanced to the next sequence.";
@@ -462,12 +541,6 @@ class AssetController extends Controller
                             'remarks'       => $validatedData['remarks'],
                         ]);
 
-            // save ta dria sa temp table for workflow
-            Workflow::create([
-                'asset_id'      => $id, 
-                'workflow_step' => 1,
-            ]);
-
             DB::commit();
 
             // return back()->with($message);
@@ -484,21 +557,6 @@ class AssetController extends Controller
                 'error' => 'An operational database issue halted processing your asset updates. Please try again.'
             ]);
         }
-    }
-
-    public function accountingEvaluateWorkflowAction(Request $request, $id) {
-        // dd($request);
-        // no $request use for now.. kay temporary lang ni..
-        Workflow::create([
-            'asset_id'      => $id, 
-            'workflow_step' => 1,
-            'status' => 'Pending',
-        ]);
-
-        return redirect()->route('accounting-dashboard')
-                ->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
-
-        // return back()->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
     }
 
     public function mcdEvaluate($id) {
@@ -704,6 +762,56 @@ class AssetController extends Controller
             ]);
         }
 
+    }
+
+    // Bidding functions BELOW..
+
+    public function userBidding()
+    {
+        $assetOnBidding = AssetBidding::with([
+            'asset.accounting_information',
+            'asset.bids' => function ($query) {
+                $query->where('user_id', Auth::id());
+            }
+        ])->get();
+
+        return Inertia::render('bidding', [
+            'assetOnBidding' => $assetOnBidding,
+        ]);
+    }
+
+    public function userBiddingEntry(Request $request, $id) {
+        $asset = Asset::where('status', 'Approved')->findOrFail($id);
+
+        $validated = $request->validate([
+            'bidder_name'           => 'nullable|string|max:255',
+            'bidder_contact_number' => 'nullable|string|max:50',
+            'bidder_classification' => 'nullable|string|max:255',
+            'department'            => 'nullable|string|max:255',
+            'date_hired'            => 'nullable|date',
+            'bidding_cycle'         => 'nullable|integer|min:1',
+            'bidding_price'         => 'required|numeric|min:0',
+            'remarks'               => 'nullable|string',
+            'reference_number'      => 'nullable|string|max:255',
+        ]);
+
+        Bidding::create([
+            'asset_id'              => $asset->id,
+            'user_id'               => Auth::id(),
+            'bidder_name'           => $validated['bidder_name'] ?? null,
+            'bidder_contact_number' => $validated['bidder_contact_number'] ?? null,
+            'bidder_classification' => $validated['bidder_classification'] ?? null,
+            'department'            => $validated['department'] ?? null,
+            'date_hired'            => $validated['date_hired'] ?? null,
+            'bidding_cycle'         => $validated['bidding_cycle'] ?? 1, 
+            'bidding_price'         => $validated['bidding_price'],
+            'bid_status'            => 'pending', 
+            'remarks'               => $validated['remarks'] ?? null,
+            'reference_number'      => $validated['reference_number'] ?? null,
+            'submitted_at'          => now(), 
+        ]);
+
+        return redirect()->back()->with('success', 'Bidding entry submitted successfully!');
     }
     
 }

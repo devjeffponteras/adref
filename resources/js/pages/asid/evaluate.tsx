@@ -48,8 +48,8 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                 <form onSubmit={handleSubmit} className="w-full max-w-7xl mx-auto p-4 space-y-4">
             
                     {/* Header Banner - Now completely dynamic! */}
-                    <div className="bg-emerald-800 text-white px-6 py-4 rounded-xl shadow-xs font-semibold text-lg flex items-center">
-                        Asset Information: {asset?.control_number || 'N/A'}
+                    <div className="bg-emerald-950 text-white px-6 py-4 rounded-xl shadow-xs font-semibold text-lg flex items-center">
+                        <span className='opacity-90 text-shadow-green-800'>Asset Information: {asset?.control_number || 'N/A'}</span>
                     </div>
 
                     {/* Main Form Container Card */}
