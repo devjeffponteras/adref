@@ -59,7 +59,7 @@ export default function UserManagement({ users = [] }: DashboardProps) {
                         </div>
                         <div className="mt-4 sm:mt-0">
                             <Link
-                                href="/user-management-create"
+                                href="/admin/user-management/create"
                                 className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-semibold rounded-lg text-white bg-emerald-700 hover:bg-emerald-800 shadow-xs focus:outline-hidden transition-colors duration-150"
                             >
                                 <PlusIcon className="h-4 w-4 mr-2" />

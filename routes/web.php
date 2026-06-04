@@ -11,10 +11,11 @@ Route::inertia('/', 'auth/login')->name('home');
 
 // Add routes here for GLOBAL account
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('bidding', 'bidding')->name('bidding');
     Route::inertia('forms', 'forms')->name('forms');
     Route::inertia('profile', 'profile')->name('profile');
 
+    Route::get('bidding', [AssetController::class, 'userBidding'])->name('bidding');
+    Route::post('user/bidding/entry/{id}', [AssetController::class, 'userBiddingEntry'])->name('bidding.entry');
     Route::get('assets/{id}/asset-status', [AssetController::class, 'assetStatus'])->name('asset-status');
 });
 
@@ -25,8 +26,13 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('disposals', [AssetController::class, 'disposals'])->name('disposals');
 
-    Route::get('user-management', [AdminController::class, 'userManagement'])->name('user-management');
-    Route::get('user-management-create', [AdminController::class, 'userManagementCreate'])->name('user-management-create');
+    Route::get('admin/user-management/index', [AdminController::class, 'userManagementIndex'])->name('user-management.index');
+    Route::get('admin/user-management/create', [AdminController::class, 'userManagementCreate'])->name('user-management.create');
+    Route::post('admin/user-management/store', [AdminController::class, 'userManagementStore'])->name('user-management.store');
+
+    Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
+    Route::get('admin/bidding/create', [AdminController::class, 'biddingCreate'])->name('bidding.create');
+    Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
 });
 
 // Add routes here for ASID account

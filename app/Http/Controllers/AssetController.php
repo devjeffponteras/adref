@@ -13,6 +13,8 @@ use App\Models\MepeoInformation;
 use App\Models\WasteClassification;
 use App\Models\WasteCharacteristic;
 use App\Models\Workflow;
+use App\Models\Bidding;
+use App\Models\AssetBidding;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
@@ -760,6 +762,56 @@ class AssetController extends Controller
             ]);
         }
 
+    }
+
+    // Bidding functions BELOW..
+
+    public function userBidding()
+    {
+        $assetOnBidding = AssetBidding::with([
+            'asset.accounting_information',
+            'asset.bids' => function ($query) {
+                $query->where('user_id', Auth::id());
+            }
+        ])->get();
+
+        return Inertia::render('bidding', [
+            'assetOnBidding' => $assetOnBidding,
+        ]);
+    }
+
+    public function userBiddingEntry(Request $request, $id) {
+        $asset = Asset::where('status', 'Approved')->findOrFail($id);
+
+        $validated = $request->validate([
+            'bidder_name'           => 'nullable|string|max:255',
+            'bidder_contact_number' => 'nullable|string|max:50',
+            'bidder_classification' => 'nullable|string|max:255',
+            'department'            => 'nullable|string|max:255',
+            'date_hired'            => 'nullable|date',
+            'bidding_cycle'         => 'nullable|integer|min:1',
+            'bidding_price'         => 'required|numeric|min:0',
+            'remarks'               => 'nullable|string',
+            'reference_number'      => 'nullable|string|max:255',
+        ]);
+
+        Bidding::create([
+            'asset_id'              => $asset->id,
+            'user_id'               => Auth::id(),
+            'bidder_name'           => $validated['bidder_name'] ?? null,
+            'bidder_contact_number' => $validated['bidder_contact_number'] ?? null,
+            'bidder_classification' => $validated['bidder_classification'] ?? null,
+            'department'            => $validated['department'] ?? null,
+            'date_hired'            => $validated['date_hired'] ?? null,
+            'bidding_cycle'         => $validated['bidding_cycle'] ?? 1, 
+            'bidding_price'         => $validated['bidding_price'],
+            'bid_status'            => 'pending', 
+            'remarks'               => $validated['remarks'] ?? null,
+            'reference_number'      => $validated['reference_number'] ?? null,
+            'submitted_at'          => now(), 
+        ]);
+
+        return redirect()->back()->with('success', 'Bidding entry submitted successfully!');
     }
     
 }

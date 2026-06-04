@@ -7,7 +7,7 @@ import {
     ArrowLeftCircleIcon, 
     SaveIcon 
 } from 'lucide-react';
-import { Role } from '@/types/models'; // Pulled cleanly from your model types!
+import { Role } from '@/types/models';
 
 interface CreateProps {
     roles: Role[];
@@ -16,18 +16,24 @@ interface CreateProps {
 export default function UserManagementCreate({ roles = [] }: CreateProps) {
     const { flash } = usePage().props as any;
 
-    // 🟢 Initialize Inertia form hook for handling POST data and errors
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset, setError } = useForm({
         name: '',
         email: '',
         password: '',
+        password_confirmation: '', // 🟢 Track confirm password state
         role_id: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/users', {
-            onSuccess: () => reset('password'), // clear password field if successfully created
+
+        if (data.password !== data.password_confirmation) {
+            setError('password', 'Your passwords do not match. Please verify.');
+            return;
+        }
+
+        post('/admin/user-management/store', {
+            onSuccess: () => reset('password', 'password_confirmation'),
         });
     };
 
@@ -78,7 +84,7 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
                             <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Full Name</label>
                             <input 
                                 type="text"
-                                placeholder="e.g. John Doe"
+                                placeholder="e.g. Juan Dela Cruz"
                                 value={data.name}
                                 onChange={e => setData('name', e.target.value)}
                                 className={`w-full p-2.5 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 focus:outline-emerald-500 focus:border-emerald-500
@@ -101,18 +107,34 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
                             {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                         </div>
 
-                        {/* Password Input */}
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Account Password</label>
-                            <input 
-                                type="password"
-                                placeholder="••••••••"
-                                value={data.password}
-                                onChange={e => setData('password', e.target.value)}
-                                className={`w-full p-2.5 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 focus:outline-emerald-500 focus:border-emerald-500
-                                    ${errors.password ? 'border-red-300' : 'border-gray-300'}`}
-                            />
-                            {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+                        {/* Password Grid Layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Original Password Input */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Account Password</label>
+                                <input 
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={data.password}
+                                    onChange={e => setData('password', e.target.value)}
+                                    className={`w-full p-2.5 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 focus:outline-emerald-500 focus:border-emerald-500
+                                        ${errors.password ? 'border-red-300' : 'border-gray-300'}`}
+                                />
+                                {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+                            </div>
+
+                            {/* 🟢 NEW: Confirm Password Input */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Confirm Password</label>
+                                <input 
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={data.password_confirmation}
+                                    onChange={e => setData('password_confirmation', e.target.value)}
+                                    className={`w-full p-2.5 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 focus:outline-emerald-500 focus:border-emerald-500
+                                        ${errors.password ? 'border-red-300' : 'border-gray-300'}`}
+                                />
+                            </div>
                         </div>
 
                         {/* Role Selector Dropdown */}
@@ -137,7 +159,7 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
                         {/* Action Buttons Footer Block */}
                         <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                             <Link 
-                                href="/user-management" 
+                                href="/admin/user-management/index" 
                                 className="inline-flex items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-150"
                             >
                                 <ArrowLeftCircleIcon className='h-4 w-4 mr-1.5' />

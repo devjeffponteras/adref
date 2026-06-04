@@ -10,7 +10,8 @@ import {
     ScanSearch,
     BriefcaseBusiness,
     LucideUserCog2,
-    UsersRound
+    UsersRound,
+    Gavel
 } from 'lucide-react';
 
 import AppLogo from '@/components/app-logo';
@@ -49,11 +50,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         icon: LayoutGrid,
         roles: ['admin', 'asid', 'mcd', 'user', 'mapeo', 'accounting'],
-        href: '/dashboard', // Kept as placeholder string to evaluate inside component
+        href: '/dashboard',
     },
     {
         title: 'Asset for Disposal',
-        href: disposals(), // 🟢 Wayfinder naturally handles this in the array structure if NavItem accepts it
+        href: disposals(),
         icon: PackageOpen,
         roles: ['admin'],
     },
@@ -91,8 +92,14 @@ const mainNavItems: NavItem[] = [
         icon: SquareUserRound,
     },
     {
+        title: 'Bidding',
+        href: '/admin/bidding/index',
+        icon: Gavel,
+        roles: ['admin'],
+    },
+    {
         title: 'User Management',
-        href: '/user-management',
+        href: '/admin/user-management/index',
         icon: LucideUserCog2,
         roles: ['admin'],
     },

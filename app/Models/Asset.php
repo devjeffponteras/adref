@@ -77,4 +77,14 @@ class Asset extends Model
     {
         return $this->hasMany(Workflow::class, 'asset_id');
     }
+
+    public function biddingListing(): HasOne
+    {
+        return $this->hasOne(AssetBidding::class, 'asset_id');
+    }
+
+    public function bids(): HasMany
+    {
+        return $this->hasMany(Bidding::class, 'asset_id');
+    }
 }
