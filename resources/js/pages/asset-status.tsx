@@ -1,6 +1,12 @@
 import React from 'react';
 import { Head, useForm, Link, usePage} from '@inertiajs/react';
-import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User, Building2, CalendarDays, ShieldAlert, BadgeHelp, BadgeCheckIcon } from 'lucide-react';
+
+interface Approver {
+    id: number;
+    name: string;
+    email: string;
+}
 
 interface assetStatus {
     id: number;
@@ -8,10 +14,11 @@ interface assetStatus {
     seq_no: number;
     is_current: boolean;
     approver_id: number | null;
-    status: 'Approved' | 'On-going' | 'Pending' | 'Rejected'; // Adjusted according to your status logic
+    status: 'Approved' | 'On-going' | 'Pending' | 'Rejected';
     approval_date: string | null;
     remarks: string | null;
     department_name?: string; 
+    approver?: Approver | null;
 }
 
 interface Props {
@@ -24,7 +31,7 @@ interface Props {
         approvals: assetStatus[];
         end_user_department: string;
     };
-    currentUserId: number; // Used to confirm if the logged-in user matches the structural permission
+    currentUserId: number;
 }
 
 export default function AssetTimeline({ asset, currentUserId }: Props) {
@@ -36,42 +43,56 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
     const handleApprove = () => {
         if (confirm('Are you sure you want to sign off on this sequence stage?')) {
-            // Uses the asset ID directly from your component props
             post(`/assets/${asset.id}/asset-approve`, {
                 onSuccess: () => setData('remarks', ''),
             });
         }
     };
 
-    // Maps status attributes to specific UI styles
     const getStatusStyles = (status: string, isCurrent: boolean) => {
         if (status === 'Approved') {
             return {
-                bg: 'bg-emerald-50 border-emerald-200',
-                badge: 'bg-emerald-600 text-white',
+                bg: 'bg-gradient-to-r from-emerald-50 to-white shadow border-b-4 border-emerald-300 hover:border-emerald-200',
+                badge: 'bg-emerald-500/10 text-emerald-700 border border-emerald-200',
+                iconBg: 'bg-white ring-4 ring-emerald-100/50',
                 icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />,
-                line: 'bg-emerald-500'
+                line: 'bg-emerald-400',
+                pillText: 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/10'
             };
         }
         
         if (isCurrent) {
             return {
-                bg: 'bg-amber-50 border-amber-200 shadow-sm ring-1 ring-amber-400/30',
-                badge: 'bg-amber-500 text-white',
-                icon: <Clock className="h-5 w-5 text-amber-500 animate-pulse" />,
-                line: 'bg-amber-300'
+                bg: 'bg-gradient-to-r from-amber-50/50 to-white border-amber-200/80 shadow border-b-4 border-amber-300 shadow-amber-900/[0.02] ring-1 ring-amber-400/20 scale-[1.01]',
+                badge: 'bg-amber-500/10 text-amber-700 border border-amber-200',
+                iconBg: 'bg-white ring-4 ring-amber-100/60',
+                icon: <Clock className="h-5 w-5 text-amber-500 animate-spin-[spin_3s_linear_infinite]" />,
+                line: 'bg-gray-200/80', // Keeps upcoming connection clean
+                pillText: 'bg-amber-500 text-white shadow-xs shadow-amber-500/10'
+            };
+        }
+
+        if (status === 'Rejected') {
+            return {
+                bg: 'bg-gradient-to-r from-rose-50/40 to-white border-rose-100 shadow-xs',
+                badge: 'bg-rose-50/10 text-rose-700 border border-rose-200',
+                iconBg: 'bg-white ring-4 ring-rose-100/50',
+                icon: <ShieldAlert className="h-5 w-5 text-rose-500" />,
+                line: 'bg-gray-200/80',
+                pillText: 'bg-rose-600 text-white shadow-xs'
             };
         }
 
         return {
-            bg: 'bg-gray-50/50 border-gray-100',
-            badge: 'bg-gray-200 text-gray-500',
-            icon: <Circle className="h-5 w-5 text-gray-300" />,
-            line: 'bg-gray-200'
+            bg: 'bg-white border-gray-100 opacity-75',
+            badge: 'bg-gray-100 text-gray-500 border border-gray-200/40',
+            iconBg: 'bg-white ring-4 ring-gray-100/30',
+            icon: <Circle className="h-5 w-5 text-gray-300 stroke-[1.5]" />,
+            line: 'bg-gray-200/80',
+            pillText: 'bg-gray-400 text-white'
         };
     };
 
-    // Department helper labels array mapping cleanly to your sequence logic
     const getDepartmentName = (seq: number) => {
         const departments = [
             'ASID (Initial Evaluation)',
@@ -90,70 +111,50 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
         <>
             <Head title={`Document Tracker - ${asset.serial_plate_id_number || 'Asset'}`} />
             
-            <div className="w-full p-4 max-w-3xl mx-auto space-y-6">
+            <div className="w-full p-4 max-w-3xl mx-auto space-y-6 antialiased selection:bg-emerald-500/10">
                 
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
-                    <Link href="/my-assets" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">
-                        <ArrowLeft className="h-4 w-4" /> Back to List
+                    <Link href="/my-assets" className="inline-flex items-center gap-2 text-xs uppercase font-bold tracking-wider text-gray-400 hover:text-emerald-700 transition-all group">
+                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to Fleet List
                     </Link>
-                    <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full uppercase tracking-wider">
-                        Approval Steps
+                    <span className="text-[10px] font-extrabold bg-linear-to-r from-emerald-50 to-teal-50 text-emerald-800 border border-emerald-200/60 px-3 py-1 rounded-full uppercase tracking-widest shadow-xs">
+                        Audit Trail Sequence
                     </span>
                 </div>
 
                 {/* Main Heading Card */}
-                <div className="bg-emerald-700 p-6 rounded-xl shadow-sm text-white">
-                    {/* Top Label */}
-                    <span className="text-xs uppercase font-bold tracking-widest opacity-75 block mb-1">
-                        ASSET INFORMATION
+                <div className="relative overflow-hidden bg-linear-to-br from-emerald-800 via-emerald-900 to-slate-950 p-6 rounded-2xl shadow-lg shadow-emerald-950/20 text-white">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                    
+                    <span className="text-[10px] uppercase font-black tracking-widest text-emerald-400 opacity-90 block mb-1">
+                        System Identity Signature
                     </span>
 
-                    {/* Primary Main Title */}
-                    <h1 className="font-bold text-2xl tracking-tight mb-6">
-                        {asset.brand_make || ''} {asset.model || ''}
+                    <h1 className="font-extrabold text-2xl tracking-tight mb-5 drop-shadow-xs">
+                        {asset.brand_make || 'Generic'} <span className="font-light text-emerald-100/80">{asset.model || 'Asset Profile'}</span>
                     </h1>
 
-                    <hr className="border-emerald-600/50 mb-4" />
-
-                    {/* Metadata Information Row Layout */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                        
-                        {/* Column 1: Asset Details */}
-                        <div className="flex flex-col">
-                            <span className="text-xs uppercase font-bold tracking-wider opacity-60 mb-0.5">
-                                Control Number
-                            </span>
-                            <span className="font-medium text-base">
-                                {asset.control_number || 'AD-26-01'}
-                            </span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-t border-white/10 pt-4">
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Control Reference</span>
+                            <span className="font-bold text-emerald-50 tracking-wide">{asset.control_number || 'N/A'}</span>
                         </div>
 
-                        {/* Column 2: Serial Trace */}
-                        <div className="flex flex-col">
-                            <span className="text-xs uppercase font-bold tracking-wider opacity-60 mb-0.5">
-                                Serial Number
-                            </span>
-                            <span className="font-mono font-medium text-base tracking-wide">
-                                {asset.serial_plate_id_number || '242206500512BX'}
-                            </span>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Hardware Tag Mapping</span>
+                            <span className="font-mono text-xs font-medium text-emerald-100 bg-white/5 px-2 py-0.5 rounded border border-white/5 w-fit tracking-wider">{asset.serial_plate_id_number || 'N/A'}</span>
                         </div>
 
-                        {/* Column 3: Custody Assignment */}
-                        <div className="flex flex-col">
-                            <span className="text-xs uppercase font-bold tracking-wider opacity-60 mb-0.5">
-                                Department
-                            </span>
-                            <span className="font-medium text-base">
-                                {asset.end_user_department || 'Audit and Systems Improvement'}
-                            </span>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Origin Department</span>
+                            <span className="font-medium text-emerald-50/90 truncate" title={asset.end_user_department}>{asset.end_user_department || 'N/A'}</span>
                         </div>
-
                     </div>
                 </div>
 
                 {/* Vertical Timeline Nodes */}
-                <div className="relative pl-6 space-y-8 before:absolute before:top-2 before:bottom-2 before:left-4.5 before:w-0.5 before:bg-gray-200">
+                <div className="relative pl-8 space-y-6">
                     {asset.approvals.map((step, idx) => {
                         const styles = getStatusStyles(step.status, step.is_current);
                         const isLast = idx === asset.approvals.length - 1;
@@ -161,70 +162,96 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                         return (
                             <div key={step.id} className="relative flex items-start gap-4 group">
                                 
-                                {/* Dynamic Connecting Line Segment */}
-                                {!isLast && <div className={`absolute -left-1.75 top-6 -bottom-9 w-0.5 ${styles.line}`} />}
+                                {/* Single Dynamic Connecting Line Segment */}
+                                {!isLast && (
+                                    <div className={`absolute -left-4.75 top-8 -bottom-6 w-0.5 transition-all duration-300 ${styles.line}`} />
+                                )}
 
                                 {/* Left Side Icon Indicator Node */}
-                                <div className="absolute -left-4 bg-white rounded-full p-0.5 z-10">
+                                <div className={`absolute -left-7.75 rounded-full p-1 z-10 transition-all duration-300 ${styles.iconBg}`}>
                                     {styles.icon}
                                 </div>
 
                                 {/* Detail Content Panel */}
-                                <div className={`flex-1 border rounded-xl p-5 bg-white transition-all ${styles.bg}`}>
-                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${styles.badge}`}>
-                                                {step.seq_no}
+                                <div className={`flex-1 border rounded-2xl p-5 bg-white transition-all duration-300 shadow-xs hover:shadow-md ${styles.bg}`}>
+                                    
+                                    {/* Card Header Structure */}
+                                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                        <div className="flex items-center gap-2.5">
+                                            <span className={`text-[11px] font-black px-2 py-0.5 rounded-lg transition-colors ${styles.badge}`}>
+                                                {step.seq_no.toString().padStart(2, '0')}
                                             </span>
-                                            <h3 className="font-bold text-gray-800 tracking-tight text-base">
+                                            <h3 className="font-bold text-slate-800 tracking-tight text-base group-hover:text-emerald-950 transition-colors">
                                                 {getDepartmentName(step.seq_no)}
                                             </h3>
                                         </div>
-                                        
+
+                                        {step.status === 'Approved' && (
+                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-green-500 text-white p-1 rounded-full uppercase tracking-wider shadow">
+                                                <BadgeCheckIcon></BadgeCheckIcon> <span className='pe-2'>Done</span>
+                                            </span>
+                                        )}
                                         {!!step.is_current && (
-                                            <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
-                                                Active Stage
+                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs shadow-amber-500/20">
+                                                <span className="h-1 w-1 rounded-full bg-white animate-ping" /> Current Stage
                                             </span>
                                         )}
                                     </div>
 
-                                    {/* Attributes Display Grid */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs border-t border-gray-100 pt-3 text-gray-600">
-                                        <div className="flex items-center gap-1.5">
-                                            <User className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                            <span><strong>Approver ID:</strong> {step.approver_id || '---'}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <Clock className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                            <span><strong>Approval Date:</strong> {step.approval_date || '---'}</span>
-                                        </div>
-                                        
-                                        <div className="md:col-span-2 text-gray-500 font-medium">
-                                            <strong>Status Flag:</strong> <span className={`capitalize py-1 px-2 shadow rounded-lg text-gray-700 ${styles.line}`}>{step.status}</span>
+                                    {/* Metadata Metrics Display Row */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-slate-100 pt-3.5 text-slate-600">
+                                        <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100/50">
+                                            <User className="h-4 w-4 text-slate-400 shrink-0" />
+                                            <div className="overflow-hidden">
+                                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide leading-none mb-0.5">Evaluated By</p>
+                                                <p className="font-semibold text-slate-700 truncate">{step.approver?.name || 'Awaiting Assignment'}</p>
+                                            </div>
                                         </div>
 
+                                        <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100/50">
+                                            <CalendarDays className="h-4 w-4 text-slate-400 shrink-0" />
+                                            <div className="overflow-hidden">
+                                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide leading-none mb-0.5">Timestamp Matrix</p>
+                                                <p className="font-semibold text-slate-700 truncate">
+                                                    {step.approval_date ? new Date(step.approval_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending Release'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Status Badge Row */}
+                                        <div className="sm:col-span-2 flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status State:</span> 
+                                            <span className={`text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-md ${styles.pillText}`}>
+                                                {step.status}
+                                            </span>
+                                        </div>
+
+                                        {/* Activity Log Remarks Block */}
                                         {!!step.remarks && (
-                                            <div className="md:col-span-2 flex items-start gap-1 bg-white/60 p-2.5 rounded border border-gray-200/60 text-gray-700">
-                                                <MessageSquare className="h-3.5 w-3.5 text-gray-400 mt-0.5 shrink-0" />
-                                                <p><strong>Remarks:</strong> {step.remarks}</p>
+                                            <div className="sm:col-span-2 flex items-start gap-2.5 bg-slate-50 border border-slate-200/60 p-3 rounded-xl mt-1 text-slate-700 shadow-inner">
+                                                <MessageSquare className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Official Evaluation Memo</p>
+                                                    <p className="text-xs font-medium text-slate-600 leading-relaxed italic">"{step.remarks}"</p>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Action Submittal Layer for Active Step Row */}
                                     {!!step.is_current && auth?.user?.role === 'admin' && (
-                                        <div className="mt-4 pt-4 border-t border-dashed border-amber-200 space-y-3">
+                                        <div className="mt-4 pt-4 border-t border-dashed border-amber-200/80 space-y-3.5">
                                             <div className="flex flex-col gap-1.5">
-                                                <label htmlFor="remarks" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                                    Add Processing Remarks
+                                                <label htmlFor="remarks" className="text-[10px] font-black text-amber-800 uppercase tracking-widest inline-flex items-center gap-1">
+                                                    <BadgeHelp className="h-3.5 w-3.5 text-amber-500" /> Action Verification Log Notes
                                                 </label>
                                                 <textarea
                                                     id="remarks"
                                                     rows={2}
                                                     value={data.remarks}
                                                     onChange={e => setData('remarks', e.target.value)}
-                                                    placeholder="Enter details or evaluation notes..."
-                                                    className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-colors bg-white text-gray-700"
+                                                    placeholder="Input processing context parameters, metrics or physical audit remarks safely..."
+                                                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-hidden focus:ring-4 focus:ring-amber-500/10 focus:border-amber-400 transition-all bg-white text-slate-700 shadow-inner resize-none placeholder:text-slate-400"
                                                 />
                                             </div>
                                             
@@ -233,9 +260,9 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                                     type="button"
                                                     disabled={processing}
                                                     onClick={handleApprove}
-                                                    className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition-colors disabled:opacity-50"
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl shadow-xs transition-all disabled:opacity-40 cursor-pointer tracking-wider uppercase hover:shadow-md hover:shadow-emerald-600/10"
                                                 >
-                                                    Sign & Approve Action
+                                                    Commit Signature Release
                                                 </button>
                                             </div>
                                         </div>

@@ -313,5 +313,5 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
 }
 
 Bidding.layout = {
-    breadcrumbs: [{ title: 'Dashboard', href: bidding() }],
+    breadcrumbs: [{ title: 'Bidding', href: bidding() }],
 };

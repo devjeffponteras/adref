@@ -25,4 +25,9 @@ class AssetApproval extends Model
     {
         return $this->belongsTo(Asset::class);
     }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_id');
+    }
 }

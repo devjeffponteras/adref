@@ -9,6 +9,19 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    // Dashboards
+
+    public function adminDashboard(): Response
+    {   
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.user.role'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('dashboard', [
+            'assetStatuses' => $assetStatuses
+        ]);
+    }
+
     public function asidDashboard(): Response
     {   
         $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver'])

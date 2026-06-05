@@ -137,9 +137,10 @@ class AssetController extends Controller
                 $query->orderBy('seq_no', 'asc');
             },
             // 'assetStatuses' => function ($query) {
-            //     $query->orderBy('seq_no', 'desc'); // Often useful to see the newest status updates first
+            //     $query->orderBy('seq_no', 'desc'); // if gusto paianaka una makita jud
             // },
-            'user' // Connects the User model data via the asset's user_id foreign key
+            'user', 
+            'approvals.approver'
         ])->findOrFail($id);
 
         // dd($asset->toArray());

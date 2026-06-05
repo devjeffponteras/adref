@@ -3,7 +3,7 @@ import { ArrowUpDown } from 'lucide-react';
 
 // Explicit type definitions for your component inputs
 interface FilterDropdownProps {
-  onFilterChange?: (status: 'pending' | 'approved') => void;
+  onFilterChange?: (status: 'pending' | 'approved' | 'on-going') => void;
   onReset?: () => void;
 }
 
@@ -22,7 +22,7 @@ export default function FilterDropdown({ onFilterChange, onReset }: FilterDropdo
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleItemClick = (status: 'pending' | 'approved'): void => {
+  const handleItemClick = (status: 'pending' | 'approved' | 'on-going'): void => {
     setIsOpen(false);
     if (onFilterChange) onFilterChange(status);
   };
@@ -63,12 +63,12 @@ export default function FilterDropdown({ onFilterChange, onReset }: FilterDropdo
             <button
                 type="button"
                 onClick={() => handleItemClick('pending')}
-                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-amber-50/50 hover:text-amber-900 transition-colors"
+                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50/50 hover:text-gray-900 transition-colors cursor-pointer"
             >
                 {/* Pure Tailwind Pulse Dot Indicator */}
                 <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gray-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-gray-500"></span>
                 </span>
                 Pending
             </button>
@@ -77,11 +77,22 @@ export default function FilterDropdown({ onFilterChange, onReset }: FilterDropdo
             <button
                 type="button"
                 onClick={() => handleItemClick('approved')}
-                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-emerald-50/50 hover:text-emerald-900 transition-colors"
+                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-emerald-50/50 hover:text-emerald-900 transition-colors cursor-pointer"
             >
                 {/* Pure Tailwind Steady Dot Indicator */}
                 <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
                 Approved
+            </button>
+
+            {/* On-going Filter */}
+            <button
+                type="button"
+                onClick={() => handleItemClick('on-going')}
+                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-700 hover:bg-amber-50/50 hover:text-amber-900 transition-colors cursor-pointer"
+            >
+                {/* Pure Tailwind Steady Dot Indicator */}
+                <span className="flex h-2 w-2 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span>
+                On-going
             </button>
             
             <hr className="my-1 border-emerald-100/60" />
@@ -90,7 +101,7 @@ export default function FilterDropdown({ onFilterChange, onReset }: FilterDropdo
             <button
                 type="button"
                 onClick={handleResetClick}
-                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors cursor-pointer"
             >
                 <i className="fas fa-undo text-xs text-gray-400"></i> 
                 Reset Filters
