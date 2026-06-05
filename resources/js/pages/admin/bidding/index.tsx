@@ -153,7 +153,7 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                                         className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-xl text-white bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 shadow-xs transition-all duration-150 cursor-pointer focus:outline-hidden"
                                                     >
                                                         <Gavel className="h-3.5 w-3.5 mr-1.5" />
-                                                        Publish to Bid
+                                                        Publish for Bidding
                                                     </button>
                                                 </td>
                                             </tr>

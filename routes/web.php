@@ -21,7 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Add routes here for admin account
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    // Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'adminDashboard'])->name('dashboard');
     Route::inertia('reports', 'reports')->name('reports');
 
     Route::get('disposals', [AssetController::class, 'disposals'])->name('disposals');

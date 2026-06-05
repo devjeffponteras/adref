@@ -2,6 +2,12 @@ import React from 'react';
 import { Head, useForm, Link, usePage} from '@inertiajs/react';
 import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User } from 'lucide-react';
 
+interface Approver {
+    id: number;
+    name: string;
+    email: string;
+}
+
 interface assetStatus {
     id: number;
     asset_id: number;
@@ -12,6 +18,7 @@ interface assetStatus {
     approval_date: string | null;
     remarks: string | null;
     department_name?: string; 
+    approver?: Approver | null;
 }
 
 interface Props {
@@ -103,7 +110,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                 </div>
 
                 {/* Main Heading Card */}
-                <div className="bg-emerald-700 p-6 rounded-xl shadow-sm text-white">
+                <div className="bg-linear-to-tl from-emerald-700 to-emerald-950 p-6 rounded-xl shadow-sm text-white">
                     {/* Top Label */}
                     <span className="text-xs uppercase font-bold tracking-widest opacity-75 block mb-1">
                         ASSET INFORMATION
@@ -192,7 +199,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs border-t border-gray-100 pt-3 text-gray-600">
                                         <div className="flex items-center gap-1.5">
                                             <User className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                                            <span><strong>Approver ID:</strong> {step.approver_id || '---'}</span>
+                                            <span><strong>Evaluated By:</strong> {step.approver?.name || '---'}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Clock className="h-3.5 w-3.5 text-gray-400 shrink-0" />

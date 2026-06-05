@@ -21,7 +21,7 @@ class Asset extends Model
         'brand_make',
         'serial_plate_id_number',
         'end_user_department',
-        'asset_classification_id', // The foreign key column link to asset_classifications
+        'asset_classification_id',
         'reasons_for_disposal',
         'asset_location',
         'status',
