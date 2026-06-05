@@ -58,7 +58,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                 
                 <div className="flex flex-col md:flex-row gap-4 mb-5">
                     <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-emerald-700 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
+                        <div className="stat-card bg-green-900 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="mb-1 opacity-75 text-sm">Pending Transactions</p>
@@ -70,7 +70,6 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 </div>
 
-                {/* --- TABLE 1: PENDING TRANSACTIONS ONLY (REMAINS UNTOUCHED) --- */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
@@ -135,7 +134,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
 
                 <div className="flex flex-col md:flex-row gap-4 my-6">
                     <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-emerald-800 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
+                        <div className="stat-card bg-emerald-950 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="mb-1 opacity-75 text-sm">Total History Log Entries</p>
@@ -147,7 +146,6 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 </div>
 
-                {/* --- TABLE 2: ENTIRE HISTORICAL STAGES PIPELINE (FILTERED ONLY HERE) --- */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
