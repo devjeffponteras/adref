@@ -38,17 +38,33 @@ interface BiddingProps {
     assetOnBidding: AssetBiddingData[];
 }
 
+interface PageProps extends Record<string, unknown> {
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            // add other user fields if necessary
+        };
+    };
+    flash: {
+        success?: string;
+    };
+    assetOnBidding?: AssetBiddingData[];
+}
+
 export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: BiddingProps) {
-    const { props } = usePage();
+
+    const { props } = usePage<PageProps>();
+    const authUser = props.auth?.user;
+
     const assetOnBidding = propsAssetOnBidding.length > 0 
         ? propsAssetOnBidding 
-        : ((props.assetOnBidding as AssetBiddingData[]) || []);
+        : (props.assetOnBidding || []);
 
-    const { flash } = usePage().props as any;
+    const flash = props.flash;
     const [selectedListing, setSelectedListing] = useState<AssetBiddingData | null>(null);
 
-    // 🟢 Expanded state hook mapping all form field input layers matching your database controller assignments
-    const { data, setData, post, processing, reset } = useForm({
+    const { data, setData, post, processing, reset, errors } = useForm({
         bidder_name: '',
         bidder_contact_number: '',
         bidding_cycle: '1',
@@ -60,9 +76,14 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
         reference_number: ''
     });
 
+    const hasCurrentUserBidded = (asset?: Asset) => {
+        if (!asset || !asset.bids || !authUser) return false;
+        return asset.bids.some(bid => Number(bid.user_id) === Number(authUser.id));
+    };
+
     const handleOpenBidModal = (listing: AssetBiddingData) => {
         setSelectedListing(listing);
-        reset(); // Clear text inputs on every unique popup instance configuration
+        reset(); 
     };
 
     const handleCloseBidModal = () => {
@@ -78,6 +99,8 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
             onSuccess: () => handleCloseBidModal(),
         });
     };
+
+    const isEmployee = data.bidder_classification === 'PMC Employee' || data.bidder_classification === 'MMPRC Employee';
 
     return (
         <>
@@ -139,19 +162,18 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                                     '₱0.00'
                                                 )}
                                             </td>
+                                            
                                             {/* Interactive Action Button Cell */}
                                             <td className="py-4 pr-6 text-center whitespace-nowrap">
-                                                {listing.asset?.bids && listing.asset.bids.length > 0 ? (
-                                                    // 🟥 Already Bidded State (Disabled Button)
+                                                {hasCurrentUserBidded(listing.asset) ? (
                                                     <button 
                                                         type="button" 
                                                         disabled
-                                                        className="inline-flex items-center justify-center px-4 py-1.5 rounded bg-gray-300 text-xs font-semibold text-gray-500 shadow-xs cursor-not-allowed border border-gray-200"
+                                                        className="inline-flex items-center justify-center px-4 py-1.5 rounded bg-gray-100 text-xs font-semibold text-gray-400 shadow-xs cursor-not-allowed border border-gray-200"
                                                     >
                                                         Done Bid
                                                     </button>
                                                 ) : (
-                                                    // 🟢 Active State (Open for Bids)
                                                     <button 
                                                         type="button" 
                                                         onClick={() => handleOpenBidModal(listing)}
@@ -176,9 +198,7 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                 </div>
             </div>
 
-            {/* ==================================================== */}
-            {/* POPUP MODAL WITH COMPLETE FIELDS LAYOUT FROM IMAGE   */}
-            {/* ==================================================== */}
+            {/* POPUP MODAL */}
             {selectedListing && selectedListing.asset && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
                     <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 my-8">
@@ -252,15 +272,32 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
 
                             {/* SECTION: Employee Conditional Subsection */}
                             <div>
-                                <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">If PMC or MMPRC Employee</h4>
+                                <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${isEmployee ? 'text-emerald-900' : 'text-gray-400'}`}>
+                                    If PMC or MMPRC Employee
+                                </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Department/Division</label>
-                                        <input type="text" value={data.department} onChange={e => setData('department', e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-hidden" placeholder="Enter department" />
+                                        <input 
+                                            type="text" 
+                                            disabled={!isEmployee}
+                                            required={isEmployee}
+                                            value={isEmployee ? data.department : ''} 
+                                            onChange={e => setData('department', e.target.value)} 
+                                            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-hidden disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed" 
+                                            placeholder={isEmployee ? "Enter department" : "N/A - Non Employee"} 
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Date Hired</label>
-                                        <input type="date" value={data.date_hired} onChange={e => setData('date_hired', e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-hidden" />
+                                        <input 
+                                            type="date" 
+                                            disabled={!isEmployee}
+                                            required={isEmployee}
+                                            value={isEmployee ? data.date_hired : ''} 
+                                            onChange={e => setData('date_hired', e.target.value)} 
+                                            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-hidden disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed" 
+                                        />
                                     </div>
                                 </div>
                             </div>

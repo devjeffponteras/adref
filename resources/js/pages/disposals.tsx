@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import { disposals } from '@/routes';
-import { Calendar, Loader, FileWarning, RefreshCw, ArrowUpDown, Tag, Eye} from 'lucide-react';
+import { Calendar, Loader, FileWarning, RefreshCw, ArrowUpDown, Tag, Eye } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface Classification {
@@ -34,9 +34,23 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
     console.log("Inertia Received Assets:", assets);
 
     const [search, setSearch] = useState('');
-    const [sortField, setSortField] = useState<keyof Asset | 'classification'>('id'); // Updated typing to explicitly allow our sort tracking
+    const [sortField, setSortField] = useState<keyof Asset | 'classification'>('id'); 
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); 
     const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // --- DYNAMIC COUNTERS ---
+    const pendingCount = useMemo(() => {
+        return assets.filter(asset => asset.status?.includes('Pending')).length;
+    }, [assets]);
+
+    const inProgressCount = useMemo(() => {
+        return assets.filter(asset => asset.status?.includes('On-going')).length;
+    }, [assets]);
+
+    const approvedCount = useMemo(() => {
+        return assets.filter(asset => asset.status?.includes('Approved')).length;
+    }, [assets]);
+    // ------------------------
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -65,7 +79,6 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
             let valA: any;
             let valB: any;
 
-            // FIX: If sorting by classification column, pull out the nested string name
             if (sortField === 'classification') {
                 valA = a.classification?.name?.toLowerCase() || '';
                 valB = b.classification?.name?.toLowerCase() || '';
@@ -87,7 +100,6 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
         return result;
     }, [assets, search, sortField, sortDirection]);
 
-    // Updated handler function signature to accept 'classification' safely
     const handleSort = (field: keyof Asset | 'classification') => {
         if (sortField === field) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -107,15 +119,14 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
 
     const exportToExcel = () => {
         const dataToExport = filteredAndSortedAssets.map(item => ({
-            // 'Asset ID': item.id,
-            'Control Number': item.control_number || 'N/A', // N/A if no data
+            'Control Number': item.control_number || 'N/A', 
             'Status': item.status || 'Pending',
-            'Brand Make': item.brand_make || 'N/A', // N/A for now
-            'Model Description': item.model || 'N/A', // N/A for now
+            'Brand Make': item.brand_make || 'N/A', 
+            'Model Description': item.model || 'N/A', 
             'Classification': item.classification?.name || 'Unclassified',
             'Accountable Personnel': item.accountable_personnel,
             'End User Department': item.end_user_department,
-            'Asset Location': item.asset_location || 'N/A', // N/A for now
+            'Asset Location': item.asset_location || 'N/A', 
             'Date Created': formatDate(item.created_at)
         }));
 
@@ -139,31 +150,31 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
                     
                     {/* Action Filters Group */}
                     <div className="flex flex-wrap items-center gap-3">
-                        {/* Upcoming Button */}
-                        <button className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <Calendar className='w-4 h-4'></Calendar>
-                        <span>Upcoming</span>
-                        <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-600 text-white min-w-5">
-                            8
-                        </span>
+                        {/* Upcoming Button (Pending) */}
+                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150">
+                            <Calendar className='w-4 h-4'></Calendar>
+                            <span>Upcoming (Pending)</span>
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-600 text-white min-w-5">
+                                {pendingCount}
+                            </span>
                         </button>
                         
-                        {/* In Progress Button */}
-                        <button className="cursor-pointer group inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <Loader className='w-4 h-4 transition-transform duration-500 ease-out group-hover:rotate-180'></Loader>
-                        <span>In Progress</span>
-                        <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-rose-600 text-white min-w-5">
-                            88
-                        </span>
+                        {/* In Progress Button (On-going) */}
+                        <button className="group inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150">
+                            <Loader className={`w-4 h-4 transition-transform duration-500 ease-out group-hover:rotate-180 ${isRefreshing ? 'animate-spin' : ''}`}></Loader>
+                            <span>In Progress</span>
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-rose-600 text-white min-w-5">
+                                {inProgressCount}
+                            </span>
                         </button>
                         
-                        {/* Pending Transactions Button */}
-                        <button className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <FileWarning className='w-4 h-4'></FileWarning>
-                        <span>Pending Transactions</span>
-                        <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-rose-600 text-white min-w-5">
-                            12
-                        </span>
+                        {/* Approved Transactions Button */}
+                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150">
+                            <FileWarning className='w-4 h-4'></FileWarning>
+                            <span>Approved Transactions</span>
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-rose-600 text-white min-w-5">
+                                {approvedCount}
+                            </span>
                         </button>
                     </div>
 
@@ -183,11 +194,12 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
                     </div>
                     <div>
                         <button 
+                            onClick={handleRefresh}
                             id="btn-refresh-dt" 
                             className="group inline-flex items-center justify-center px-2 py-1.5 rounded-md border border-emerald-600 text-xs font-medium text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer" 
                             title="Refresh Table"
                             >
-                            <RefreshCw className="h-5 w-5 transition-transform duration-500 ease-out group-hover:rotate-180" />
+                            <RefreshCw className={`h-5 w-5 transition-transform duration-500 ease-out group-hover:rotate-180 ${isRefreshing ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
                     </div>
@@ -207,7 +219,6 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
                                     <div className="flex items-center gap-1.5">Status <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                 </th>
                                 
-                                {/* FIXED: Keeps standard handleSort parameter pattern cleanly intact */}
                                 <th onClick={() => handleSort('classification')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
                                     <div className="flex items-center gap-1.5">Classification <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                 </th>

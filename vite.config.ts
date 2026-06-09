@@ -27,5 +27,16 @@ export default defineConfig({
         wayfinder({
             formVariants: true,
         }),
+        
     ],
+
+    server: {
+        host: '172.16.8.66', 
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: '172.16.8.66',
+        },
+    },
+
 });

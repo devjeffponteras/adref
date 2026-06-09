@@ -14,6 +14,7 @@ use App\Models\WasteClassification;
 use App\Models\WasteCharacteristic;
 use App\Models\Workflow;
 use App\Models\Bidding;
+use App\Models\Form;
 use App\Models\AssetBidding;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class AssetController extends Controller
 {
@@ -813,6 +815,99 @@ class AssetController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Bidding entry submitted successfully!');
+    }
+
+    public function forms() {
+        // Fetch forms and map over them to format the keys for React
+        $files = Form::with('user')->get()->map(function ($form) {
+            return [
+                'id'        => $form->id,
+                'file_name' => $form->original_name ?? basename($form->document_path), // Fallback if null
+                'purpose'   => $form->purpose,
+                'file_path' => Storage::url($form->document_path),
+                'user'          => $form->user ? [
+                    'name' => $form->user->name,
+                    'email' => $form->user->email,
+                ] : null,
+            ];
+        });
+
+        // Return to the 'Forms' React page component matching its expected prop names
+        return Inertia::render('forms', [
+            'uploadedFiles' => $files, 
+        ]);
+    }
+
+    public function formUpload(Request $request) {
+       
+        // Validate the file and the purpose description
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:pdf,doc,docx,jpg,png|max:10240',
+            'purpose'  => 'required|string|max:1000',
+        ]);
+        //  dd($request);
+        if ($request->hasFile('file')) {
+            // Upload the file to your local public storage disk
+            $uploadedFile = $request->file('file');
+            
+            $originalName = $uploadedFile->getClientOriginalName();
+
+            $filePath = $uploadedFile->store('uploads/forms', 'public');
+
+            // Create the record using your columns
+            Form::create([
+                'user_id'       => Auth::id(),
+                'document_path' => $filePath,
+                'original_name' => $originalName,
+                'purpose'       => $validated['purpose'],
+            ]);
+
+            return redirect()->back()->with('success', 'Document uploaded successfully!');
+        }
+
+        return redirect()->back()->with('error', 'Failed to upload document.');
+    }
+
+    public function formUpdate(Request $request, $id) {
+        $form = Form::findOrFail($id);
+
+        $validated = $request->validate([
+            'file'    => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:10240',
+            'purpose' => 'required|string|max:1000',
+        ]);
+
+        $updateData = [
+            'purpose' => $validated['purpose'],
+        ];
+
+        if ($request->hasFile('file')) {
+            
+            if ($form->document_path && Storage::disk('public')->exists($form->document_path)) {
+                Storage::disk('public')->delete($form->document_path);
+            }
+
+            $uploadedFile = $request->file('file');
+            $filePath = $uploadedFile->store('uploads/forms', 'public');
+
+            $updateData['document_path'] = $filePath;
+            $updateData['original_name'] = $uploadedFile->getClientOriginalName();
+        }
+
+        $form->update($updateData);
+
+        return redirect()->back()->with('success', 'Document updated successfully!');
+    }
+
+    public function formDelete($id) {
+        $form = Form::findOrFail($id);
+
+        if ($form->document_path && Storage::disk('public')->exists($form->document_path)) {
+            Storage::disk('public')->delete($form->document_path);
+        }
+
+        $form->delete();
+
+        return redirect()->back()->with('success', 'Document and its physical file were completely removed!');
     }
     
 }
