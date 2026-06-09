@@ -11,12 +11,15 @@ Route::inertia('/', 'auth/login')->name('home');
 
 // Add routes here for GLOBAL account
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('forms', 'forms')->name('forms');
     Route::inertia('profile', 'profile')->name('profile');
-
     Route::get('bidding', [AssetController::class, 'userBidding'])->name('bidding');
     Route::post('user/bidding/entry/{id}', [AssetController::class, 'userBiddingEntry'])->name('bidding.entry');
     Route::get('assets/{id}/asset-status', [AssetController::class, 'assetStatus'])->name('asset-status');
+
+    Route::get('forms', [AssetController::class, 'forms'])->name('forms');
+    Route::post('forms/form-upload', [AssetController::class, 'formUpload'])->name('form-upload');
+    Route::post('forms/form-update/{id}', [AssetController::class, 'formUpdate'])->name('form-update');
+    Route::post('forms/form-delete/{id}', [AssetController::class, 'formDelete'])->name('form-delete');
 });
 
 // Add routes here for admin account

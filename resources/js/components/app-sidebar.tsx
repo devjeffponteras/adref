@@ -86,11 +86,11 @@ const mainNavItems: NavItem[] = [
         icon: ClipboardPen,
         roles: ['admin'],
     },
-    {
-        title: 'My Profile',
-        href: profile(),
-        icon: SquareUserRound,
-    },
+    // {
+    //     title: 'My Profile',
+    //     href: profile(),
+    //     icon: SquareUserRound,
+    // },
     {
         title: 'Bidding',
         href: '/admin/bidding/index',
