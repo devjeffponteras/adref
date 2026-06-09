@@ -63,7 +63,9 @@ class AssetController extends Controller
             ->get();
 
         return Inertia::render('user/create-asset', [
-            'classifications' => $classifications
+            'classifications' => $classifications,
+            'accountable_personnels' => config('dropdown_data.ACCOUNTABLE_PERSONNEL'),
+            'end_user_departments' => config('dropdown_data.END_USER_DEPARTMENT')
         ]);
     }
 

@@ -107,19 +107,24 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
         return departments[seq - 1] || `Approval Stage ${seq}`;
     };
 
+    const handleBack = () => {
+        // Standard browser back function works perfectly with Inertia
+        window.history.back(); 
+    };
+
     return (
         <>
             <Head title={`Document Tracker - ${asset.serial_plate_id_number || 'Asset'}`} />
-            
+
             <div className="w-full p-4 max-w-3xl mx-auto space-y-6 antialiased selection:bg-emerald-500/10">
-                
+
                 {/* Header Actions */}
                 <div className="flex items-center justify-between">
-                    <Link href="/my-assets" className="inline-flex items-center gap-2 text-xs uppercase font-bold tracking-wider text-gray-400 hover:text-emerald-700 transition-all group">
-                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back to Fleet List
+                    <Link onClick={handleBack} className="inline-flex items-center gap-2 text-xs uppercase font-bold tracking-wider text-gray-400 hover:text-emerald-700 transition-all group">
+                        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Back
                     </Link>
                     <span className="text-[10px] font-extrabold bg-linear-to-r from-emerald-50 to-teal-50 text-emerald-800 border border-emerald-200/60 px-3 py-1 rounded-full uppercase tracking-widest shadow-xs">
-                        Audit Trail Sequence
+                        Asset Disposal Request Status
                     </span>
                 </div>
 

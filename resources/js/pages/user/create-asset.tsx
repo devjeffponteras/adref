@@ -73,6 +73,17 @@ export default function CreateAsset({ classifications }: Props) {
                                     onChange={e => setData('accountable_personnel', e.target.value)}
                                     className="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                                 />
+                                {/* <select 
+                                    value={data.usage_type} 
+                                    onChange={e => setData('usage_type', e.target.value)}
+                                >
+                                    <option value="">Select an option...</option>
+                                    {usageTypes.map((type) => (
+                                        <option key={type.value} value={type.value}>
+                                            {type.label}
+                                        </option>
+                                    ))}
+                                </select> */}
                                 {errors.accountable_personnel && <span className="text-xs text-rose-500 font-medium">{errors.accountable_personnel}</span>}
                             </div>
 
