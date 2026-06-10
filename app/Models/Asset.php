@@ -23,6 +23,8 @@ class Asset extends Model
         'end_user_department',
         'asset_classification_id',
         'reasons_for_disposal',
+        'assessment_reports',
+        'asset_photos',
         'asset_location',
         'status',
         'assessment_report_path',
@@ -31,6 +33,11 @@ class Asset extends Model
 
     protected $attributes = [
         'status' => 'Pending',
+    ];
+
+    protected $casts = [
+        'assessment_reports' => 'array',
+        'asset_photos' => 'array'
     ];
 
     public function approvals(): HasMany

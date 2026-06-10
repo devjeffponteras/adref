@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Folder, FolderCheck, SearchCheckIcon } from 'lucide-react';
+import { Folder, FolderCheck, SearchCheckIcon, FileSearch2, FolderOpen } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { WelcomeNoteMini } from '@/components/welcome-note-mini';
 import { Link } from '@inertiajs/react';
@@ -68,10 +68,33 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                             </div>
                         </div>
                     </div>
+                    <div className="w-full md:w-1/4">
+                        <div className="stat-card bg-emerald-950 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="mb-1 opacity-75 text-sm">Final Stages</p>
+                                    <h2 className="font-bold text-2xl">{historyTransactions.length || 0}</h2>
+                                </div>
+                                <FolderCheck className='h-8 w-8 opacity-80' />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="w-full md:w-1/4">
+                        <div className="stat-card bg-green-700 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="mb-1 opacity-75 text-sm">All Transactions</p>
+                                    <h2 className="font-bold text-2xl">{assetStatuses.length || 0}</h2>
+                                </div>
+                                <FolderOpen className='h-8 w-8 opacity-80' />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
                     <div className="overflow-x-auto">
+                        <h3 className='font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex gap-2 '><Folder className='w-5 h-5' /> Pending Transactions</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
                             <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
                                 <tr>
@@ -132,29 +155,88 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
 
                 <hr className="border-gray-100" />
 
-                <div className="flex flex-col md:flex-row gap-4 my-6">
-                    <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-emerald-950 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="mb-1 opacity-75 text-sm">Total History Log Entries</p>
-                                    <h2 className="font-bold text-2xl">{historyTransactions.length || 0}</h2>
-                                </div>
-                                <FolderCheck className='h-8 w-8 opacity-80' />
-                            </div>
-                        </div>
+                <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
+                    <div className="overflow-x-auto">
+                        <h3 className='font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex gap-2 '><FolderOpen className='w-5 h-5' />All Transactions</h3>
+                        <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
+                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                                <tr>
+                                    <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
+                                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Department / Remarks</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
+                                </tr>
+                            </thead>
+                            
+                            <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                {historyTransactions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
+                                            No active asset disposal data found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    assetStatuses.map((item) => {
+                                        const formattedDate = item.created_at 
+                                            ? new Date(item.created_at).toLocaleString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })
+                                            : 'No Date Recorded';
+
+                                        return (
+                                            <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
+                                                    <Link 
+                                                        href={`/assets/${item.asset_id}/asset-status`} 
+                                                        className="inline-flex items-center gap-1.5 text-sm text-white font-medium transition-colors outline-1 px-2 py-2 rounded-full shadow bg-green-700 hover:bg-green-900"
+                                                        title='View Status'
+                                                    >
+                                                        <FileSearch2 className='w-5 h-5'  />
+                                                    </Link>
+                                                </td>
+                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
+                                                    {formattedDate}
+                                                </td>
+                                                <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    {item.asset?.control_number}
+                                                </td>
+                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
+                                                    <div className="font-medium text-gray-800">{item.asset?.department || 'Asset Department'}</div>
+                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
+                                                </td>
+                                                <td className="px-4 py-4 font-medium text-gray-700">
+                                                    {item.approver?.name || 'System Auto'}
+                                                </td>
+                                                <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    Stage {item.seq_no}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
+                <hr className="border-gray-100" />
+
                 <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
                     <div className="overflow-x-auto">
+                        <h3 className='gap-2 font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex'><FolderCheck className='w-5 h-5' /> Final Stages</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
                             <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Department / Remarks</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created / Approved By</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status / Action</th>
                                 </tr>

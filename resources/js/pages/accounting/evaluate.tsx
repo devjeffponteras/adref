@@ -304,7 +304,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
 
 AccountingEvaluate.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: '/asid-dashboard' },
+        { title: 'Dashboard', href: '/accounting-dashboard' },
         { title: 'Asset Evaluation' },
     ],
 };

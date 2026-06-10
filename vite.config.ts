@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
+import path from 'path'
 
 export default defineConfig({
     plugins: [
@@ -29,11 +30,18 @@ export default defineConfig({
         }),
         
     ],
-
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './resources/js'),
+            '@config': path.resolve(__dirname, './resources/js/config'),
+        },
+    },
     server: {
         host: '172.16.8.66', 
-        port: 5173,
+        // host: true, 
+        port: 8994,
         strictPort: true,
+        cors: true,
         hmr: {
             host: '172.16.8.66',
         },
