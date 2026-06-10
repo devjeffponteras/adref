@@ -133,7 +133,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                     <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
                     
                     <span className="text-[10px] uppercase font-black tracking-widest text-emerald-400 opacity-90 block mb-1">
-                        System Identity Signature
+                        Item Brand &amp; Model
                     </span>
 
                     <h1 className="font-extrabold text-2xl tracking-tight mb-5 drop-shadow-xs">
@@ -142,17 +142,17 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-t border-white/10 pt-4">
                         <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Control Reference</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Control Number</span>
                             <span className="font-bold text-emerald-50 tracking-wide">{asset.control_number || 'N/A'}</span>
                         </div>
 
                         <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Hardware Tag Mapping</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Serial Tag / Plate Number</span>
                             <span className="font-mono text-xs font-medium text-emerald-100 bg-white/5 px-2 py-0.5 rounded border border-white/5 w-fit tracking-wider">{asset.serial_plate_id_number || 'N/A'}</span>
                         </div>
 
                         <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Origin Department</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">End-User &amp; Department</span>
                             <span className="font-medium text-emerald-50/90 truncate" title={asset.end_user_department}>{asset.end_user_department || 'N/A'}</span>
                         </div>
                     </div>
@@ -216,7 +216,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                         <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100/50">
                                             <CalendarDays className="h-4 w-4 text-slate-400 shrink-0" />
                                             <div className="overflow-hidden">
-                                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide leading-none mb-0.5">Timestamp Matrix</p>
+                                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide leading-none mb-0.5">Approval Timestamp</p>
                                                 <p className="font-semibold text-slate-700 truncate">
                                                     {step.approval_date ? new Date(step.approval_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending Release'}
                                                 </p>
@@ -236,7 +236,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                             <div className="sm:col-span-2 flex items-start gap-2.5 bg-slate-50 border border-slate-200/60 p-3 rounded-xl mt-1 text-slate-700 shadow-inner">
                                                 <MessageSquare className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                                                 <div className="space-y-0.5">
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Official Evaluation Memo</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Evaluation Remarks</p>
                                                     <p className="text-xs font-medium text-slate-600 leading-relaxed italic">"{step.remarks}"</p>
                                                 </div>
                                             </div>

@@ -2,8 +2,9 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import SubHeader from '@/components/sub-header';
 import { Link, useForm } from '@inertiajs/react';
-import { FileText, Plus, X, FolderHeart, Upload } from 'lucide-react';
+import { FileText, Plus, X, Upload } from 'lucide-react';
 import { createAsset } from '@/routes';
+import { ACCOUNTABLE_PERSONNEL, END_USER_DEPARTMENT } from '@config/dropdown_data';
 
 interface Classification {
     id: number;
@@ -14,34 +15,56 @@ interface Props {
     classifications: Classification[];
 }
 
+// Interfaces for both multi-upload item formats
+interface AssessmentReportItem {
+    id: string;
+    file: File | null;
+}
+
+interface AssetPhotoItem {
+    id: string;
+    file: File | null;
+}
+
 export default function CreateAsset({ classifications }: Props) {
 
-    // FIXED: Changed keys to match your backend database snake_case structure
     const { data, setData, post, processing, errors, reset } = useForm({
         accountable_personnel: '',
         model: '',
-        description: '', // If you use an extra column for reason or notes
+        description: '',
         brand_make: '',
         serial_plate_id_number: '',
         end_user_department: '',
         asset_classification_id: '', 
         reasons_for_disposal: '', 
         asset_location: '',
-        assessment_report_path: null as File | null,
-        asset_photo_path: null as File | null,
+        
+        // Dynamic array storage setups for both structural upload properties
+        assessment_reports: [
+            { id: crypto.randomUUID(), file: null }
+        ] as AssessmentReportItem[],
+
+        asset_photos: [
+            { id: crypto.randomUUID(), file: null }
+        ] as AssetPhotoItem[],
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/store-asset', {
-            forceFormData: true, // Crucial for uploading file binaries
-            onSuccess: () => reset(),
+            forceFormData: true,
+            onSuccess: () => reset(
+                'accountable_personnel', 'model', 'description', 
+                'brand_make', 'serial_plate_id_number', 'end_user_department', 
+                'asset_classification_id', 'reasons_for_disposal', 'asset_location', 
+                'assessment_reports', 'asset_photos'
+            ),
         });
     };
 
     return (
         <>
-        <Head title="Scan / Log Asset" />
+            <Head title="Scan / Log Asset" />
 
             <SubHeader />
 
@@ -59,31 +82,26 @@ export default function CreateAsset({ classifications }: Props) {
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
                         
+                        {/* Form Inputs Grid System */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            
                             {/* Accountable Personnel */}
                             <div className="flex flex-col gap-2">
                                 <label htmlFor="accountable_personnel" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                                     Accountable Personnel
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     id="accountable_personnel"
-                                    value={data.accountable_personnel}
+                                    value={data.accountable_personnel || ''}
                                     onChange={e => setData('accountable_personnel', e.target.value)}
-                                    className="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
-                                />
-                                {/* <select 
-                                    value={data.usage_type} 
-                                    onChange={e => setData('usage_type', e.target.value)}
+                                    className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                                 >
-                                    <option value="">Select an option...</option>
-                                    {usageTypes.map((type) => (
-                                        <option key={type.value} value={type.value}>
-                                            {type.label}
+                                    <option value="" disabled>Select personnel...</option>
+                                    {ACCOUNTABLE_PERSONNEL.map((person) => (
+                                        <option key={person.value} value={person.value}>
+                                            {person.label}
                                         </option>
                                     ))}
-                                </select> */}
+                                </select>
                                 {errors.accountable_personnel && <span className="text-xs text-rose-500 font-medium">{errors.accountable_personnel}</span>}
                             </div>
 
@@ -151,13 +169,19 @@ export default function CreateAsset({ classifications }: Props) {
                                 <label htmlFor="end_user_department" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                                     End-User / Department
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     id="end_user_department"
-                                    value={data.end_user_department}
+                                    value={data.end_user_department || ''}
                                     onChange={e => setData('end_user_department', e.target.value)}
-                                    className="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
-                                />
+                                    className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+                                >
+                                    <option value="" disabled>Select personnel...</option>
+                                    {END_USER_DEPARTMENT.map((person) => (
+                                        <option key={person.value} value={person.value}>
+                                            {person.label}
+                                        </option>
+                                    ))}
+                                </select>
                                 {errors.end_user_department && <span className="text-xs text-rose-500 font-medium">{errors.end_user_department}</span>}
                             </div>
 
@@ -215,49 +239,120 @@ export default function CreateAsset({ classifications }: Props) {
                             * Note: All asset information needed should be filled out, please indicate N/A for not applicable sections.
                         </div>
 
-                        {/* File Attachments */}
+                        {/* File Attachments Grid Layout */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-gray-100">
                             
-                            {/* Document Attachment Field */}
-                            <div className="flex flex-col gap-2">
+                            {/* Document Attachment Section */}
+                            <div className="flex flex-col gap-3">
                                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    + Attach Assessment Report
+                                    Assessment Reports
                                 </label>
-                                <div className="flex items-center gap-2">
-                                    <label className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group">
-                                        <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
-                                            {data.assessment_report_path ? data.assessment_report_path.name : "Choose assessment report..."}
-                                        </span>
-                                        <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
-                                        <input 
-                                            type="file" 
-                                            className="hidden" 
-                                            onChange={e => setData('assessment_report_path', e.target.files ? e.target.files[0] : null)}
-                                        />
-                                    </label>
-                                </div>
-                                {errors.assessment_report_path && <span className="text-xs text-rose-500 font-medium">{errors.assessment_report_path}</span>}
+
+                                {data.assessment_reports.map((item, index) => (
+                                    <div key={item.id} className="flex items-center gap-2">
+                                        <label className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group">
+                                            <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
+                                                {item.file ? item.file.name : `Choose assessment report #${index + 1}...`}
+                                            </span>
+                                            <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+                                            <input 
+                                                type="file" 
+                                                className="hidden" 
+                                                onChange={e => {
+                                                    const files = e.target.files;
+                                                    const updatedReports = [...data.assessment_reports];
+                                                    updatedReports[index].file = files ? files[0] : null;
+                                                    setData('assessment_reports', updatedReports);
+                                                }}
+                                            />
+                                        </label>
+
+                                        {data.assessment_reports.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const updatedReports = data.assessment_reports.filter(r => r.id !== item.id);
+                                                    setData('assessment_reports', updatedReports);
+                                                }}
+                                                className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {errors.assessment_reports && <span className="text-xs text-rose-500 font-medium">{errors.assessment_reports}</span>}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setData('assessment_reports', [
+                                            ...data.assessment_reports,
+                                            { id: crypto.randomUUID(), file: null }
+                                        ]);
+                                    }}
+                                    className="w-fit text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-1 transition-colors cursor-pointer"
+                                >
+                                    + Add More Reports
+                                </button>
                             </div>
 
-                            {/* Photo Upload Field */}
-                            <div className="flex flex-col gap-2">
+                            {/* Dynamic Photo Upload Field (UPDATED TO MULTI-UPLOAD) */}
+                            <div className="flex flex-col gap-3">
                                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    + Clear Photo of the Asset
+                                    Photos of the Asset
                                 </label>
-                                <div className="flex items-center gap-2">
-                                    <label className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group">
-                                        <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
-                                            {data.asset_photo_path ? data.asset_photo_path.name : "Choose physical image file..."}
-                                        </span>
-                                        <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
-                                        <input 
-                                            type="file" 
-                                            className="hidden" 
-                                            onChange={e => setData('asset_photo_path', e.target.files ? e.target.files[0] : null)}
-                                        />
-                                    </label>
-                                </div>
-                                {errors.asset_photo_path && <span className="text-xs text-rose-500 font-medium">{errors.asset_photo_path}</span>}
+
+                                {data.asset_photos.map((item, index) => (
+                                    <div key={item.id} className="flex items-center gap-2">
+                                        <label className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group">
+                                            <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
+                                                {item.file ? item.file.name : `Choose physical image file #${index + 1}...`}
+                                            </span>
+                                            <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+                                            <input 
+                                                type="file" 
+                                                accept="image/*"
+                                                className="hidden" 
+                                                onChange={e => {
+                                                    const files = e.target.files;
+                                                    const updatedPhotos = [...data.asset_photos];
+                                                    updatedPhotos[index].file = files ? files[0] : null;
+                                                    setData('asset_photos', updatedPhotos);
+                                                }}
+                                            />
+                                        </label>
+
+                                        {data.asset_photos.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const updatedPhotos = data.asset_photos.filter(p => p.id !== item.id);
+                                                    setData('asset_photos', updatedPhotos);
+                                                }}
+                                                className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {errors.asset_photos && <span className="text-xs text-rose-500 font-medium">{errors.asset_photos}</span>}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setData('asset_photos', [
+                                            ...data.asset_photos,
+                                            { id: crypto.randomUUID(), file: null }
+                                        ]);
+                                    }}
+                                    className="w-fit text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-1 transition-colors cursor-pointer"
+                                >
+                                    + Add More Photos
+                                </button>
                             </div>
                         </div>
 

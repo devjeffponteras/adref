@@ -84,29 +84,60 @@ class AssetController extends Controller
             'asset_location'          => 'nullable|string|max:255',
             'description'             => 'nullable|string',
             'reasons_for_disposal'    => 'nullable|string', 
-            'assessment_report_path'  => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-            'asset_photo_path'        => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            
+            // Multi-upload validation hooks
+            'assessment_reports'        => 'required|array|min:1',
+            'assessment_reports.*.file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+            'asset_photos'              => 'required|array|min:1',
+            'asset_photos.*.file'       => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        // dd($request->toArray());
-
-        $validated['user_id'] = auth()->id();
-        $validated['status'] = 'Pending';
-        $validated['control_number'] = null;
-
-        // File handler mapping
-        if ($request->hasFile('assessment_report_path')) {
-            $validated['assessment_report_path'] = $request->file('assessment_report_path')->store('reports', 'public');
-        }
-        if ($request->hasFile('asset_photo_path')) {
-            $validated['asset_photo_path'] = $request->file('asset_photo_path')->store('photos', 'public');
+        $reportPaths = [];
+        if ($request->has('assessment_reports')) {
+            foreach ($request->input('assessment_reports') as $index => $item) {
+                if ($request->hasFile("assessment_reports.{$index}.file")) {
+                    $file = $request->file("assessment_reports.{$index}.file");
+                    $reportPaths[] = $file->store('reports', 'public');
+                }
+            }
         }
 
-        // Use a database transaction to ensure data consistency across tables
-        DB::transaction(function () use ($validated) {
+        $photoPaths = [];
+        if ($request->has('asset_photos')) {
+            foreach ($request->input('asset_photos') as $index => $item) {
+                if ($request->hasFile("asset_photos.{$index}.file")) {
+                    $file = $request->file("asset_photos.{$index}.file");
+                    $photoPaths[] = $file->store('photos', 'public');
+                }
+            }
+        }
+
+        $assetData = [
+            'accountable_personnel'   => $validated['accountable_personnel'],
+            'model'                   => $validated['model'],
+            'brand_make'              => $validated['brand_make'],
+            'serial_plate_id_number'  => $validated['serial_plate_id_number'],
+            'end_user_department'     => $validated['end_user_department'],
+            'asset_classification_id' => $validated['asset_classification_id'],
+            'asset_location'          => $validated['asset_location'],
+            'description'             => $validated['description'],
+            'reasons_for_disposal'    => $validated['reasons_for_disposal'],
             
-            $asset = Asset::create($validated);
+            // Storing the arrays of file path strings
+            'assessment_reports'      => $reportPaths,
+            'asset_photos'            => $photoPaths,
+            
+            // System defaults
+            'user_id'                 => auth()->id(),
+            'status'                  => 'Pending',
+            'control_number'          => null,
+        ];
 
+        DB::transaction(function () use ($assetData) {
+            
+            $asset = Asset::create($assetData);
+
+            // Populate baseline workflow matrices
             for ($i = 1; $i <= 8; $i++) {
                 $asset->approvals()->create([
                     'seq_no'        => $i,
@@ -118,6 +149,7 @@ class AssetController extends Controller
                 ]);
             }
 
+            // Initialize progress tracker logs
             AssetStatus::create([
                 'asset_id'      => $asset->id,
                 'seq_no'        => 1,
@@ -303,11 +335,9 @@ class AssetController extends Controller
     public function asidViewAsset($id)
     {
         $asset = Asset::with(['user', 'classification'])->findOrFail($id);
-        // dd($asset->toArray());
         return Inertia::render('asid/view', [
             'asset' => $asset
         ]);
-        
     }
 
     public function asidViewAssetAction(Request $request, $id)
