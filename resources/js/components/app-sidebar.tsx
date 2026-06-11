@@ -33,6 +33,7 @@ import {
     asidDashboard,
     mcdDashboard,
     userDashboard,
+    mepeoDashboard,
     accountingDashboard,
     disposals,
     bidding,
@@ -49,7 +50,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         icon: LayoutGrid,
-        roles: ['admin', 'asid', 'mcd', 'user', 'mapeo', 'accounting'],
+        roles: ['admin', 'asid', 'mcd', 'user', 'mepeo', 'accounting'],
         href: '/dashboard',
     },
     {
@@ -117,7 +118,7 @@ export function AppSidebar() {
             asid:  asidDashboard(),
             mcd:   mcdDashboard(),
             user:  userDashboard(),
-            mapeo: userDashboard(),
+            mepeo: mepeoDashboard(),
             accounting: accountingDashboard(),
         };
         return routes[role] || userDashboard();

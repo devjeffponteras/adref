@@ -21,6 +21,7 @@ interface AccountingInformation {
     acquisition_date: string;
     acquisition_cost: string;
     book_value: string;
+    status: string;
 }
 
 interface Asset {
@@ -92,26 +93,28 @@ export default function AccountingDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 )}
 
-                <div className="flex flex-col md:flex-row gap-4 mb-5">
-                    <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-emerald-700 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="mb-1 opacity-75 text-sm">Pending Transactions</p>
-                                    <h2 className="font-bold text-2xl">{pendingTransactions.length}</h2>
-                                </div>
-                                <Folder className='h-8 w-8 opacity-80' />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-950/10 cursor-pointer">
+                        <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/80">Pending Transactions</p>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{pendingTransactions.length || 0}</h2>
+                            </div>
+                            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                                <Folder className='h-6 w-6 text-white' />
                             </div>
                         </div>
                     </div>
-                    <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-emerald-900 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="mb-1 opacity-75 text-sm">Evaluated Transactions</p>
-                                    <h2 className="font-bold text-2xl">{evaluatedTransactions}</h2>
-                                </div>
-                                <FolderCheck className='h-8 w-8 opacity-80' />
+                    <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-cyan-700 to-[#004d40] p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-teal-950/10 cursor-pointer">
+                        <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-cyan-100/80">Evaluated Transactions</p>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{evaluatedTransactions}</h2>
+                            </div>
+                            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                                <FolderCheck className='h-6 w-6 text-white' />
                             </div>
                         </div>
                     </div>
