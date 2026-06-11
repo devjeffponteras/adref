@@ -62,7 +62,7 @@ class DashboardController extends Controller
 
     public function mepeoDashboard(): Response
     {
-        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.mcd_information'])
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.mcd_information', 'asset.mepeo_information'])
             ->orderBy('created_at', 'desc')
             ->get();
 

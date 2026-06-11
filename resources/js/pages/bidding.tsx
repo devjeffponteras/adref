@@ -102,6 +102,11 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
 
     const isEmployee = data.bidder_classification === 'PMC Employee' || data.bidder_classification === 'MMPRC Employee';
 
+    const currentDate = new Date();
+
+    const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+    const currentYear = currentDate.getFullYear();
+
     return (
         <>
             <Head title="Assets for Bidding" />
@@ -114,10 +119,10 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                     </div>
                 )}
 
-                <div className="mb-6 overflow-hidden rounded-xl border border-emerald-900 bg-emerald-900 p-4 shadow-md shadow-emerald-950/10">
+                <div className="mb-6 overflow-hidden rounded-xl border border-emerald-900 bg-emerald-900 p-4 shadow shadow">
                     <div className="flex items-center justify-between">
                         <h5 className="text-lg font-bold tracking-wide text-white">
-                            List of Assets for Bidding — Active Deployment Staging
+                            List of Assets for Bidding — {currentMonth} {currentYear} Bidding Cycle
                         </h5>
                     </div>
                 </div>
@@ -132,7 +137,7 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                     <div className="overflow-x-auto w-full">
                         {assetOnBidding.length > 0 ? (
                             <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                                <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                                <thead className="bg-gray-200 text-xs font-bold uppercase tracking-wider text-emerald-800">
                                     <tr>
                                         <th className="py-3.5 pl-6 pr-3 font-semibold">Control Number</th>
                                         <th className="px-4 py-3.5 font-semibold">Name of Asset / Details</th>

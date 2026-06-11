@@ -56,37 +56,46 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                 {/* mini sub header */}
                 <WelcomeNoteMini />
                 
-                <div className="flex flex-col md:flex-row gap-4 mb-5">
-                    <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-green-900 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="mb-1 opacity-75 text-sm">Pending Transactions</p>
-                                    <h2 className="font-bold text-2xl">{pendingTransactions.length}</h2>
-                                </div>
-                                <Folder className='h-8 w-8 opacity-80' />
+                {/* Metric Cards Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {/* Pending Transactions */}
+                    <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange-950/10 cursor-pointer">
+                        <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-amber-100/80">Pending Transactions</p>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{pendingTransactions.length}</h2>
+                            </div>
+                            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                                <Folder className='h-6 w-6 text-white' />
                             </div>
                         </div>
                     </div>
-                    <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-emerald-950 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="mb-1 opacity-75 text-sm">Final Stages</p>
-                                    <h2 className="font-bold text-2xl">{historyTransactions.length || 0}</h2>
-                                </div>
-                                <FolderCheck className='h-8 w-8 opacity-80' />
+
+                    {/* Final Stages */}
+                    <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-950/10 cursor-pointer">
+                        <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/80">Final Stages</p>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{historyTransactions.length || 0}</h2>
+                            </div>
+                            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                                <FolderCheck className='h-6 w-6 text-white' />
                             </div>
                         </div>
                     </div>
-                    <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-green-700 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="mb-1 opacity-75 text-sm">All Transactions</p>
-                                    <h2 className="font-bold text-2xl">{assetStatuses.length || 0}</h2>
-                                </div>
-                                <FolderOpen className='h-8 w-8 opacity-80' />
+
+                    {/* All Transactions */}
+                    <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-cyan-700 to-[#004d40] p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-teal-950/10 cursor-pointer">
+                        <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-cyan-100/80">All Transactions</p>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{assetStatuses.length || 0}</h2>
+                            </div>
+                            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                                <FolderOpen className='h-6 w-6 text-white' />
                             </div>
                         </div>
                     </div>
@@ -96,7 +105,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     <div className="overflow-x-auto">
                         <h3 className='font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex gap-2 '><Folder className='w-5 h-5' /> Pending Transactions</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800">
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Applicant</th>
@@ -159,7 +168,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     <div className="overflow-x-auto">
                         <h3 className='font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex gap-2 '><FolderOpen className='w-5 h-5' />All Transactions</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800">
                                 <tr>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
@@ -231,7 +240,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     <div className="overflow-x-auto">
                         <h3 className='gap-2 font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex'><FolderCheck className='w-5 h-5' /> Final Stages</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800">
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>

@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { Link } from '@inertiajs/react';
-import { Folder, CircleCheck, XIcon } from 'lucide-react';
+import { Folder, CircleCheck, XIcon, FolderCheck } from 'lucide-react';
 
 interface User {
     id: number;
@@ -24,6 +24,7 @@ interface MepeoInformation {
     waste_classification_id: string;
     waste_characteristic_id: string;
     remarks: string;
+    status: string;
 }
 
 interface Asset {
@@ -66,7 +67,20 @@ export default function MepeoDashboard({ assetStatuses }: DashboardProps) {
 
     const { flash } = usePage().props as any;
 
-    const pendingTransactions = assetStatuses?.filter(item => item?.asset?.mcd_information?.status === 'Approved') || [];
+    const pendingTransactions = assetStatuses?.filter(item => {
+        const isMcdApproved = item?.asset?.mcd_information?.status === 'Approved';
+        const isMepeoNotExist = !item?.asset?.mepeo_information;
+        return isMcdApproved && isMepeoNotExist;
+    }) || [];
+
+    const evaluatedTransactionsCount = assetStatuses?.filter(item => item.asset?.mepeo_information).length || 0;
+
+    const displayedTransactions = assetStatuses?.filter(item => {
+        const isMcdApproved = item?.asset?.mcd_information?.status === 'Approved';
+        const hasMepeoInfo = !!item.asset?.mepeo_information;
+
+        return (isMcdApproved && !hasMepeoInfo) || hasMepeoInfo;
+    }) || [];
 
     return (
         <>
@@ -92,15 +106,28 @@ export default function MepeoDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 )}
 
-                <div className="flex flex-col md:flex-row gap-4 mb-5">
-                    <div className="w-full md:w-1/4">
-                        <div className="stat-card bg-emerald-700 text-white p-4 rounded-xl border-0 shadow-sm h-20 hover:-translate-y-1.5 transition-all cursor-pointer">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="mb-1 opacity-75 text-sm">Pending Transactions</p>
-                                    <h2 className="font-bold text-2xl">{pendingTransactions.length}</h2>
-                                </div>
-                                <Folder className='h-8 w-8 opacity-80' />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-950/10 cursor-pointer">
+                        <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-amber-100">Pending Transactions</p>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{pendingTransactions.length}</h2>
+                            </div>
+                            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                                <Folder className='h-6 w-6 text-white' />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-cyan-700 to-[#004d40] p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-teal-950/10 cursor-pointer">
+                        <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-cyan-100/80">Evaluated Transactions</p>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{evaluatedTransactionsCount}</h2>
+                            </div>
+                            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                                <FolderCheck className='h-6 w-6 text-white' />
                             </div>
                         </div>
                     </div>
@@ -120,15 +147,14 @@ export default function MepeoDashboard({ assetStatuses }: DashboardProps) {
                             </thead>
                             
                             <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {!assetStatuses || assetStatuses.length === 0 ? (
+                                {displayedTransactions.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
                                             No active asset disposal data found.
                                         </td>
                                     </tr>
                                 ) : (
-                                    assetStatuses.map((item) => {
-
+                                    displayedTransactions.map((item) => {
                                         const isLogged = !!item.asset?.mepeo_information;
 
                                         const formattedDate = item.created_at 
