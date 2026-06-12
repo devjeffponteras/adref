@@ -43,7 +43,7 @@ class AccountingInformation extends Model
         return [
             'acquisition_date' => 'date',
             'acquisition_cost' => 'decimal:2',
-            'book_value'       => 'decimal:2',
+            'book_value' => 'decimal:2',
         ];
     }
 

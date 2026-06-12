@@ -1,8 +1,8 @@
-import React from 'react';
 import { Head } from '@inertiajs/react';
-import SubHeader from '@/components/sub-header';
 import { Link, useForm } from '@inertiajs/react';
 import { FileText, Plus, X, Upload } from 'lucide-react';
+import React from 'react';
+import SubHeader from '@/components/sub-header';
 import { createAsset } from '@/routes';
 import { ACCOUNTABLE_PERSONNEL, END_USER_DEPARTMENT } from '@config/dropdown_data';
 

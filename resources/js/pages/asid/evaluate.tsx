@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { CircleCheck, ArrowLeftCircle, XIcon } from 'lucide-react';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface AsidInformation {
     id: number;

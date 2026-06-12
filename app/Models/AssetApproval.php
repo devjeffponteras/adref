@@ -15,7 +15,7 @@ class AssetApproval extends Model
         'approver_id',
         'status',
         'approval_date',
-        'remarks'
+        'remarks',
     ];
 
     /**

@@ -33,7 +33,10 @@ interface AssetProfileCardProps {
 export function AssetProfileCard({ asset }: AssetProfileCardProps) {
 
     const openDocumentSecurely = (path: string | null) => {
-        if (!path) return;
+        if (!path) {
+return;
+}
+
         window.open(`/storage/${path}`, '_blank');
     };
 

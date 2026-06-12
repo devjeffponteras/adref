@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowLeftCircle, FolderCheckIcon } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -63,7 +63,10 @@ interface EvaluateProps {
 }
 
 const formatDateForInput = (dateString: string | undefined | null): string => {
-    if (!dateString) return '';
+    if (!dateString) {
+return '';
+}
+
     return dateString.split(' ')[0].split('T')[0];
 };
 
@@ -91,8 +94,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
     const handleActionSubmit = (actionType: 'submit-workflow' | 'approve-workflow' | 'save-only') => {
         if (actionType === 'submit-workflow') {
             post(`/accounting-evaluate/${asset.id}/workflow-action`);
-        } 
-        else if (actionType === 'save-only') {
+        } else if (actionType === 'save-only') {
             post(`/accounting-evaluate/${asset.id}/save-only`);
         } else {
             post(`/accounting-evaluate/${asset.id}/action`);

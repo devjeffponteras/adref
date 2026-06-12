@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { useForm, Head, usePage, Link } from '@inertiajs/react';
 import { Folder, CircleCheck, XIcon, Gavel, FileText, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -67,7 +67,9 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
     };
 
     const handleConfirmPublish = () => {
-        if (!selectedAsset) return;
+        if (!selectedAsset) {
+return;
+}
 
         post(`/admin/bidding/store/${selectedAsset.id}`, {
             onSuccess: () => handleCloseModal(),

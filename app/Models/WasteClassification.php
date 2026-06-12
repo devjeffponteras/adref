@@ -30,8 +30,6 @@ class WasteClassification extends Model
     /**
      * Get all mepeo information evaluations linked to this waste classification.
      * * This allows you to do: $classification->mepeoEntries
-     *
-     * @return HasMany
      */
     public function mepeoEntries(): HasMany
     {

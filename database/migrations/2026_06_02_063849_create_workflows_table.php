@@ -16,9 +16,9 @@ return new class extends Migration
 
             $table->integer('asset_id')->nullable();
             $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
-                  ->default('Pending');
+                ->default('Pending');
             $table->integer('workflow_step')->nullable();
-            
+
             $table->timestamps();
         });
     }

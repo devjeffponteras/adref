@@ -121,12 +121,16 @@ export function AppSidebar() {
             mepeo: mepeoDashboard(),
             accounting: accountingDashboard(),
         };
+
         return routes[role] || userDashboard();
     };
 
     const filteredNavItems: NavItem[] = mainNavItems
         .filter((item) => {
-            if (!item.roles) return true;
+            if (!item.roles) {
+return true;
+}
+
             return item.roles.includes(userRole);
         })
         .map((item) => {
@@ -136,6 +140,7 @@ export function AppSidebar() {
                     href: resolveDashboardRoute(userRole)
                 };
             }
+
             return item;
         });
 

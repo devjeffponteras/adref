@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
-use App\Models\Role;
-use App\Models\User;
 use App\Models\Asset;
 use App\Models\AssetBidding;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminController extends Controller
 {
@@ -21,7 +21,7 @@ class AdminController extends Controller
         $users = User::with('role')->get();
 
         return Inertia::render('admin/user-management/index', [
-            'users' => $users
+            'users' => $users,
         ]);
     }
 
@@ -31,7 +31,7 @@ class AdminController extends Controller
     public function userManagementCreate(): Response
     {
         return Inertia::render('admin/user-management/create', [
-            'roles' => Role::all()
+            'roles' => Role::all(),
         ]);
     }
 
@@ -43,7 +43,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed', 
+            'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
         ]);
 

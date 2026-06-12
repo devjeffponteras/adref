@@ -30,8 +30,6 @@ class WasteCharacteristic extends Model
     /**
      * Get all mepeo information evaluations logged with this waste characteristic.
      * This allows you to run: $characteristic->mepeoEntries
-     *
-     * @return HasMany
      */
     public function mepeoEntries(): HasMany
     {

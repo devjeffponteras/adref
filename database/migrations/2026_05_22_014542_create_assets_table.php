@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             // Foreign key from users table
-           $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
 
             $table->string('control_number');
             $table->string('accountable_personnel');
@@ -24,11 +24,11 @@ return new class extends Migration
             $table->string('brand_make')->nullable();
             $table->string('serial_plate_id_number')->unique()->nullable(); // Unique if it acts as a primary identifier
             $table->string('end_user_department');
-            
+
             // Dropdown & Additional Details
             $table->foreignId('asset_classification_id')
-              ->constrained('asset_classifications')
-              ->onDelete('restrict');
+                ->constrained('asset_classifications')
+                ->onDelete('restrict');
 
             $table->text('reasons_for_disposal')->nullable();
             $table->string('asset_location')->nullable();

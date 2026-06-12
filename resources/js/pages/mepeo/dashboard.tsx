@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { Link } from '@inertiajs/react';
 import { Folder, CircleCheck, XIcon, FolderCheck } from 'lucide-react';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -70,6 +70,7 @@ export default function MepeoDashboard({ assetStatuses }: DashboardProps) {
     const pendingTransactions = assetStatuses?.filter(item => {
         const isMcdApproved = item?.asset?.mcd_information?.status === 'Approved';
         const isMepeoNotExist = !item?.asset?.mepeo_information;
+
         return isMcdApproved && isMepeoNotExist;
     }) || [];
 

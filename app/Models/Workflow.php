@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Workflow extends Model
 {
@@ -18,7 +18,7 @@ class Workflow extends Model
     ];
 
     protected $casts = [
-        'asset_id'      => 'integer',
+        'asset_id' => 'integer',
         'workflow_step' => 'integer',
     ];
 }

@@ -1,5 +1,4 @@
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { 
     CircleCheck, 
     XIcon, 
@@ -7,7 +6,8 @@ import {
     ArrowLeftCircleIcon, 
     SaveIcon 
 } from 'lucide-react';
-import { Role } from '@/types/models';
+import { WelcomeNote } from '@/components/welcome-note';
+import type { Role } from '@/types/models';
 
 interface CreateProps {
     roles: Role[];
@@ -29,6 +29,7 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
 
         if (data.password !== data.password_confirmation) {
             setError('password', 'Your passwords do not match. Please verify.');
+
             return;
         }
 

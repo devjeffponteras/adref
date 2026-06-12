@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { 
     FileText, 
     Image as ImageIcon, 
@@ -12,10 +13,9 @@ import {
     AlertCircle,
     SquareArrowLeft,
 } from 'lucide-react';
-import { WelcomeNote } from '@/components/welcome-note';
-import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -87,7 +87,10 @@ export default function AsidEvaluate({ asset }: EvaluateProps) {
     };
 
     const openDocumentSecurely = (path: string | null) => {
-        if (!path) return;
+        if (!path) {
+return;
+}
+
         window.open(`/storage/${path}`, '_blank');
     };
 

@@ -1,5 +1,4 @@
 import { Head, usePage, Link } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { 
     CircleCheck, 
     XIcon, 
@@ -9,7 +8,8 @@ import {
     UserIcon,
     ShieldIcon
 } from 'lucide-react';
-import { User } from '@/types/models'; // Imported cleanly from your centralized models type file!
+import { WelcomeNote } from '@/components/welcome-note';
+import type { User } from '@/types/models'; // Imported cleanly from your centralized models type file!
 
 export interface DashboardProps {
     users: User[];

@@ -1,6 +1,6 @@
-import React from 'react';
 import { Head, useForm, Link, usePage} from '@inertiajs/react';
 import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User, Building2, CalendarDays, ShieldAlert, BadgeHelp, BadgeCheckIcon } from 'lucide-react';
+import React from 'react';
 
 interface Approver {
     id: number;
@@ -104,6 +104,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
             'Administration Division',
             'Executive Division'
         ];
+
         return departments[seq - 1] || `Approval Stage ${seq}`;
     };
 

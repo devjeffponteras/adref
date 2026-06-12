@@ -44,6 +44,7 @@ export default defineConfig({
         cors: true,
         hmr: {
             host: '172.16.8.66',
+            clientPort: 8994,
         },
     },
 

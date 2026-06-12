@@ -15,20 +15,20 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('asset_id')
-                  ->constrained('assets')
-                  ->cascadeOnDelete();
+                ->constrained('assets')
+                ->cascadeOnDelete();
 
             $table->string('role')->nullable();
             $table->string('par_number')->nullable();
             $table->text('remarks')->nullable();
 
             $table->foreignId('approver_id')
-                  ->nullable()
-                  ->constrained('users')
-                  ->nullOnDelete();
-            
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
             $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
-                  ->default('Pending');
+                ->default('Pending');
 
             $table->timestamps();
         });

@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id();
             // primary() or unique() ensures an asset can only be listed for bidding ONCE at a time.
             $table->foreignId('asset_id')
-                  ->unique() 
-                  ->constrained('assets')
-                  ->cascadeOnDelete();
+                ->unique()
+                ->constrained('assets')
+                ->cascadeOnDelete();
 
-            $table->string('status')->default('active'); 
-            
+            $table->string('status')->default('active');
+
             $table->timestamp('listed_at')->useCurrent();
 
             $table->timestamps();
