@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Workflow extends Model
+class Workflow extends Model implements Auditable 
 {
-    use HasFactory;
+    use HasFactory, AuditableTrait;
 
     protected $table = 'workflows';
 

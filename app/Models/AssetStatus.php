@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AssetStatus extends Model
+class AssetStatus extends Model implements Auditable 
 {
+    use AuditableTrait;
+
     /**
      * The table associated with the model.
      *

@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AssetApproval extends Model
+class AssetApproval extends Model implements Auditable 
 {
+    use AuditableTrait;
+
     // Allows mass-assignment for your specific tracking column criteria
     protected $fillable = [
         'asset_id',
