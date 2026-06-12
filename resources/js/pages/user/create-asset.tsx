@@ -1,8 +1,8 @@
-import React from 'react';
 import { Head } from '@inertiajs/react';
-import SubHeader from '@/components/sub-header';
 import { Link, useForm } from '@inertiajs/react';
 import { FileText, Plus, X, Upload } from 'lucide-react';
+import React from 'react';
+import SubHeader from '@/components/sub-header';
 import { createAsset } from '@/routes';
 import { ACCOUNTABLE_PERSONNEL, END_USER_DEPARTMENT } from '@config/dropdown_data';
 
@@ -26,6 +26,18 @@ interface AssetPhotoItem {
     file: File | null;
 }
 
+const generateUUID = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    // Reliable fallback for insecure HTTP local network setups
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 export default function CreateAsset({ classifications }: Props) {
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -41,11 +53,11 @@ export default function CreateAsset({ classifications }: Props) {
         
         // Dynamic array storage setups for both structural upload properties
         assessment_reports: [
-            { id: crypto.randomUUID(), file: null }
+            { id: generateUUID(), file: null } // 👈 Swapped here
         ] as AssessmentReportItem[],
 
         asset_photos: [
-            { id: crypto.randomUUID(), file: null }
+            { id: generateUUID(), file: null } // 👈 Swapped here
         ] as AssetPhotoItem[],
     });
 

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('code')->unique()->nullable(); // e.g., "IT", "FUR", "VEH" (Optional, useful for asset tagging)
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true); // Allows you to soft-disable options in your dropdown
-            
+
             $table->timestamps();
         });
     }

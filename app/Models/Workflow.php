@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class Workflow extends Model
+class Workflow extends Model implements Auditable 
 {
-    use HasFactory;
+    use HasFactory, AuditableTrait;
 
     protected $table = 'workflows';
 
@@ -18,7 +20,7 @@ class Workflow extends Model
     ];
 
     protected $casts = [
-        'asset_id'      => 'integer',
+        'asset_id' => 'integer',
         'workflow_step' => 'integer',
     ];
 }

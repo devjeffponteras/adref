@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { bidding } from '@/routes';
 import { Calendar, Loader, FileWarning, RefreshCw, Gavel, XIcon, FolderOpen, Send } from 'lucide-react';
+import { useState } from 'react';
 import { WelcomeNote } from '@/components/welcome-note';
+import { bidding } from '@/routes';
 
 interface AccountingInfo {
     id: number;
@@ -77,7 +77,10 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
     });
 
     const hasCurrentUserBidded = (asset?: Asset) => {
-        if (!asset || !asset.bids || !authUser) return false;
+        if (!asset || !asset.bids || !authUser) {
+return false;
+}
+
         return asset.bids.some(bid => Number(bid.user_id) === Number(authUser.id));
     };
 
@@ -93,7 +96,10 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
 
     const handleSubmittingBid = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedListing || !selectedListing.asset) return;
+
+        if (!selectedListing || !selectedListing.asset) {
+return;
+}
 
         post(`/user/bidding/entry/${selectedListing.asset.id}`, {
             onSuccess: () => handleCloseBidModal(),

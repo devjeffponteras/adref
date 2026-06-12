@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Models\Role;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -41,21 +41,21 @@ class HandleInertiaRequests extends Middleware
 
         // 2. If a user is logged in, attach their role data to the user object
         if ($user) {
-                $user->loadMissing('role'); // This eager-loads the 'role' relationship
-            }
+            $user->loadMissing('role'); // This eager-loads the 'role' relationship
+        }
 
-            return [
-                ...parent::share($request),
-                'name' => config('app.name'),
-                'auth' => [
-                    'user' => $user, // Passes the user complete with their role relationship
-                ],
-                'roles' => Role::select('id', 'name')->get(),
-                'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-                'flash' => [
-                    'success' => fn () => $request->session()->get('success'),
-                    'error'   => fn () => $request->session()->get('error'),
-                ],
-            ];
+        return [
+            ...parent::share($request),
+            'name' => config('app.name'),
+            'auth' => [
+                'user' => $user, // Passes the user complete with their role relationship
+            ],
+            'roles' => Role::select('id', 'name')->get(),
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+        ];
     }
 }

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { 
     FileText, 
@@ -12,6 +11,7 @@ import {
     Loader,
     Plus
 } from 'lucide-react';
+import { useState } from 'react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { forms } from '@/routes';
 
@@ -96,6 +96,7 @@ export default function Forms() {
 
     const handlePrint = (filePath: string) => {
         const printWindow = window.open(filePath, '_blank');
+
         if (printWindow) {
             printWindow.addEventListener('load', () => {
                 printWindow.print();

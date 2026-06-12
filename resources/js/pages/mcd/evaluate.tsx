@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowLeftCircle } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -58,7 +58,10 @@ interface EvaluateProps {
 }
 
 const formatDateForInput = (dateString: string | undefined | null): string => {
-    if (!dateString) return '';
+    if (!dateString) {
+return '';
+}
+
     return dateString.split(' ')[0].split('T')[0];
 };
 

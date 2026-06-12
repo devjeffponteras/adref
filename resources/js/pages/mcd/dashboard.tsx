@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { Link } from '@inertiajs/react';
 import { Folder, CircleCheck, XIcon, FolderCheck } from 'lucide-react';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -69,6 +69,7 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
     const pendingTransactions = assetStatuses?.filter(item => {
         const isAccountingApproved = item?.asset?.accounting_information?.status === 'Approved';
         const isMcdNotExist = !item?.asset?.mcd_information;
+
         return isAccountingApproved && isMcdNotExist;
     }) || [];
 

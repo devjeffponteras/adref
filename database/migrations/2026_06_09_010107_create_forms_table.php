@@ -13,19 +13,19 @@ return new class extends Migration
     {
         Schema::create('forms', function (Blueprint $table) {
             $table->id();
-            
+
             // The user who uploaded the file
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); 
-            
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
             // The file path on your server storage
             $table->string('document_path');
 
             // original name add ta para diloi malibog
             $table->string('original_name')->nullable();
-            
+
             // The reason or purpose for uploading the document
-            $table->text('purpose'); 
-            
+            $table->text('purpose');
+
             $table->timestamps();
         });
     }

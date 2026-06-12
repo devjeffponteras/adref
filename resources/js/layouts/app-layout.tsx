@@ -1,8 +1,8 @@
+import { usePage } from '@inertiajs/react';
+import { CircleCheck, XIcon, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import type { BreadcrumbItem } from '@/types';
-import { usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
-import { CircleCheck, XIcon, AlertCircle } from 'lucide-react';
 
 export default function AppLayout({
     breadcrumbs = [],

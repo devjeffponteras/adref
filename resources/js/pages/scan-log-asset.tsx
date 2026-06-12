@@ -1,8 +1,8 @@
 import { Head, usePage } from '@inertiajs/react';
-import { scanLogAsset } from '@/routes';
 import { Link } from '@inertiajs/react';
 import { FileText, Plus } from 'lucide-react';
 import SubHeader from '@/components/sub-header';
+import { scanLogAsset } from '@/routes';
 
 
 export default function  ScanLogAsset() {

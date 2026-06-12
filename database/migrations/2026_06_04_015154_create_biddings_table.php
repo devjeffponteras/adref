@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('biddings', function (Blueprint $table) {
             $table->id();
-            
+
             // Core Relationships
             $table->foreignId('asset_id')
                 ->constrained()
@@ -27,16 +27,16 @@ return new class extends Migration
             // Bidder Information
             $table->string('bidder_name')->nullable();
             $table->string('bidder_contact_number')->nullable();
-            $table->string('bidder_classification')->nullable(); 
-            $table->string('department')->nullable(); 
-            $table->date('date_hired')->nullable(); 
-            
+            $table->string('bidder_classification')->nullable();
+            $table->string('department')->nullable();
+            $table->date('date_hired')->nullable();
+
             // Bidding Metrics
-            $table->integer('bidding_cycle')->nullable(); 
-            $table->decimal('bidding_price', 15, 2)->nullable(); 
+            $table->integer('bidding_cycle')->nullable();
+            $table->decimal('bidding_price', 15, 2)->nullable();
 
             // Operational Fields
-            $table->string('bid_status')->default('pending'); 
+            $table->string('bid_status')->default('pending');
             $table->text('remarks')->nullable();
             $table->string('reference_number')->nullable();
             $table->timestamp('submitted_at')->nullable();

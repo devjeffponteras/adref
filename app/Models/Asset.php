@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Asset extends Model
+class Asset extends Model implements Auditable 
 {
+    use AuditableTrait;
     use HasFactory;
 
     protected $fillable = [
@@ -37,7 +40,7 @@ class Asset extends Model
 
     protected $casts = [
         'assessment_reports' => 'array',
-        'asset_photos' => 'array'
+        'asset_photos' => 'array',
     ];
 
     public function approvals(): HasMany
@@ -49,12 +52,12 @@ class Asset extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
- 
+
     public function classification(): BelongsTo
     {
         return $this->belongsTo(AssetClassification::class, 'asset_classification_id');
     }
-    
+
     public function assetStatuses(): HasMany
     {
         return $this->hasMany(AssetStatus::class, 'asset_id');

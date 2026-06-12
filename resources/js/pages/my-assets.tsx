@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
 import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag } from 'lucide-react';
-import { WelcomeNote } from '@/components/welcome-note';
+import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface Classification {
     id: number;
@@ -41,15 +41,27 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
     };
 
     const getStatusStyles = (status: string = '') => {
-        if (status.includes('On-going')) return 'bg-amber-50 text-amber-700 border-amber-200';
-        if (status.includes('Pending')) return 'bg-gray-50 text-gray-700 border-gray-200';
-        if (status.includes('Returned')) return 'bg-orange-50 text-orange-700 border-orange-200';
-        if (status.includes('Approved')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (status.includes('On-going')) {
+return 'bg-amber-50 text-amber-700 border-amber-200';
+}
+
+        if (status.includes('Pending')) {
+return 'bg-gray-50 text-gray-700 border-gray-200';
+}
+
+        if (status.includes('Returned')) {
+return 'bg-orange-50 text-orange-700 border-orange-200';
+}
+
+        if (status.includes('Approved')) {
+return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+}
+
         return 'bg-rose-50 text-rose-700 border-rose-200'; 
     };
 
     const filteredAndSortedAssets = useMemo(() => {
-        let result = [...assets].filter(asset => 
+        const result = [...assets].filter(asset => 
             (asset.serial_plate_id_number?.toLowerCase() || '').includes(search.toLowerCase()) ||
             (asset.model?.toLowerCase() || '').includes(search.toLowerCase()) ||
             (asset.brand_make?.toLowerCase() || '').includes(search.toLowerCase()) ||
@@ -71,14 +83,31 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                 valA = a[sortField as keyof Asset];
                 valB = b[sortField as keyof Asset];
                 
-                if (valA === null || valA === undefined) valA = '';
-                if (valB === null || valB === undefined) valB = '';
-                if (typeof valA === 'string') valA = valA.toLowerCase();
-                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA === null || valA === undefined) {
+valA = '';
+}
+
+                if (valB === null || valB === undefined) {
+valB = '';
+}
+
+                if (typeof valA === 'string') {
+valA = valA.toLowerCase();
+}
+
+                if (typeof valB === 'string') {
+valB = valB.toLowerCase();
+}
             }
 
-            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            if (valA < valB) {
+return sortDirection === 'asc' ? -1 : 1;
+}
+
+            if (valA > valB) {
+return sortDirection === 'asc' ? 1 : -1;
+}
+
             return 0;
         });
 

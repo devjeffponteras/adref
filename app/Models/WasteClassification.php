@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class WasteClassification extends Model
+class WasteClassification extends Model implements Auditable 
 {
+    use AuditableTrait;
     use HasFactory;
 
     /**
@@ -30,8 +33,6 @@ class WasteClassification extends Model
     /**
      * Get all mepeo information evaluations linked to this waste classification.
      * * This allows you to do: $classification->mepeoEntries
-     *
-     * @return HasMany
      */
     public function mepeoEntries(): HasMany
     {

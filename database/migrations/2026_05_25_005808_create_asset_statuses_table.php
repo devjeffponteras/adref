@@ -14,21 +14,21 @@ return new class extends Migration
         Schema::create('asset_statuses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('asset_id')
-                  ->constrained('assets')
-                  ->cascadeOnDelete();
-                  
+                ->constrained('assets')
+                ->cascadeOnDelete();
+
             $table->integer('seq_no');
-            
+
             // $table->boolean('is_current')->default(false); // remove kay murag dili needed
-            
+
             $table->foreignId('approver_id')
-                  ->nullable()
-                  ->constrained('users')
-                  ->nullOnDelete();
-            
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
             $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
-                  ->default('Pending');
-                  
+                ->default('Pending');
+
             $table->dateTime('approval_date')->nullable();
             $table->text('remarks')->nullable();
             $table->timestamps();

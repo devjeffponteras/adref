@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { Link } from '@inertiajs/react';
 import { Folder, CircleCheck, XIcon, FolderCheck } from 'lucide-react';
+import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;

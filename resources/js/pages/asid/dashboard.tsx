@@ -1,8 +1,8 @@
 import { Head } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { Folder, FolderCheck, SearchCheckIcon, FileSearch2, FolderOpen } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { WelcomeNoteMini } from '@/components/welcome-note-mini';
-import { Link } from '@inertiajs/react';
 
 interface User {
     id: number;

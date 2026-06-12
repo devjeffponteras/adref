@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
 import { Package, Clock, CircleCheck, RefreshCw } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import FilterDropdown from '@/components/ui/filter-dropdown';
 import { WelcomeNote } from '@/components/welcome-note';
 import { WelcomeNoteMini } from '@/components/welcome-note-mini';
@@ -61,6 +61,7 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
             receivedFrom: 'End-User (departments)', 
             total: assetStatuses.filter(item => {
                 const userRole = item.asset?.user?.role?.name;
+
                 return userRole?.toLowerCase() === 'user';
                 }).length,
         },
@@ -68,6 +69,7 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
             receivedFrom: 'Evaluation Team (Accounting, MCD, MEPEO)', 
             total: assetStatuses.filter(item => {
                 const userRole = item.asset?.user?.role?.name;
+
                 return userRole?.toLowerCase() !== 'user' && userRole?.toLowerCase() !== 'admin';
                 }).length,
         },
@@ -75,6 +77,7 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
             receivedFrom: 'Executive Team', 
             total: assetStatuses.filter(item => {
                 const userRole = item.asset?.user?.role?.name;
+
                 return userRole?.toLowerCase() === 'admin';
                 }).length,
         },
@@ -82,7 +85,9 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
     }, [assetStatuses]);
 
     const displayedRecentRecords = useMemo(() => {
-        if (filterStatus === 'all') return assetStatuses;
+        if (filterStatus === 'all') {
+return assetStatuses;
+}
         
         return assetStatuses.filter(record => {
         return record.status.toLowerCase() === filterStatus;
@@ -97,8 +102,14 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 60) return `${diffMins <= 0 ? 1 : diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffMins < 60) {
+return `${diffMins <= 0 ? 1 : diffMins}m ago`;
+}
+
+    if (diffHours < 24) {
+return `${diffHours} hours ago`;
+}
+
         return `${diffDays} days ago`;
     };
 
