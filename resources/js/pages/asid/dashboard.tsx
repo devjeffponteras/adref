@@ -203,7 +203,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
                                                         href={`/assets/${item.asset_id}/asset-status`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-white font-medium transition-colors outline-1 px-2 py-2 rounded-full shadow bg-green-700 hover:bg-green-900"
+                                                        className="inline-flex items-center gap-1.5 text-sm text-white font-medium transition-colors outline-1 px-2 py-2 rounded-full shadow bg-linear-to-br from-cyan-700 to-[#01a78b]"
                                                         title='View Status'
                                                     >
                                                         <FileSearch2 className='w-5 h-5'  />
