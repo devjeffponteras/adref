@@ -32,6 +32,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('admin/user-management/index', [AdminController::class, 'userManagementIndex'])->name('user-management.index');
     Route::get('admin/user-management/create', [AdminController::class, 'userManagementCreate'])->name('user-management.create');
     Route::post('admin/user-management/store', [AdminController::class, 'userManagementStore'])->name('user-management.store');
+    Route::get('admin/user-management/edit/{id}', [AdminController::class, 'userManagementEdit'])->name('user-management.edit');
+    Route::post('admin/user-management/update', [AdminController::class, 'userManagementUpdate'])->name('user-management.update');
+    Route::post('admin/user-management/delete/{id}', [AdminController::class, 'userManagementDelete'])->name('user-management.delete');
 
     Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
     Route::get('admin/bidding/create', [AdminController::class, 'biddingCreate'])->name('bidding.create');

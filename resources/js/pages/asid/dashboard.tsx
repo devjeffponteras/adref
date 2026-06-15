@@ -3,36 +3,7 @@ import { Link } from '@inertiajs/react';
 import { Folder, FolderCheck, SearchCheckIcon, FileSearch2, FolderOpen } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { WelcomeNoteMini } from '@/components/welcome-note-mini';
-
-interface User {
-    id: number;
-    name: string;
-}
-
-interface Asset {
-    id: number;
-    control_number: string;
-    accountable_personnel: string;
-    department?: string;
-    user?: User;
-}
-
-interface Approver {
-    id: number;
-    name: string;
-}
-
-interface AssetStatusData {
-    id: number;
-    seq_no: number;
-    is_current: boolean;
-    status: string;
-    remarks: string | null;
-    created_at: string;
-    asset_id: number;
-    asset: Asset | null;
-    approver: Approver | null;
-}
+import type { AssetStatusData } from '@/types/models';
 
 interface DashboardProps {
     assetStatuses: AssetStatusData[];
@@ -142,7 +113,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                     {item.asset?.user?.name || 'N/A'}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
-                                                    <div className="font-medium text-gray-800">{item.asset?.department || 'The Users Department'}</div>
+                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'The Users Department'}</div>
                                                 </td>
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
@@ -216,7 +187,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                     {item.asset?.control_number}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800">{item.asset?.department || 'Asset Department'}</div>
+                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
                                                     <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
@@ -279,7 +250,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                     {item.asset?.control_number}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800">{item.asset?.department || 'Asset Department'}</div>
+                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
                                                     <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
