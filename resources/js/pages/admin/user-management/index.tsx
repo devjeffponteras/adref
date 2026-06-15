@@ -1,4 +1,5 @@
-import { Head, usePage, Link } from '@inertiajs/react';
+import { useState } from 'react';
+import { Head, usePage, Link, router } from '@inertiajs/react';
 import { 
     CircleCheck, 
     XIcon, 
@@ -6,10 +7,11 @@ import {
     PencilIcon, 
     Trash2Icon, 
     UserIcon,
-    ShieldIcon
+    ShieldIcon,
+    AlertTriangleIcon
 } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
-import type { User } from '@/types/models'; // Imported cleanly from your centralized models type file!
+import type { User } from '@/types/models';
 
 export interface DashboardProps {
     users: User[];
@@ -17,6 +19,28 @@ export interface DashboardProps {
 
 export default function UserManagement({ users = [] }: DashboardProps) {
     const { flash } = usePage().props as any;
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+    const openDeleteConfirmation = (user: User) => {
+        setUserToDelete(user);
+        setIsModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        setIsModalOpen(false);
+        setUserToDelete(null);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!userToDelete) return;
+
+        router.post(`/admin/user-management/delete/${userToDelete.id}`, {}, {
+            onSuccess: () => closeDeleteModal(),
+            onError: () => closeDeleteModal(),
+        });
+    };
 
     return (
         <>
@@ -122,26 +146,26 @@ export default function UserManagement({ users = [] }: DashboardProps) {
                                                 </span>
                                             </td>
 
-                                            {/* Interactive Icon Link Control Stacks */}
+                                            {/* Interactive Action Control Elements */}
                                             <td className="px-6 py-4 whitespace-nowrap text-right font-medium align-middle">
                                                 <div className="inline-flex items-center gap-2">
                                                     <Link
-                                                        href={`/users/${user.id}/edit`}
+                                                        href={`/admin/user-management/edit/${user.id}`}
                                                         title="Modify User Details"
                                                         className="p-1.5 rounded-md border border-gray-200 text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 transition-colors duration-150 shadow-xs"
                                                     >
                                                         <PencilIcon className="h-4 w-4" />
                                                     </Link>
-                                                    <Link
-                                                        // method="delete"
-                                                        as="button"
-                                                        // href={`/users/${user.id}`}
-                                                        href='#'
+                                                    
+                                                    {/* 🔄 CHANGED: Converted from an instant Link trigger to a local state button click handler */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openDeleteConfirmation(user)}
                                                         title="Revoke System Access"
-                                                        className="p-1.5 rounded-md border border-gray-200 text-gray-500 hover:text-red-700 hover:bg-red-50 hover:border-red-200 transition-colors duration-150 shadow-xs cursor-pointer"
+                                                        className="p-1.5 rounded-md border border-gray-200 text-gray-500 hover:text-red-700 hover:bg-red-50 hover:border-red-200 transition-colors duration-150 shadow-xs cursor-pointer focus:outline-hidden"
                                                     >
                                                         <Trash2Icon className="h-4 w-4" />
-                                                    </Link>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -153,18 +177,56 @@ export default function UserManagement({ users = [] }: DashboardProps) {
                 </div>
 
             </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs transition-opacity duration-200 animate-fade-in">
+                    <div className="bg-white border border-gray-200 rounded-xl shadow-xl max-w-md w-full overflow-hidden transform scale-100 transition-transform duration-200">
+                        
+                        {/* Modal Body Header Details */}
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 shrink-0 rounded-full bg-red-50 flex items-center justify-center border border-red-100">
+                                    <AlertTriangleIcon className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-gray-900">Confirm Account Revocation</h3>
+                                    <p className="text-xs text-gray-500 mt-0.5">This action cannot be undone automatically.</p>
+                                </div>
+                            </div>
+                            
+                            <p className="text-sm text-gray-600 bg-gray-50 border border-gray-100 rounded-lg p-3 leading-relaxed">
+                                Are you sure you want to permanently erase <span className="font-bold text-gray-900">{userToDelete?.name}</span> ({userToDelete?.email || 'no email registered'}) from active staff directories? All operational access rights will be terminated.
+                            </p>
+                        </div>
+
+                        {/* Modal Action Controls Footer */}
+                        <div className="bg-gray-50/70 border-t border-gray-200 px-6 py-3.5 flex items-center justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={closeDeleteModal}
+                                className="px-3.5 py-2 border border-gray-300 text-xs font-semibold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150 cursor-pointer focus:outline-hidden"
+                            >
+                                Abort Operational Request
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmDelete}
+                                className="px-4 py-2 text-xs font-semibold rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 cursor-pointer shadow-xs focus:outline-hidden"
+                            >
+                                Confirm Erase Data
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            )}
         </>
     );
 }
 
 UserManagement.layout = {
     breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: '/dashboard',
-        },
-        {
-            title: 'User Management',
-        },
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'User Management' },
     ],
 };

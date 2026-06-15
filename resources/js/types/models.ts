@@ -5,6 +5,7 @@ export interface User {
     password: string;
     status: string;
     role?: Role | null;
+    role_id: number | string;
 }
 
 export interface Role {

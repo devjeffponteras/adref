@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
+use Inertia\Response;
+
 use App\Models\Asset;
 use App\Models\AssetBidding;
 use App\Models\Role;
 use App\Models\User;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
@@ -55,6 +59,73 @@ class AdminController extends Controller
         ]);
 
         return redirect('/admin/user-management/index')->with('success', 'User registered successfully!');
+    }
+
+    /**
+     * Edit ta ug user
+     */
+    public function userManagementEdit($id): Response
+    {
+        $user = User::findOrFail($id);
+        $roles = Role::all(); 
+
+        return Inertia::render('admin/user-management/edit', [ 
+            'user' => $user,
+            'roles' => $roles,
+        ]);
+    }
+
+    /**
+     * Update ta ug existing user
+     */
+    public function userManagementUpdate(Request $request)
+    {
+        $user = User::findOrFail($request->id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            'password' => 'nullable|string|min:8|confirmed',
+            'role_id' => 'required|exists:roles,id',
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role_id' => $validated['role_id'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($updateData);
+
+        return redirect('/admin/user-management/index')->with('success', 'User updated successfully!');
+    }
+
+    /**
+     * Delete a user
+     */
+    public function userManagementDelete($id)
+    {
+        $user = User::findOrFail($id);
+
+        if (Auth::id() == $user->id) {
+            return redirect('/admin/user-management/index')
+                ->with('error', 'You cannot delete your own account!');
+        }
+
+        $user->delete();
+
+        return redirect('/admin/user-management/index')
+            ->with('success', 'User deleted successfully!');
     }
 
     // bidding
