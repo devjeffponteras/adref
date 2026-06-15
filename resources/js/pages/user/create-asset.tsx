@@ -53,11 +53,11 @@ export default function CreateAsset({ classifications }: Props) {
         
         // Dynamic array storage setups for both structural upload properties
         assessment_reports: [
-            { id: generateUUID(), file: null } // 👈 Swapped here
+            { id: generateUUID(), file: null }
         ] as AssessmentReportItem[],
 
         asset_photos: [
-            { id: generateUUID(), file: null } // 👈 Swapped here
+            { id: generateUUID(), file: null }
         ] as AssetPhotoItem[],
     });
 
@@ -82,7 +82,7 @@ export default function CreateAsset({ classifications }: Props) {
 
             <div className="w-full p-4 max-w-6xl mx-auto space-y-6">
             
-                <div className="bg-emerald-700 p-5 rounded-xl shadow-sm border border-emerald-800">
+                <div className="bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-800">
                     <div className="flex justify-between items-center text-white">
                         <div className="flex items-center gap-2.5">
                             <FileText className="h-5 w-5 opacity-90" />
@@ -301,7 +301,7 @@ export default function CreateAsset({ classifications }: Props) {
                                     onClick={() => {
                                         setData('assessment_reports', [
                                             ...data.assessment_reports,
-                                            { id: crypto.randomUUID(), file: null }
+                                            { id: generateUUID(), file: null }
                                         ]);
                                     }}
                                     className="w-fit text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-1 transition-colors cursor-pointer"
@@ -358,7 +358,7 @@ export default function CreateAsset({ classifications }: Props) {
                                     onClick={() => {
                                         setData('asset_photos', [
                                             ...data.asset_photos,
-                                            { id: crypto.randomUUID(), file: null }
+                                            { id: generateUUID(), file: null }
                                         ]);
                                     }}
                                     className="w-fit text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-1 transition-colors cursor-pointer"
