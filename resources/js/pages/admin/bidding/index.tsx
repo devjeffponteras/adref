@@ -115,7 +115,7 @@ return;
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-emerald-950/5 border-b border-gray-100 text-xs font-semibold uppercase tracking-wider text-emerald-900">
+                                        <tr className="bg-emerald-950/5 border-b border-gray-100 text-xs font-semibold uppercase tracking-wider text-slate-900">
                                             <th className="py-4 px-5">Control No. / Model</th>
                                             <th className="py-4 px-5">Accountable Personnel</th>
                                             <th className="py-4 px-5">Department</th>
@@ -243,7 +243,7 @@ return;
                                                 </td>
                                                 <td className="py-4 px-5 text-right align-middle">
                                                     <Link
-                                                        href={`/admin/bidding/manage/${item.id}`}
+                                                        href='#'
                                                         className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-xl text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 active:bg-gray-100 shadow-xs transition-all duration-150 cursor-pointer"
                                                     >
                                                         <FileText className="h-3.5 w-3.5 mr-1.5 text-gray-400" />

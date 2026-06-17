@@ -134,10 +134,10 @@ export default function MepeoDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 </div>
 
-                <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
+                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                            <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-800">
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>

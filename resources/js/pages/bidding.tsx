@@ -1,5 +1,5 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Calendar, Loader, FileWarning, RefreshCw, Gavel, XIcon, FolderOpen, Send } from 'lucide-react';
+import { Calendar, Loader, FileWarning, RefreshCw, Gavel, XIcon, FolderOpen, Send, Layers } from 'lucide-react';
 import { useState } from 'react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { bidding } from '@/routes';
@@ -125,17 +125,34 @@ return;
                     </div>
                 )}
 
-                <div className="mb-6 overflow-hidden rounded-xl border border-emerald-900 bg-emerald-900 p-4 shadow shadow">
-                    <div className="flex items-center justify-between">
-                        <h5 className="text-lg font-bold tracking-wide text-white">
-                            List of Assets for Bidding — {currentMonth} {currentYear} Bidding Cycle
-                        </h5>
+                <div className="mb-6 rounded-xl bg-slate-900 p-6 shadow-lg border border-slate-800">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                            {/* Icon Container with subtle yellow glow border */}
+                            <div className="p-2 bg-slate-800 rounded-lg text-amber-400 border border-amber-500/10 shadow-sm">
+                                <Layers className="h-5 w-5" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <h5 className="text-xs font-bold tracking-widest text-amber-400 uppercase">
+                                    Asset Bidding Pool
+                                </h5>
+                                <p className="text-lg font-bold text-white tracking-tight">
+                                    Review and manage items up for public auction
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {/* High-visibility Timeframe Badge */}
+                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-400/10 text-amber-300 border border-amber-400/20 shadow-inner">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            {currentMonth} {currentYear} Bidding Cycle
+                        </span>
                     </div>
                 </div>
 
-                <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md">
+                <div className="mb-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                     <div className="border-b border-emerald-100/50 bg-white/80 backdrop-blur-xs px-6 py-4">
-                        <h5 className="text-center text-sm font-bold uppercase tracking-wider text-[#004d40]">
+                        <h5 className="text-center text-sm font-bold uppercase tracking-wider text-slate-800">
                             Active Marketplace Inventories Open for Bidding Proposals
                         </h5>
                     </div>
@@ -143,7 +160,7 @@ return;
                     <div className="overflow-x-auto w-full">
                         {assetOnBidding.length > 0 ? (
                             <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                                <thead className="bg-gray-200 text-xs font-bold uppercase tracking-wider text-emerald-800">
+                                <thead className="bg-gray-200 text-xs font-bold uppercase tracking-wider text-slate-800">
                                     <tr>
                                         <th className="py-3.5 pl-6 pr-3 font-semibold">Control Number</th>
                                         <th className="px-4 py-3.5 font-semibold">Name of Asset / Details</th>
