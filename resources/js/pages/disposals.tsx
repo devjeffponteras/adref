@@ -172,24 +172,24 @@ return sortDirection === 'asc' ? 1 : -1;
             
                 {/* Action Buttons & Counter Indicators Strip */}
                 <div className="mb-6">
-                    <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-800">
+                    <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border-l-4 border-slate-800">
                     
                     {/* Action Filters Group */}
                     <div className="flex flex-wrap items-center gap-3">
                         {/* Upcoming Button (Pending) */}
-                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150">
+                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-800 bg-slate-50 hover:bg-slate-100/80 rounded-lg border border-slate-200 transition-colors duration-150">
                             <Calendar className='w-4 h-4'></Calendar>
                             <span>Upcoming (Pending)</span>
-                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-600 text-white min-w-5">
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-slate-600 text-white min-w-5">
                                 {pendingCount}
                             </span>
                         </button>
                         
                         {/* In Progress Button (On-going) */}
-                        <button className="group inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150">
+                        <button className="group inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100/80 rounded-lg border border-amber-200 transition-colors duration-150">
                             <Loader className={`w-4 h-4 transition-transform duration-500 ease-out group-hover:rotate-180 ${isRefreshing ? 'animate-spin' : ''}`}></Loader>
                             <span>In Progress</span>
-                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-rose-600 text-white min-w-5">
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-amber-600 text-white min-w-5">
                                 {inProgressCount}
                             </span>
                         </button>
@@ -198,7 +198,7 @@ return sortDirection === 'asc' ? 1 : -1;
                         <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 rounded-lg border border-emerald-200 transition-colors duration-150">
                             <FileWarning className='w-4 h-4'></FileWarning>
                             <span>Approved Transactions</span>
-                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-rose-600 text-white min-w-5">
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-600 text-white min-w-5">
                                 {approvedCount}
                             </span>
                         </button>
@@ -208,13 +208,12 @@ return sortDirection === 'asc' ? 1 : -1;
                 </div>
 
                 {/* Asset Transaction Logs Card Layout */}
-                <div className="overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/2">
+                <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                     
                     {/* Card Header component wrapper */}
                     <div className="flex items-center justify-between border-b border-emerald-100/50 bg-white/80 backdrop-blur-sm px-6 py-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-5 w-1.5 rounded-full bg-emerald-600" />
-                        <h5 className="text-lg font-bold tracking-tight text-[#004d40]">
+                        <h5 className="text-lg font-bold tracking-tight text-slate-800">
                         Asset Transaction Logs
                         </h5>
                     </div>
@@ -233,7 +232,7 @@ return sortDirection === 'asc' ? 1 : -1;
                     {/* Table Layout Wrapper with scrolling fallback */}
                     <div className="overflow-x-auto w-full">
                     <table id="assetTable" className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                        <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                        <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-800/80">
                             <tr>
                                 <th className="px-6 py-4 w-28">Action</th>
                                 

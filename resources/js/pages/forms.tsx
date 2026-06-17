@@ -118,7 +118,7 @@ export default function Forms() {
                 )}
 
                 {/* Header Sub-banner */}
-                <div className="mb-6 overflow-hidden rounded-xl border border-emerald-900 bg-emerald-900 p-4 shadow-md">
+                <div className="mb-6 overflow-hidden rounded-xl border border-emerald-900 bg-linear-to-br from-slate-900 to-slate-600 p-4 shadow-md">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <h5 className="text-lg font-bold tracking-wide text-white">
                             Forms Management Module
@@ -126,7 +126,7 @@ export default function Forms() {
                         <button
                             type="button"
                             onClick={handleOpenUploadModal}
-                            className="inline-flex items-center justify-center px-4 py-2 bg-white text-emerald-900 rounded-lg text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center px-4 py-2 bg-white text-slate-900 rounded-lg text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors cursor-pointer"
                         >
                             <Plus className="w-4 h-4 mr-1.5" />
                             Upload New Document
@@ -135,17 +135,17 @@ export default function Forms() {
                 </div>
 
                 {/* Main Documents Workspace */}
-                <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-white shadow-md">
+                <div className="mb-6 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
                     <div className="border-b border-emerald-100/50 bg-linear-to-r from-emerald-50/20 to-transparent px-6 py-4">
-                        <h5 className="text-sm font-bold uppercase tracking-wider text-[#004d40]">
+                        <h5 className="text-sm font-bold uppercase tracking-wider text-slate-800">
                             Active Repository & Uploaded Documentation
                         </h5>
                     </div>
 
                     <div className="overflow-x-auto w-full">
                         {filesList.length > 0 ? (
-                            <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                                <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+                            <table className="w-full min-w-full divide-y divide-slate-100/40 text-left align-middle text-sm">
+                                <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-800">
                                     <tr>
                                         <th className="py-3.5 pl-6 pr-3 font-semibold w-[25%]">File Name</th>
                                         <th className="px-4 py-3.5 font-semibold w-[40%]">Purpose / Description</th>

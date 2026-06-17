@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import { FileText, Plus } from 'lucide-react';
-import SubHeader from '@/components/sub-header';
+import { WelcomeNote } from '@/components/welcome-note';
 import { scanLogAsset } from '@/routes';
 
 
@@ -14,8 +14,8 @@ export default function  ScanLogAsset() {
         <>
         <Head title="My Assets" />
 
-            {/* sub header */}
-            <SubHeader />
+            {/* Welcome note */}
+            <WelcomeNote />
             
             <div className="w-full p-4">
 

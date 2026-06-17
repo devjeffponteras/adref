@@ -150,9 +150,9 @@ return;
                     </div>
                 </div>
 
-                <div className="mb-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md">
+                <div className="mb-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                     <div className="border-b border-emerald-100/50 bg-white/80 backdrop-blur-xs px-6 py-4">
-                        <h5 className="text-center text-sm font-bold uppercase tracking-wider text-[#004d40]">
+                        <h5 className="text-center text-sm font-bold uppercase tracking-wider text-slate-800">
                             Active Marketplace Inventories Open for Bidding Proposals
                         </h5>
                     </div>
@@ -160,7 +160,7 @@ return;
                     <div className="overflow-x-auto w-full">
                         {assetOnBidding.length > 0 ? (
                             <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                                <thead className="bg-gray-200 text-xs font-bold uppercase tracking-wider text-emerald-800">
+                                <thead className="bg-gray-200 text-xs font-bold uppercase tracking-wider text-slate-800">
                                     <tr>
                                         <th className="py-3.5 pl-6 pr-3 font-semibold">Control Number</th>
                                         <th className="px-4 py-3.5 font-semibold">Name of Asset / Details</th>

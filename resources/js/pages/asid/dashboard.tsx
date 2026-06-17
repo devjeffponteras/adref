@@ -72,11 +72,11 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 </div>
 
-                <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
+                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
                     <div className="overflow-x-auto">
-                        <h3 className='font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex gap-2 '><Folder className='w-5 h-5' /> Pending Transactions</h3>
-                        <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800">
+                        <h3 className='font-bold text-sm px-4 py-2 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex gap-2 '><Folder className='w-5 h-5' /> Pending Transactions</h3>
+                        <table className="w-full min-w-full divide-y divide-slate-100/40 text-left align-middle text-sm">
+                            <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-800">
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Applicant</th>
@@ -118,7 +118,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
                                                         href={`/asid-view/${item.asset_id}`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-green-500 hover:text-green-700 font-medium transition-colors outline-1 outline-green-300 px-3 py-2 rounded hover:bg-green-50"
+                                                        className="inline-flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emarald-700 font-medium transition-colors outline-1 outline-emerald-300 px-3 py-2 rounded hover:bg-emerald-50"
                                                     >
                                                         <SearchCheckIcon className='w-5 h-5' />
                                                         View
@@ -135,11 +135,11 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
 
                 <hr className="border-gray-100" />
 
-                <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
+                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
                     <div className="overflow-x-auto">
-                        <h3 className='font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex gap-2 '><FolderOpen className='w-5 h-5' />All Transactions</h3>
-                        <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800">
+                        <h3 className='font-bold text-sm px-4 py-2 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex gap-2 '><FolderOpen className='w-5 h-5' />All Transactions</h3>
+                        <table className="w-full min-w-full divide-y divide-slate-100 text-left align-middle text-sm">
+                            <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-800">
                                 <tr>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
@@ -207,11 +207,11 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
 
                 <hr className="border-gray-100" />
 
-                <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
+                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
                     <div className="overflow-x-auto">
-                        <h3 className='gap-2 font-bold text-sm px-4 py-2 text-green-900 uppercase mb-0 bg-green-50 border-b border-green-200 flex'><FolderCheck className='w-5 h-5' /> Final Stages</h3>
+                        <h3 className='gap-2 font-bold text-sm px-4 py-2 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex'><FolderCheck className='w-5 h-5' /> Final Stages</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800">
+                            <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-800">
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>

@@ -149,39 +149,45 @@ return `${diffHours} hours ago`;
         <WelcomeNoteMini />
         
         {/* Metric Cards Row */}
-        <div className="flex flex-col md:flex-row gap-4 mb-5">
-          <div className="w-full md:w-1/3">
-            <div className="stat-card bg-emerald text-white border-0 shadow-sm h-20 hover:-translate-y-1.5 cursor-pointer">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="mb-1 opacity-75 text-sm">Total Requests from End-User</p>
-                  <h2 className="font-bold text-2xl">{stats.totalRequests}</h2>
-                </div>
-                <Package className='h-8 w-8 opacity-80' />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+          <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-orange-950/10 cursor-pointer">
+              <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+              <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-amber-100/80">Total Requests from End-User</p>
+                      <h2 className="font-extrabold text-3xl tracking-tight">{stats.totalRequests}</h2>
+                  </div>
+                  <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                      <Package className='h-6 w-6 text-white' />
+                  </div>
               </div>
-            </div>
           </div>
-          <div className="w-full md:w-1/3">
-            <div className="stat-card bg-leaf text-white border-0 shadow-sm h-20 hover:-translate-y-1.5 cursor-pointer">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="mb-1 opacity-75 text-sm">In Progress</p>
-                  <h2 className="font-bold text-2xl">{stats.pendingCount}</h2>
-                </div>
-                <Clock className='h-8 w-8 opacity-80' />
+
+          <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-cyan-700 to-[#004d40] p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-emerald-950/10 cursor-pointer">
+            <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+              <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/80">In Progress</p>
+                      <h2 className="font-extrabold text-3xl tracking-tight">{stats.pendingCount}</h2>
+                  </div>
+                  <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                      <Clock className='h-6 w-6 text-white' />
+                  </div>
               </div>
-            </div>
           </div>
-          <div className="w-full md:w-1/3">
-            <div className="stat-card bg-dark-green text-white border-0 shadow-sm h-20 hover:-translate-y-1.5 cursor-pointer">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="mb-1 opacity-75 text-sm">Approved from Evaluation Team</p>
-                  <h2 className="font-bold text-2xl">{stats.approvedCount}</h2>
-                </div>
-                <CircleCheck className='h-8 w-8 opacity-80' />
+          
+          <div className="group relative overflow-hidden rounded-2xl bg-linear-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-teal-950/10 cursor-pointer">
+            <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-white/10 blur-xl transition-all group-hover:scale-150" />
+              <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-cyan-100/80">Approved from Evaluation Team</p>
+                      <h2 className="font-extrabold text-3xl tracking-tight">{stats.approvedCount}</h2>
+                  </div>
+                  <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
+                      <CircleCheck className='h-6 w-6 text-white' />
+                  </div>
               </div>
-            </div>
           </div>
         </div>
 
@@ -189,8 +195,7 @@ return `${diffHours} hours ago`;
         <div className="my-4 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
             <div className='inline-flex items-center gap-3'>
-              <div className="h-5 w-1.5 rounded-full bg-emerald-600" />
-              <h5 className="text-lg font-bold text-[#004d40]">Summary of all ADREF Requests</h5>
+              <h5 className="text-lg font-bold text-slate-800">Summary of all ADREF Requests</h5>
             </div>
           </div>
 
@@ -215,11 +220,10 @@ return `${diffHours} hours ago`;
         </div>
 
         {/* Recent Records Table */}
-        <div className="my-6 overflow-hidden rounded-2xl border border-emerald-100/60 bg-linear-to-b from-white to-emerald-50/10 shadow-md shadow-emerald-900/3">
-          <div className="flex items-center justify-between border-b border-emerald-100/50 bg-white/80 backdrop-blur-sm px-6 py-4">
+        <div className="my-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-white/80 backdrop-blur-sm px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="h-5 w-1.5 rounded-full bg-emerald-600" />
-              <h5 className="text-lg font-bold tracking-tight text-[#004d40]">Recent ADREF submitted</h5>
+              <h5 className="text-lg font-bold tracking-tight text-slate-800">Recent ADREF Submitted</h5>
             </div>
 
             <div className="flex items-center gap-2">
@@ -241,7 +245,7 @@ return `${diffHours} hours ago`;
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-              <thead className="bg-emerald-50/60 text-xs font-bold uppercase tracking-wider text-emerald-800/80">
+              <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-800/80">
                 <tr>
                   <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                   <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>

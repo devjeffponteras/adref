@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import { Link, useForm } from '@inertiajs/react';
 import { FileText, Plus, X, Upload } from 'lucide-react';
 import React from 'react';
-import SubHeader from '@/components/sub-header';
+import { WelcomeNote } from '@/components/welcome-note';
 import { createAsset } from '@/routes';
 import { ACCOUNTABLE_PERSONNEL, END_USER_DEPARTMENT } from '@config/dropdown_data';
 
@@ -78,7 +78,8 @@ export default function CreateAsset({ classifications }: Props) {
         <>
             <Head title="Scan / Log Asset" />
 
-            <SubHeader />
+            {/* Welcome note */}
+            <WelcomeNote />
 
             <div className="w-full p-4 max-w-6xl mx-auto space-y-6">
             
