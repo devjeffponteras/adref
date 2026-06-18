@@ -16,7 +16,7 @@ return new class extends Migration
 
             $table->foreignId('asset_id')
                 ->constrained('assets')
-                ->cascadeOnDelete();
+                ->noActionOnDelete();
 
             $table->string('role')->nullable();
             $table->string('asset_number')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
             $table->foreignId('approver_id')
                 ->nullable()
                 ->constrained('users')
-                ->nullOnDelete();
+                ->noActionOnDelete();
 
             $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
                 ->default('Pending');

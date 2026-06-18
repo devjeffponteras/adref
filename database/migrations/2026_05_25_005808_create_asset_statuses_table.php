@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('asset_id')
                 ->constrained('assets')
-                ->cascadeOnDelete();
+                ->noActionOnDelete();
 
             $table->integer('seq_no');
 
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('approver_id')
                 ->nullable()
                 ->constrained('users')
-                ->nullOnDelete();
+                ->noActionOnDelete();
 
             $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
                 ->default('Pending');
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->timestamps();
 
-            $table->index(['asset_id', 'is_current']);
+            $table->index(['asset_id']);
             $table->unique(['asset_id', 'seq_no']);
         });
     }
