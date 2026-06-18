@@ -162,7 +162,9 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                 {/* Vertical Timeline Nodes */}
                 <div className="relative pl-8 space-y-6">
                     {asset.approvals.map((step, idx) => {
-                        const styles = getStatusStyles(step.status, step.is_current);
+                        const isStrictlyCurrent = String(step.is_current) === '1' || step.is_current === true;
+    
+                        const styles = getStatusStyles(step.status, isStrictlyCurrent);
                         const isLast = idx === asset.approvals.length - 1;
 
                         return (
@@ -197,7 +199,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                                 <BadgeCheckIcon></BadgeCheckIcon> <span className='pe-2'>Done</span>
                                             </span>
                                         )}
-                                        {!!step.is_current && (
+                                        {isStrictlyCurrent && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs shadow-amber-500/20">
                                                 <span className="h-1 w-1 rounded-full bg-white animate-ping" /> Current Stage
                                             </span>
@@ -245,7 +247,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                     </div>
 
                                     {/* Action Submittal Layer for Active Step Row */}
-                                    {!!step.is_current && auth?.user?.role === 'admin' && (
+                                    {isStrictlyCurrent && auth?.user?.role === 'admin' && (
                                         <div className="mt-4 pt-4 border-t border-dashed border-amber-200/80 space-y-3.5">
                                             <div className="flex flex-col gap-1.5">
                                                 <label htmlFor="remarks" className="text-[10px] font-black text-amber-800 uppercase tracking-widest inline-flex items-center gap-1">

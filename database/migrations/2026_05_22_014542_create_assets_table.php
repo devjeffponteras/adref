@@ -28,7 +28,7 @@ return new class extends Migration
             // Dropdown & Additional Details
             $table->foreignId('asset_classification_id')
                 ->constrained('asset_classifications')
-                ->onDelete('restrict');
+                ->noActionOnDelete();
 
             $table->text('reasons_for_disposal')->nullable();
             $table->string('asset_location')->nullable();

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('asset_id')
                 ->unique()
                 ->constrained('assets')
-                ->cascadeOnDelete();
+                ->noActionOnDelete();
 
             $table->string('status')->default('active');
 

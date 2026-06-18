@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('mepeo_information', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
-            $table->foreignId('approver_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('asset_id')->constrained('assets')->noActionOnDelete();
+            $table->foreignId('approver_id')->constrained('users')->noActionOnDelete();
             $table->foreignId('waste_classification_id')->nullable()->constrained('waste_classifications');
             $table->foreignId('waste_characteristic_id')->nullable()->constrained('waste_characteristics');
             $table->text('remarks')->nullable();

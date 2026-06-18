@@ -10,9 +10,18 @@ interface DashboardProps {
 }
 
 export default function AsidDashboard({ assetStatuses }: DashboardProps) {
-    const pendingTransactions = assetStatuses?.filter(item => item.status === 'Pending') || [];
+    // Standardized safe array fallback
+    const safeStatuses = assetStatuses || [];
 
-    const historyTransactions = assetStatuses?.filter(item => item.asset?.control_number && item.asset.control_number.trim() !== '' && item.seq_no > 4) || [];
+    // Filter Pending
+    const pendingTransactions = safeStatuses.filter(item => item.status === 'Pending');
+
+    // Filter Final Stages - Using Number() to handle cases where SQL Server returns seq_no as a string
+    const historyTransactions = safeStatuses.filter(item => 
+        item.asset?.control_number && 
+        item.asset.control_number.trim() !== '' && 
+        Number(item.seq_no) > 4
+    );
 
     return (
         <>
@@ -49,7 +58,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                         <div className="flex justify-between items-start">
                             <div className="space-y-2">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/80">Final Stages</p>
-                                <h2 className="font-extrabold text-3xl tracking-tight">{historyTransactions.length || 0}</h2>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{historyTransactions.length}</h2>
                             </div>
                             <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
                                 <FolderCheck className='h-6 w-6 text-white' />
@@ -63,7 +72,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                         <div className="flex justify-between items-start">
                             <div className="space-y-2">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-cyan-100/80">All Transactions</p>
-                                <h2 className="font-extrabold text-3xl tracking-tight">{assetStatuses.length || 0}</h2>
+                                <h2 className="font-extrabold text-3xl tracking-tight">{safeStatuses.length}</h2>
                             </div>
                             <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md border border-white/10 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white/20">
                                 <FolderOpen className='h-6 w-6 text-white' />
@@ -72,6 +81,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                     </div>
                 </div>
 
+                {/* Pending Transactions Table */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
                     <div className="overflow-x-auto">
                         <h3 className='font-bold text-sm px-4 py-2 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex gap-2 '><Folder className='w-5 h-5' /> Pending Transactions</h3>
@@ -96,13 +106,9 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                     pendingTransactions.map((item) => {
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })
-                                            : 'No Date Recorded';
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit',
+                                            }) : 'No Date Recorded';
 
                                         return (
                                             <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
@@ -118,10 +124,9 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
                                                         href={`/asid-view/${item.asset_id}`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emarald-700 font-medium transition-colors outline-1 outline-emerald-300 px-3 py-2 rounded hover:bg-emerald-50"
+                                                        className="inline-flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emerald-700 font-medium transition-colors outline-1 outline-emerald-300 px-3 py-2 rounded hover:bg-emerald-50"
                                                     >
-                                                        <SearchCheckIcon className='w-5 h-5' />
-                                                        View
+                                                        <SearchCheckIcon className='w-5 h-5' /> View
                                                     </Link>
                                                 </td>
                                             </tr>
@@ -135,6 +140,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
 
                 <hr className="border-gray-100" />
 
+                {/* All Transactions Table Section */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
                     <div className="overflow-x-auto">
                         <h3 className='font-bold text-sm px-4 py-2 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex gap-2 '><FolderOpen className='w-5 h-5' />All Transactions</h3>
@@ -151,23 +157,20 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                             </thead>
                             
                             <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {historyTransactions.length === 0 ? (
+                                {/* FIX 1: Verify layout emptiness using safeStatuses instead of historyTransactions */}
+                                {safeStatuses.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
                                             No active asset disposal data found.
                                         </td>
                                     </tr>
                                 ) : (
-                                    assetStatuses.map((item) => {
+                                    safeStatuses.map((item) => {
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })
-                                            : 'No Date Recorded';
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit',
+                                            }) : 'No Date Recorded';
 
                                         return (
                                             <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
@@ -184,7 +187,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                     {formattedDate}
                                                 </td>
                                                 <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.control_number}
+                                                    {item.asset?.control_number || '—'}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
                                                     <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
@@ -207,6 +210,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
 
                 <hr className="border-gray-100" />
 
+                {/* Final Stages Table Section */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
                     <div className="overflow-x-auto">
                         <h3 className='gap-2 font-bold text-sm px-4 py-2 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex'><FolderCheck className='w-5 h-5' /> Final Stages</h3>
@@ -233,13 +237,9 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                     historyTransactions.map((item) => {
                                         const formattedDate = item.created_at 
                                             ? new Date(item.created_at).toLocaleString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })
-                                            : 'No Date Recorded';
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit',
+                                            }) : 'No Date Recorded';
 
                                         return (
                                             <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">

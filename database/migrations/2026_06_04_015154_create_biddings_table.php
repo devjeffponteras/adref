@@ -17,12 +17,12 @@ return new class extends Migration
             // Core Relationships
             $table->foreignId('asset_id')
                 ->constrained()
-                ->cascadeOnDelete();
+                ->noActionOnDelete();
 
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained('users')
-                ->nullOnDelete();
+                ->noActionOnDelete();
 
             // Bidder Information
             $table->string('bidder_name')->nullable();
