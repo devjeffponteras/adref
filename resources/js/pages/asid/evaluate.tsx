@@ -41,7 +41,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
 
             {/* sub header */}
             <WelcomeNote />
-            
+
             {/* main content */}
             <div className="container-fluid p-4">
 
@@ -57,10 +57,14 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                         
                         <h3 className="text-gray-900 font-bold text-lg tracking-tight">
                             Evaluation Information
+
+                            {isLockedAsid && 
                             <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                                 <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
                                 Submitted to Workflow
                             </span>
+                            }
+
                         </h3>
 
                         {/* Section 1: Remarks & Checked By */}

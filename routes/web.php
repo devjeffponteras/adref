@@ -39,6 +39,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
     Route::get('admin/bidding/create', [AdminController::class, 'biddingCreate'])->name('bidding.create');
     Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
+
+    // Secret Options
+    Route::get('admin/secret/assets', [AdminController::class, 'assetPass'])->name('admin.asset-pass');
+    Route::post('/admin/secret/assets/{id}/approve', [AdminController::class, 'approveAssetPass'])
+    ->name('assets.approve-pass');
 });
 
 // Add routes here for ASID account
