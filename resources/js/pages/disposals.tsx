@@ -96,29 +96,29 @@ return 'bg-gray-50 text-gray-700 border-gray-200';
                 valB = b[sortField as keyof Asset];
                 
                 if (valA === null || valA === undefined) {
-valA = '';
-}
+                    valA = '';
+                }
 
                 if (valB === null || valB === undefined) {
-valB = '';
-}
+                    valB = '';
+                }
 
                 if (typeof valA === 'string') {
-valA = valA.toLowerCase();
-}
+                    valA = valA.toLowerCase();
+                }
 
                 if (typeof valB === 'string') {
-valB = valB.toLowerCase();
-}
+                    valB = valB.toLowerCase();
+                }
             }
 
             if (valA < valB) {
-return sortDirection === 'asc' ? -1 : 1;
-}
+                return sortDirection === 'asc' ? -1 : 1;
+            }
 
             if (valA > valB) {
-return sortDirection === 'asc' ? 1 : -1;
-}
+                return sortDirection === 'asc' ? 1 : -1;
+            }
 
             return 0;
         });
