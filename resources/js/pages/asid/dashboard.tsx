@@ -20,7 +20,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
     const historyTransactions = safeStatuses.filter(item => 
         item.asset?.control_number && 
         item.asset.control_number.trim() !== '' && 
-        Number(item.seq_no) > 4
+        Number(item.seq_no) > 3
     );
 
     return (
@@ -264,7 +264,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                         href={`/asid-evaluate/${item.asset_id}`} 
                                                         className="inline-flex items-center gap-1.5 text-sm text-amber-500 hover:text-amber-700 font-medium transition-colors outline-1 outline-amber-300 px-3 py-2 rounded hover:bg-amber-50"
                                                     >
-                                                        {item.status === 'Pending' ? 'Evaluate' : 'View Logs'}
+                                                        {item.status === 'On-going' ? 'Evaluate' : 'View Logs'}
                                                     </Link>
                                                 </td>
                                             </tr>

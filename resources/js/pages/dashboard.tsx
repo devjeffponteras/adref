@@ -86,8 +86,8 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
 
     const displayedRecentRecords = useMemo(() => {
         if (filterStatus === 'all') {
-return assetStatuses;
-}
+          return assetStatuses;
+        }
         
         return assetStatuses.filter(record => {
         return record.status.toLowerCase() === filterStatus;
@@ -103,14 +103,13 @@ return assetStatuses;
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffMins < 60) {
-return `${diffMins <= 0 ? 1 : diffMins}m ago`;
-}
+      return `${diffMins <= 0 ? 1 : diffMins}m ago`;
+    }
 
     if (diffHours < 24) {
-return `${diffHours} hours ago`;
-}
-
-        return `${diffDays} days ago`;
+      return `${diffHours} hours ago`;
+    }
+      return `${diffDays} days ago`;
     };
 
     const handleFilterSelection = (status: 'pending' | 'approved' | 'on-going') => {

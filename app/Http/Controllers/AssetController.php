@@ -251,14 +251,15 @@ class AssetController extends Controller
 
     public function asidEvaluateAction(Request $request, $id)
     {
+        // dd($request);
         $validated = $request->validate([
             'remarks' => 'required|string|min:2|max:1000',
             'disposition' => 'required|string|min:2|max:1000',
-            'reviewed_by' => 'required|string|min:2|max:1000',
             'checked_by' => 'required|string|min:2|max:1000',
         ]);
 
         $validated['status'] = 'Approved';
+        $validated['reviewed_by'] = 'MS Dela Peña';
 
         $asset = Asset::findOrFail($id);
 
@@ -270,6 +271,7 @@ class AssetController extends Controller
                 $currentSeq = $currentApproval ? $currentApproval->seq_no : 1;
 
                 $asset->update(['status' => 'On-going']);
+                // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'On-going']);
 
                 $asset->approvals()->where('seq_no', $currentSeq)->update([
                     'is_current' => false,
@@ -295,6 +297,7 @@ class AssetController extends Controller
                     ]);
                 } else {
                     $asset->update(['status' => 'Completed']);
+                    // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'Completed']);
                 }
 
                 AsidInformation::updateOrCreate(

@@ -11,7 +11,8 @@ import {
     BriefcaseBusiness,
     LucideUserCog2,
     UsersRound,
-    Gavel
+    Gavel,
+    FastForward
 } from 'lucide-react';
 
 import AppLogo from '@/components/app-logo';
@@ -104,6 +105,14 @@ const mainNavItems: NavItem[] = [
         icon: LucideUserCog2,
         roles: ['admin'],
     },
+    {
+        title: 'Temp Workflow',
+        href: '/admin/secret/assets',
+        icon: FastForward,
+        roles: ['admin'],
+    },
+
+    
 ];
 
 export function AppSidebar() {

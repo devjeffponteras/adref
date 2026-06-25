@@ -9,7 +9,10 @@ use App\Models\Asset;
 use App\Models\AssetBidding;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\AssetStatus;
+use App\Models\AssetApproval;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -152,5 +155,60 @@ class AdminController extends Controller
         ]);
 
         return redirect('/admin/bidding/index')->with('success', 'Asset successfully published for bidding entry!');
+    }
+
+    public function assetPass()
+    {
+        $assetStatuses = AssetStatus::with(['asset', 'asset.approvals'])
+            ->where('seq_no', '>=', 6)
+            ->where('seq_no', '!=', 8)
+            ->get();
+    
+        return Inertia::render('admin/secret-options/asset-pass', [
+            'assetStatuses' => $assetStatuses,
+        ]);
+    }
+
+    public function approveAssetPass(Request $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $asset = Asset::findOrFail($id);
+            $asset->update([
+                'status' => 'Approved'
+            ]);
+
+            AssetStatus::where('asset_id', $id)->update([
+                'seq_no' => 8,
+                'status' => 'Approved'
+            ]);
+
+            AssetApproval::where('asset_id', $id)->update([
+                'status' => 'Approved',
+                'is_current' => 0
+            ]);
+
+            $lastApproval = AssetApproval::where('asset_id', $id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastApproval) {
+                $lastApproval->update([
+                    'is_current' => 1
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Asset has been fully approved successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error("Asset Approval Failed for ID {$id}: " . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to approve asset. Please try again.');
+        }
     }
 }

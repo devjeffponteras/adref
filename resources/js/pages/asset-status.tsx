@@ -199,7 +199,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                                 <BadgeCheckIcon></BadgeCheckIcon> <span className='pe-2'>Done</span>
                                             </span>
                                         )}
-                                        {isStrictlyCurrent && (
+                                        {isStrictlyCurrent && !isLast && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs shadow-amber-500/20">
                                                 <span className="h-1 w-1 rounded-full bg-white animate-ping" /> Current Stage
                                             </span>
