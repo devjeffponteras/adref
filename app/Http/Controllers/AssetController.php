@@ -75,88 +75,103 @@ class AssetController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'accountable_personnel' => 'required|string|max:255',
-            'model' => 'nullable|string|max:255',
-            'brand_make' => 'nullable|string|max:255',
-            'serial_plate_id_number' => 'nullable|string|max:255',
-            'end_user_department' => 'required|string|max:255',
-            'asset_classification_id' => 'required|exists:asset_classifications,id',
-            'asset_location' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'reasons_for_disposal' => 'nullable|string',
+            'accountable_personnel'   => 'required|string|max:255',
+            'model'                   => 'nullable|string|max:255',
+            'brand_make'              => 'nullable|string|max:255',
+            'serial_plate_id_number'  => 'nullable|string|max:255',
+            'end_user_department'     => 'required|string|max:255',
+            'asset_classification_id' => 'required|string|max:255',
+            'others_description'      => 'nullable|string|max:255',
+            'asset_location'          => 'nullable|string|max:255',
+            'description'             => 'nullable|string',
+            'reasons_for_disposal'    => 'nullable|string',
 
             // Multi-upload validation hooks
-            'assessment_reports' => 'required|array|min:1',
-            'assessment_reports.*.file' => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-            'asset_photos' => 'required|array|min:1',
-            'asset_photos.*.file' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'assessment_reports'              => 'required|array|min:1',
+            'assessment_reports.*.file'        => 'nullable|file|extensions:pdf,doc,docx|max:5120',
+            'assessment_reports.*.description' => 'nullable|string|max:255',
+            
+            'asset_photos'                    => 'required|array|min:1',
+            'asset_photos.*.file'              => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'asset_photos.*.description'       => 'nullable|string|max:255',
         ]);
 
-        $reportPaths = [];
-        if ($request->has('assessment_reports')) {
-            foreach ($request->input('assessment_reports') as $index => $item) {
+        $reportsJsonArray = [];
+        if (!empty($validated['assessment_reports'])) {
+            foreach ($validated['assessment_reports'] as $index => $item) {
                 if ($request->hasFile("assessment_reports.{$index}.file")) {
                     $file = $request->file("assessment_reports.{$index}.file");
-                    $reportPaths[] = $file->store('reports', 'public');
+                    $path = $file->store('reports', 'public');
+                    
+                    $reportsJsonArray[] = [
+                        'file_path'   => $path,
+                        'description' => $item['description'] ?? null
+                    ];
                 }
             }
         }
 
-        $photoPaths = [];
-        if ($request->has('asset_photos')) {
-            foreach ($request->input('asset_photos') as $index => $item) {
+        $photosJsonArray = [];
+        if (!empty($validated['asset_photos'])) {
+            foreach ($validated['asset_photos'] as $index => $item) {
                 if ($request->hasFile("asset_photos.{$index}.file")) {
                     $file = $request->file("asset_photos.{$index}.file");
-                    $photoPaths[] = $file->store('photos', 'public');
+                    $path = $file->store('photos', 'public');
+                    
+                    $photosJsonArray[] = [
+                        'file_path'   => $path,
+                        'description' => $item['description'] ?? null
+                    ];
                 }
             }
         }
 
         $assetData = [
-            'accountable_personnel' => $validated['accountable_personnel'],
-            'model' => $validated['model'],
-            'brand_make' => $validated['brand_make'],
-            'serial_plate_id_number' => $validated['serial_plate_id_number'],
-            'end_user_department' => $validated['end_user_department'],
+            'accountable_personnel'   => $validated['accountable_personnel'],
+            'model'                   => $validated['model'],
+            'brand_make'              => $validated['brand_make'],
+            'serial_plate_id_number'  => $validated['serial_plate_id_number'],
+            'end_user_department'     => $validated['end_user_department'],
+            
             'asset_classification_id' => $validated['asset_classification_id'],
-            'asset_location' => $validated['asset_location'],
-            'description' => $validated['description'],
-            'reasons_for_disposal' => $validated['reasons_for_disposal'],
+            'others_description'      => $validated['others_description'],
 
-            // Storing the arrays of file path strings
-            'assessment_reports' => $reportPaths,
-            'asset_photos' => $photoPaths,
+            'asset_location'          => $validated['asset_location'],
+            'description'             => $validated['description'],
+            'reasons_for_disposal'    => $validated['reasons_for_disposal'],
 
-            // System defaults
-            'user_id' => auth()->id(),
-            'status' => 'Pending',
-            'control_number' => null,
+            'user_id'                 => auth()->id(),
+            'status'                  => 'Pending',
+            'control_number'          => null,
+
+            // Bundled into the same table payload:
+            'assessment_reports'      => $reportsJsonArray,
+            'asset_photos'            => $photosJsonArray,
         ];
 
         DB::transaction(function () use ($assetData) {
-
             $asset = Asset::create($assetData);
 
-            // Populate baseline workflow matrices
+            // Generate approval sequence steps
             for ($i = 1; $i <= 8; $i++) {
                 $asset->approvals()->create([
-                    'seq_no' => $i,
-                    'is_current' => ($i === 1),
-                    'status' => ($i === 1) ? 'On-going' : 'Pending',
-                    'approver_id' => null,
+                    'seq_no'        => $i,
+                    'is_current'    => ($i === 1),
+                    'status'        => ($i === 1) ? 'On-going' : 'Pending',
+                    'approver_id'   => null,
                     'approval_date' => null,
-                    'remarks' => null,
+                    'remarks'       => null,
                 ]);
             }
 
-            // Initialize progress tracker logs
+            // Initialize status history
             AssetStatus::create([
-                'asset_id' => $asset->id,
-                'seq_no' => 1,
-                'status' => 'Pending',
-                'approver_id' => null,
+                'asset_id'      => $asset->id,
+                'seq_no'        => 1,
+                'status'        => 'Pending',
+                'approver_id'   => null,
                 'approval_date' => null,
-                'remarks' => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
+                'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
             ]);
         });
 
@@ -176,6 +191,7 @@ class AssetController extends Controller
             //     $query->orderBy('seq_no', 'desc'); // if gusto paianaka una makita jud
             // },
             'user',
+            'user.department',
             'approvals.approver',
         ])->findOrFail($id);
 
@@ -349,7 +365,7 @@ class AssetController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:Approved,Returned,Rejected,On-going,Pending',
             'remarks' => 'required|string|min:5|max:1000',
-            'control_number' => 'required_if:status,Approved|nullable|string|max:255',
+            // 'control_number' is no longer required from the request since we auto-generate it
         ]);
 
         $asset = Asset::findOrFail($id);
@@ -361,8 +377,28 @@ class AssetController extends Controller
 
             $assetUpdate = ['status' => $validated['status']];
 
-            if ($validated['status'] === 'Approved' && array_key_exists('control_number', $validated)) {
-                $assetUpdate['control_number'] = $validated['control_number'];
+            if ($validated['status'] === 'Approved') {
+
+            if (!$asset->control_number) {
+                    $yearSuffix = date('y'); // e.g., "26" for 2026
+                    $pattern = "AD-{$yearSuffix}-";
+
+                    $latestAsset = Asset::where('control_number', 'LIKE', "{$pattern}%")
+                        ->orderBy('control_number', 'desc')
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($latestAsset) {
+                        $lastSequence = (int) substr($latestAsset->control_number, -4);
+                        $nextSequence = $lastSequence + 1;
+                    } else {
+                        $nextSequence = 1;
+                    }
+
+                    $paddedSequence = str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+                    $assetUpdate['control_number'] = "{$pattern}{$paddedSequence}";
+                }
+
                 $assetUpdate['status'] = 'On-going';
             }
 
@@ -389,7 +425,7 @@ class AssetController extends Controller
                     'remarks' => null,
                 ]);
             } elseif ($validated['status'] === 'Returned') {
-                $targetActiveSeq = 1; // Send back to step 1
+                $targetActiveSeq = 1;
 
                 $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
                     'is_current' => true,
@@ -402,7 +438,6 @@ class AssetController extends Controller
                 $targetActiveSeq = $currentSeq;
             }
 
-            // Log details explicitly onto the row the user just interacted with
             AssetStatus::where('asset_id', $asset->id)
                 ->update([
                     'seq_no' => $targetActiveSeq,

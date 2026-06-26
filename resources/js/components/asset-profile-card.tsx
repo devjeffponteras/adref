@@ -1,6 +1,5 @@
 import { ClipboardList, Building2, AlertCircle, FileText, ImageIcon, Download } from 'lucide-react';
 
-// Define the exact structural footprint needed for this component to run
 interface User {
     id: number;
     name: string;
@@ -9,6 +8,11 @@ interface User {
 interface AssetClassification {
     id: number;
     name: string;
+}
+
+interface AttachedFile {
+    path: string;
+    description: string;
 }
 
 interface AssetProfileCardProps {
@@ -22,8 +26,9 @@ interface AssetProfileCardProps {
         asset_location: string;
         reasons_for_disposal: string;
         
-        assessment_reports?: string[] | null; 
-        asset_photos?: string[] | null; 
+        // Fix: Accept both the old string[] structure and the new AttachedFile[] structure
+        assessment_reports?: string[] | AttachedFile[] | null; 
+        asset_photos?: string[] | AttachedFile[] | null; 
         
         user?: User;
         classification?: AssetClassification;
@@ -33,16 +38,26 @@ interface AssetProfileCardProps {
 export function AssetProfileCard({ asset }: AssetProfileCardProps) {
 
     const openDocumentSecurely = (path: string | null) => {
-        if (!path) {
-return;
-}
-
+        if (!path) return;
         window.open(`/storage/${path}`, '_blank');
     };
 
-    // Safely extract arrays with clear fallbacks if they return null or undefined
-    const reportsList = Array.isArray(asset.assessment_reports) ? asset.assessment_reports : [];
-    const photosList = Array.isArray(asset.asset_photos) ? asset.asset_photos : [];
+    // Helper function to normalize both string arrays and object arrays uniformly
+    const normalizeAttachments = (items: string[] | AttachedFile[] | null | undefined): AttachedFile[] => {
+        if (!Array.isArray(items)) return [];
+        return items.map((item, idx) => {
+            if (typeof item === 'string') {
+                return {
+                    path: item,
+                    description: `Attached File #${idx + 1}` // Fallback description for legacy strings
+                };
+            }
+            return item;
+        });
+    };
+
+    const reportsList = normalizeAttachments(asset.assessment_reports);
+    const photosList = normalizeAttachments(asset.asset_photos);
 
     return (
         <div className="bg-white rounded-2xl border border-emerald-100/60 shadow-md shadow-emerald-900/3 overflow-hidden main-info-card">
@@ -89,7 +104,7 @@ return;
                         </div>
                     </div>
 
-                    {/* Middle Column: Technical Properties & Hardware Parameters */}
+                    {/* Middle Column: Technical Properties */}
                     <div className="space-y-4 md:border-l md:border-gray-100 md:pl-8">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-emerald-700/80 mb-2 pb-1 border-b border-gray-100">
                             Technical Specifications
@@ -119,7 +134,7 @@ return;
                         </div>
                     </div>
 
-                    {/* Right Column: Attachments Showcase (UPDATED MULTI-ROW RENDERING) */}
+                    {/* Right Column: Attachments Showcase with Descriptions */}
                     <div className="space-y-4 md:border-l md:border-gray-100 md:pl-8">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-emerald-700/80 mb-2 pb-1 border-b border-gray-100">
                             Attachments
@@ -129,23 +144,28 @@ return;
                         <div className="space-y-2">
                             <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Assessment Reports</h4>
                             {reportsList.length > 0 ? (
-                                reportsList.map((path, idx) => (
+                                reportsList.map((item, idx) => (
                                     <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50/50 hover:bg-gray-50 transition-all group">
                                         <div className="flex items-start gap-2.5">
-                                            <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                            <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-100 transition-colors shrink-0">
                                                 <FileText className="w-4 h-4" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs text-gray-700 font-medium truncate mb-2">Report Document #{idx + 1}</p>
-                                                <div className="flex gap-2">
+                                                <p className="text-xs text-gray-700 font-bold truncate">Report Document #{idx + 1}</p>
+                                                
+                                                <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed wrap-break-word">
+                                                    {item.description}
+                                                </p>
+
+                                                <div className="flex gap-2 mt-2">
                                                     <button 
-                                                        onClick={() => openDocumentSecurely(path)}
+                                                        onClick={() => openDocumentSecurely(item.path)}
                                                         className="text-[11px] inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-semibold transition-colors bg-white px-2 py-0.5 rounded shadow-xs border border-gray-100 cursor-pointer"
                                                     >
                                                         View Tab
                                                     </button>
                                                     <a 
-                                                        href={`/storage/${path}`} 
+                                                        href={`/storage/${item.path}`} 
                                                         download
                                                         className="text-[11px] inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium transition-colors bg-white px-2 py-0.5 rounded shadow-xs border border-gray-100"
                                                     >
@@ -165,23 +185,28 @@ return;
                         <div className="space-y-2 pt-2">
                             <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Physical Evidence Photos</h4>
                             {photosList.length > 0 ? (
-                                photosList.map((path, idx) => (
+                                photosList.map((item, idx) => (
                                     <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50/50 hover:bg-gray-50 transition-all group">
                                         <div className="flex items-start gap-2.5">
-                                            <div className="p-1.5 bg-purple-50 rounded-lg text-purple-600 group-hover:bg-purple-100 transition-colors">
+                                            <div className="p-1.5 bg-purple-50 rounded-lg text-purple-600 group-hover:bg-purple-100 transition-colors shrink-0">
                                                 <ImageIcon className="w-4 h-4" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs text-gray-700 font-medium truncate mb-2">Condition Photo #{idx + 1}</p>
-                                                <div className="flex gap-2">
+                                                <p className="text-xs text-gray-700 font-bold truncate">Condition Photo #{idx + 1}</p>
+                                                
+                                                <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed wrap-break-word">
+                                                    {item.description}
+                                                </p>
+
+                                                <div className="flex gap-2 mt-2">
                                                     <button 
-                                                        onClick={() => openDocumentSecurely(path)}
+                                                        onClick={() => openDocumentSecurely(item.path)}
                                                         className="text-[11px] inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-semibold transition-colors bg-white px-2 py-0.5 rounded shadow-xs border border-gray-100 cursor-pointer"
                                                     >
                                                         View Image
                                                     </button>
                                                     <a 
-                                                        href={`/storage/${path}`} 
+                                                        href={`/storage/${item.path}`} 
                                                         download
                                                         className="text-[11px] inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium transition-colors bg-white px-2 py-0.5 rounded shadow-xs border border-gray-100"
                                                     >

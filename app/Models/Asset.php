@@ -32,6 +32,9 @@ class Asset extends Model implements Auditable
         'status',
         'assessment_report_path',
         'asset_photo_path',
+        'assessment_report_path_desc',
+        'asset_photo_path_desc',
+        'others_description',
     ];
 
     protected $attributes = [

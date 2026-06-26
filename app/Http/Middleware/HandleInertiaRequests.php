@@ -36,10 +36,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        // 1. Get the current logged-in user
         $user = $request->user();
 
-        // 2. If a user is logged in, attach their role data to the user object
         if ($user) {
             $user->loadMissing('role'); // This eager-loads the 'role' relationship
         }
@@ -48,7 +46,9 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $user, // Passes the user complete with their role relationship
+                'user' => $request->user() 
+                ? $request->user()->loadMissing(['role', 'department']) // Add 'department' here
+                : null,
             ],
             'roles' => Role::select('id', 'name')->get(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
