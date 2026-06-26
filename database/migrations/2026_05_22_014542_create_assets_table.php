@@ -37,6 +37,10 @@ return new class extends Migration
             // File Upload Paths (Form Row 4)
             $table->string('assessment_report_path')->nullable(); // Stores the uploaded file path
             $table->string('asset_photo_path')->nullable();       // Stores the uploaded image path
+            $table->string('assessment_report_path_desc')->nullable(); // Stores the uploaded file path description
+            $table->string('asset_photo_path_desc')->nullable();       // Stores the uploaded image path description
+
+            $table->string('others_description')->nullable();
 
             $table->timestamps();
         });

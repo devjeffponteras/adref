@@ -21,6 +21,18 @@ interface assetStatus {
     approver?: Approver | null;
 }
 
+// 1. Added nested relationship interfaces to match backend query
+interface Department {
+    id: number;
+    name: string;
+}
+
+interface UserProfile {
+    id: number;
+    name: string;
+    department?: Department | null;
+}
+
 interface Props {
     asset: {
         id: number;
@@ -29,7 +41,7 @@ interface Props {
         model: string;
         brand_make: string;
         approvals: assetStatus[];
-        end_user_department: string;
+        user?: UserProfile | null; // 2. Added the 'user' object relation
     };
     currentUserId: number;
 }
@@ -67,7 +79,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                 badge: 'bg-amber-500/10 text-amber-700 border border-amber-200',
                 iconBg: 'bg-white ring-4 ring-amber-100/60',
                 icon: <Clock className="h-5 w-5 text-amber-500 animate-spin-[spin_3s_linear_infinite]" />,
-                line: 'bg-gray-200/80', // Keeps upcoming connection clean
+                line: 'bg-gray-200/80', 
                 pillText: 'bg-amber-500 text-white shadow-xs shadow-amber-500/10'
             };
         }
@@ -109,7 +121,6 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
     };
 
     const handleBack = () => {
-        // Standard browser back function works perfectly with Inertia
         window.history.back(); 
     };
 
@@ -149,12 +160,18 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
                         <div className="flex flex-col gap-0.5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Serial Tag / Plate Number</span>
-                            <span className="font-mono text-xs font-medium text-emerald-100 bg-white/5 px-2 py-0.5 rounded border border-white/5 w-fit tracking-wider">{asset.serial_plate_id_number || 'N/A'}</span>
+                            <span className="font-mono uppercase text-xs font-medium text-emerald-100 bg-white/5 px-2 py-0.5 rounded border border-white/5 w-fit tracking-wider">{asset.serial_plate_id_number || 'N/A'}</span>
                         </div>
 
+                        {/* 3. Updated this column to pull data from asset.user.department.name */}
                         <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">End-User &amp; Department</span>
-                            <span className="font-medium text-emerald-50/90 truncate" title={asset.end_user_department}>{asset.end_user_department || 'N/A'}</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">End-User Department</span>
+                            <span 
+                                className="font-medium text-emerald-50/90 truncate" 
+                                title={asset.user?.department?.name || 'N/A'}
+                            >
+                                {asset.user?.department?.name || 'N/A'}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -170,20 +187,16 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                         return (
                             <div key={step.id} className="relative flex items-start gap-4 group">
                                 
-                                {/* Single Dynamic Connecting Line Segment */}
                                 {!isLast && (
                                     <div className={`absolute -left-4.75 top-8 -bottom-6 w-0.5 transition-all duration-300 ${styles.line}`} />
                                 )}
 
-                                {/* Left Side Icon Indicator Node */}
                                 <div className={`absolute -left-7.75 rounded-full p-1 z-10 transition-all duration-300 ${styles.iconBg}`}>
                                     {styles.icon}
                                 </div>
 
-                                {/* Detail Content Panel */}
                                 <div className={`flex-1 border rounded-2xl p-5 bg-white transition-all duration-300 shadow-xs hover:shadow-md ${styles.bg}`}>
                                     
-                                    {/* Card Header Structure */}
                                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                                         <div className="flex items-center gap-2.5">
                                             <span className={`text-[11px] font-black px-2 py-0.5 rounded-lg transition-colors ${styles.badge}`}>
@@ -196,7 +209,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
                                         {step.status === 'Approved' && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-black bg-green-500 text-white p-1 rounded-full uppercase tracking-wider shadow">
-                                                <BadgeCheckIcon></BadgeCheckIcon> <span className='pe-2'>Done</span>
+                                                <BadgeCheckIcon /> <span className='pe-2'>Done</span>
                                             </span>
                                         )}
                                         {isStrictlyCurrent && !isLast && (
@@ -206,7 +219,6 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                         )}
                                     </div>
 
-                                    {/* Metadata Metrics Display Row */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-slate-100 pt-3.5 text-slate-600">
                                         <div className="flex items-center gap-2 bg-slate-50/50 p-2 rounded-xl border border-slate-100/50">
                                             <User className="h-4 w-4 text-slate-400 shrink-0" />
@@ -221,12 +233,13 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                             <div className="overflow-hidden">
                                                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide leading-none mb-0.5">Approval Timestamp</p>
                                                 <p className="font-semibold text-slate-700 truncate">
-                                                    {step.approval_date ? new Date(step.approval_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending Release'}
+                                                    {step.approval_date 
+                                                        ? `${new Date(step.approval_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} @ ${new Date(step.approval_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+                                                        : 'Pending Release'}
                                                 </p>
                                             </div>
                                         </div>
                                         
-                                        {/* Status Badge Row */}
                                         <div className="sm:col-span-2 flex items-center gap-2 mt-1">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status State:</span> 
                                             <span className={`text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-md ${styles.pillText}`}>
@@ -288,12 +301,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
 AssetTimeline.layout = {
     breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: '/my-assets'
-        },
-        {
-            title: 'Asset Status Timeline',
-        },
+        { title: 'Dashboard', href: '/my-assets' },
+        { title: 'Asset Status Timeline' },
     ],
 };
