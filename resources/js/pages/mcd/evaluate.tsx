@@ -259,8 +259,8 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
-                            <input 
-                                type="text"
+                            <textarea 
+                                rows={3}
                                 placeholder="Type Remarks.."
                                 value={data.par_remarks}
                                 onChange={e => setData('par_remarks', e.target.value)}
@@ -269,7 +269,7 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
                                             ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
                                             : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
                                         }`}
-                            />
+                            ></textarea>
                             {errors.par_remarks && <p className="text-xs text-red-500 mt-1">{errors.par_remarks}</p>}
                         </div>
                     </div>

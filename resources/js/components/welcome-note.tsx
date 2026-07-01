@@ -27,7 +27,7 @@ export function WelcomeNote() {
                     {/* Right Section: System context transformed into an app-status badge */}
                     <div className="flex flex-col items-start sm:items-end gap-1.5 border-t border-zinc-200/60 pt-3 sm:border-t-0 sm:pt-0">
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white shadow rounded-xl border border-zinc-300/30">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                            <span className="w-1.5 h-1.5 rounded-full animate-ping bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                             <span className="text-xs font-bold text-zinc-600 tracking-wide uppercase">
                                 Asset Disposal System Active
                             </span>

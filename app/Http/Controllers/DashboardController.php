@@ -23,7 +23,7 @@ class DashboardController extends Controller
 
     public function asidDashboard(): Response
     {
-        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver'])
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.classification'])
             ->orderBy('created_at', 'desc')
             ->get();
 

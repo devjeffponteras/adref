@@ -468,10 +468,10 @@ class AssetController extends Controller
         $asset = Asset::findOrFail($id);
 
         $validatedData = $request->validate([
-            'asset_number' => 'required|string|max:100|unique:accounting_information,asset_number,'.$asset->id.',asset_id',
-            'acquisition_date' => 'required|date',
-            'acquisition_cost' => 'required|numeric|min:0',
-            'book_value' => 'required|numeric|min:0',
+            'asset_number' => 'nullable|string|max:100',
+            'acquisition_date' => 'nullable|date',
+            'acquisition_cost' => 'nullable|numeric|min:0',
+            'book_value' => 'nullable|numeric|min:0',
             'remarks' => 'nullable|string|max:1000',
             'checked_by' => 'required|string|max:255',
         ]);
@@ -508,65 +508,43 @@ class AssetController extends Controller
 
     }
 
-    // Accounting flow -- Step 2 mauna ni next kay para ma process kunohay sa workflow..
-    public function accountingEvaluateWorkflowAction(Request $request, $id)
-    {
-        // dd($request);
-        // no $request use for now.. kay temporary lang ni..
-        $asset = Asset::findOrFail($id);
-
-        DB::transaction(function () use ($asset, $id) {
-            $asset->accounting_information()->updateOrCreate(
-                [],
-                ['conformed_by' => 'Ivan Moreno']
-            );
-
-            Workflow::updateOrCreate(
-                ['asset_id' => $id],
-                [
-                    'workflow_step' => 1,
-                    'status' => 'Approved',
-                ]
-            );
-        });
-
-        // return back()->with('success', 'Accounting records saved successfully.');
-        return redirect()->route('accounting-dashboard')
-            ->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
-
-        // return back()->with('success', 'Asset disposal request successfully submitted to Workflow System. Please wait for the respective response.');
-    }
-
-    // Accounting flow -- Step 3 mauna ni last part para ma sequence.. HAHAYZZZZZZZ!
     public function accountingEvaluateAction(Request $request, $id)
     {
-        $asset = Asset::findOrFail($id);
-
         $validatedData = $request->validate([
-            'asset_number' => ['required', 'string', 'max:100', Rule::unique('accounting_information', 'asset_number')->ignore($asset->id, 'asset_id')],
-            'acquisition_date' => 'required|date',
-            'acquisition_cost' => 'required|numeric|min:0',
-            'book_value' => 'required|numeric|min:0',
-            'remarks' => 'nullable|string|max:1000',
-            'checked_by' => 'required|string|max:255',
+            'asset_number'     => 'nullable|string|max:100',
+            'acquisition_date' => 'nullable|date',
+            'acquisition_cost' => 'nullable|numeric|min:0',
+            'book_value'       => 'nullable|numeric|min:0',
+            'remarks'          => 'nullable|string|max:1000',
+            'checked_by'       => 'required|string|max:255',
         ]);
+
+        $asset = Asset::findOrFail($id);
 
         DB::beginTransaction();
 
         try {
+            Workflow::updateOrCreate(
+                ['asset_id' => $id],
+                [
+                    'workflow_step' => 1,
+                    'status'        => 'Approved',
+                ]
+            );
+
             AccountingInformation::updateOrCreate(
                 ['asset_id' => $asset->id],
                 [
-                    'role' => 'accounting',
-                    'asset_number' => $validatedData['asset_number'],
+                    'role'             => 'accounting',
+                    'asset_number'     => $validatedData['asset_number'],
                     'acquisition_date' => $validatedData['acquisition_date'],
                     'acquisition_cost' => $validatedData['acquisition_cost'],
-                    'book_value' => $validatedData['book_value'],
-                    'remarks' => $validatedData['remarks'],
-                    'checked_by' => $validatedData['checked_by'],
-                    'conformed_by' => 'N/A',
-                    'status' => 'Approved',
-                    'approver_id' => Auth::id(),
+                    'book_value'       => $validatedData['book_value'],
+                    'remarks'          => $validatedData['remarks'],
+                    'checked_by'       => $validatedData['checked_by'],
+                    'conformed_by'     => 'Ivan Moreno',
+                    'status'           => 'Approved',
+                    'approver_id'      => Auth::id(),
                 ]
             );
 
@@ -575,11 +553,11 @@ class AssetController extends Controller
                 ->firstOrFail();
 
             $currentApproval->update([
-                'is_current' => false,
-                'status' => 'Approved',
-                'approver_id' => Auth::id(),
+                'is_current'    => false,
+                'status'        => 'Approved',
+                'approver_id'   => Auth::id(),
                 'approval_date' => now(),
-                'remarks' => $validatedData['remarks'],
+                'remarks'       => $validatedData['remarks'],
             ]);
 
             $nextApproval = AssetApproval::where('asset_id', $id)
@@ -589,15 +567,15 @@ class AssetController extends Controller
             if ($nextApproval) {
                 $nextApproval->update([
                     'is_current' => true,
-                    'status' => 'On-going',
+                    'status'     => 'On-going',
                 ]);
 
                 $asset->update([
                     'status' => 'On-going',
-                    // 'status' => 'pending_workflow_approval' // mao ni if goods na ang WORKFLOW vice versa connection! eyy!! then add og algo for WORKFLOW app. try lang muna :)
+                    // 'status' => 'pending_workflow_approval' // Un-comment this later when workflow sync is fully linked!
                 ]);
 
-                $message = 'Accounting details recorded. Asset evaluation successfully advanced to the next sequence.';
+                $message = 'Accounting details recorded. Asset evaluation successfully advanced to the next sequence and submitted to the Workflow System.';
             } else {
                 $asset->update([
                     'status' => 'Completed',
@@ -608,24 +586,23 @@ class AssetController extends Controller
 
             AssetStatus::where('asset_id', $asset->id)
                 ->update([
-                    'seq_no' => $currentApproval->seq_no + 1,
-                    'status' => 'On-going',
-                    'approver_id' => Auth::id(),
+                    'seq_no'        => $currentApproval->seq_no + 1,
+                    'status'        => 'On-going',
+                    'approver_id'   => Auth::id(),
                     'approval_date' => now(),
-                    'remarks' => $validatedData['remarks'],
+                    'remarks'       => $validatedData['remarks'],
                 ]);
 
             DB::commit();
 
-            // return back()->with($message);
             return redirect()->route('accounting-dashboard')
                 ->with('success', $message);
 
         } catch (\Exception $e) {
-            // Discard all table queries cleanly if anything goes wrong
+            // Discard all queries cleanly if anything hits the fan
             DB::rollBack();
 
-            Log::error("Failed transaction sequence processing accounting evaluation for Asset ID {$id}: ".$e->getMessage());
+            Log::error("Failed transaction sequence processing accounting evaluation for Asset ID {$id}: " . $e->getMessage());
 
             return back()->withErrors([
                 'error' => 'An operational database issue halted processing your asset updates. Please try again.',
