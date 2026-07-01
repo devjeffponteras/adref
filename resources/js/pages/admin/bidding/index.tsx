@@ -81,7 +81,7 @@ return;
             <Head title="Bidding Dashboard" />
 
             {/* Sub Header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             {/* Main Content */}
             <div className="container-fluid p-4 space-y-10"> {/* 🟢 Added vertical spacing container */}

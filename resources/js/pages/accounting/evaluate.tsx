@@ -105,7 +105,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
         <>
             <Head title="Asset Evaluation - Accounting" />
 
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             <div className="container-fluid p-4">
 

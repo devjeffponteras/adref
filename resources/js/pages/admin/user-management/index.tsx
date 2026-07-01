@@ -47,7 +47,7 @@ export default function UserManagement({ users = [] }: DashboardProps) {
             <Head title="User Management Dashboard" />
 
             {/* Sub Header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             {/* Main Content Container */}
             <div className="container-fluid p-6">

@@ -1,6 +1,17 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { CircleCheck, ArrowLeftCircle, XIcon } from 'lucide-react';
+import { AssetProfileCard } from '@/components/asset-profile-card';
 import { WelcomeNote } from '@/components/welcome-note';
+
+interface User {
+    id: number;
+    name: string;
+}
+
+interface AssetClassification {
+    id: number;
+    name: string;
+}
 
 interface AsidInformation {
     id: number;
@@ -10,16 +21,34 @@ interface AsidInformation {
     reviewed_by: string;
 }
 
+interface AssetData {
+    id: number;
+    user_id: number;
+    control_number: string;
+    accountable_personnel: string;
+    model: string;
+    description: string;
+    brand_make: string;
+    serial_plate_id_number: string;
+    end_user_department: string;
+    asset_classification_id: number;
+    reasons_for_disposal: string;
+    asset_location: string;
+    status: string;
+    assessment_report_path: string | null;
+    asset_photo_path: string | null;
+    created_at: string;
+    user?: User;
+    classification?: AssetClassification;
+    asid_information?: AsidInformation | null;
+}
+
 interface AssetProps {
-    asset: {
-        id: number;
-        control_number: string;
-        department?: string;
-        asid_information?: AsidInformation | null;
-    };
+    asset: AssetData;
 }
 
 export default function AsidEvaluate({ asset }: AssetProps) {
+    const { auth } = usePage().props as any;
 
     const isLockedAsid = !!asset?.asid_information;
 
@@ -40,7 +69,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
             <Head title={`Evaluate - ${asset?.control_number || 'Asset'}`} />
 
             {/* sub header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             {/* main content */}
             <div className="container-fluid p-4">
@@ -48,9 +77,11 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                 <form onSubmit={handleSubmit} className="w-full max-w-7xl mx-auto p-4 space-y-4">
             
                     {/* Header Banner - Now completely dynamic! */}
-                    <div className="bg-emerald-950 text-white px-6 py-4 rounded-xl shadow-xs font-semibold text-lg flex items-center">
+                    {/* <div className="bg-emerald-950 text-white px-6 py-4 rounded-xl shadow-xs font-semibold text-lg flex items-center">
                         <span className='opacity-90 text-shadow-green-800'>Asset Information: {asset?.control_number || 'N/A'}</span>
-                    </div>
+                    </div> */}
+
+                    <AssetProfileCard asset={asset} />
 
                     {/* Main Form Container Card */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
@@ -76,6 +107,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 <textarea 
                                     rows={2}
                                     value={data.remarks}
+                                    disabled={isLockedAsid}
                                     onChange={(e) => setData('remarks', e.target.value)}
                                     className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                             ${isLockedAsid
@@ -93,7 +125,8 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 </label>
                                 <input 
                                     type="text" 
-                                    value={data.checked_by}
+                                    value={isLockedAsid ? data.checked_by : auth?.user?.name}
+                                    disabled={isLockedAsid}
                                     onChange={(e) => setData('checked_by', e.target.value)}
                                     className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                             ${isLockedAsid
@@ -116,6 +149,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 </label>
                                 <textarea 
                                     rows={2} 
+                                    disabled={isLockedAsid}
                                     value={data.disposition}
                                     onChange={(e) => setData('disposition', e.target.value)}
                                     className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150

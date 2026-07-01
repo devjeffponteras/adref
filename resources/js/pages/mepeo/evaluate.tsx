@@ -127,7 +127,7 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
             <Head title="Asset Evaluation - MEPEO" />
 
             {/* sub header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             {/* main content */}
             <div className="container-fluid p-4">

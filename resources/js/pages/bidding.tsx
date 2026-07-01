@@ -116,7 +116,7 @@ return;
     return (
         <>
             <Head title="Assets for Bidding" />
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             <div className="w-full p-6 bg-gray-50/50 min-h-screen">
                 {flash?.success && (

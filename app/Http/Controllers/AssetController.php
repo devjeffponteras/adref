@@ -760,8 +760,8 @@ class AssetController extends Controller
         $asset = Asset::findOrFail($id);
 
         $validatedData = $request->validate([
-            'waste_classification_id' => 'required|numeric|min:0',
-            'waste_characteristic_id' => 'required|numeric|min:0',
+            'waste_classification_id' => 'numeric|min:0',
+            'waste_characteristic_id' => 'numeric|min:0',
             'mepeo_remarks' => 'required|string|min:2|max:1000',
         ]);
 

@@ -92,7 +92,7 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
             <Head title="Asset Evaluation - Accounting" />
 
             {/* sub header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             {/* main content */}
             <div className="container-fluid p-4">

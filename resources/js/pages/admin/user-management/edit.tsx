@@ -46,7 +46,7 @@ export default function UserManagementEdit({ user, roles = [] }: EditProps) {
             <Head title="Edit User - Management" />
 
             {/* Sub Header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             {/* Main Content Container */}
             <div className="container-fluid p-6 max-w-3xl mx-auto">

@@ -157,7 +157,7 @@ return sortDirection === 'asc' ? 1 : -1;
             <Head title="My Assets" />
 
             {/* sub header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             <div className="container mx-auto p-6 space-y-6">
             

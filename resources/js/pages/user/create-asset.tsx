@@ -85,7 +85,7 @@ export default function CreateAsset({ classifications }: Props) {
         <>
             <Head title="Scan / Log Asset" />
 
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             {errors['assessment_reports.0.file'] && (
                 <span className="text-red-500">{errors['assessment_reports.0.file']}</span>
