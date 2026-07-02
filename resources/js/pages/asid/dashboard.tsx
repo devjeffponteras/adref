@@ -2,7 +2,6 @@ import { Head } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import { Folder, FolderCheck, SearchCheckIcon, FileSearch2, FolderOpen, LucideMap } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
-import { WelcomeNoteMini } from '@/components/welcome-note-mini';
 import type { AssetStatusData } from '@/types/models';
 
 interface DashboardProps {
@@ -25,7 +24,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
 
     // Filter Scraps
     const ScrapTransactions = safeStatuses.filter(item => 
-        item.asset?.mepeo_info?.waste_characteristic_id == 13  &&
+        item.asset?.mepeo_information?.waste_characteristic_id == 13  &&
         Number(item.seq_no) > 3
     );
 
@@ -40,7 +39,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
             <div className="container-fluid p-4">
 
                 {/* mini sub header */}
-                <WelcomeNoteMini />
+                {/* <WelcomeNoteMini /> */}
                 
                 {/* Metric Cards Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

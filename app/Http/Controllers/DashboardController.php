@@ -32,6 +32,17 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function managerDashboard(): Response
+    {
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.classification', 'asset.manager_information', 'asset.asid_information'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('manager/dashboard', [
+            'assetStatuses' => $assetStatuses,
+        ]);
+    }
+
     public function accountingDashboard(): Response
     {
         $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information'])

@@ -54,7 +54,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
 
     const { data, setData, post, processing, errors } = useForm({
         remarks: asset.asid_information?.remarks || (asset as any).asidInformation?.remarks || '',
-        checked_by: asset.asid_information?.checked_by || '',
+        checked_by: asset.asid_information?.checked_by || auth?.user?.name,
         disposition: asset.asid_information?.disposition || '',
         reviewed_by: asset.asid_information?.reviewed_by || '',
     });
@@ -126,7 +126,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 <input 
                                     type="text" 
                                     value={isLockedAsid ? data.checked_by : auth?.user?.name}
-                                    disabled={isLockedAsid}
+                                    readOnly
                                     onChange={(e) => setData('checked_by', e.target.value)}
                                     className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                             ${isLockedAsid

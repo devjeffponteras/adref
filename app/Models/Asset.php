@@ -86,6 +86,11 @@ class Asset extends Model implements Auditable
         return $this->hasOne(MepeoInformation::class, 'asset_id');
     }
 
+    public function manager_information(): HasOne
+    {
+        return $this->hasOne(ManagerInformation::class, 'asset_id');
+    }
+
     public function workflow(): HasMany
     {
         return $this->hasMany(Workflow::class, 'asset_id');

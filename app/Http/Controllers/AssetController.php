@@ -13,6 +13,7 @@ use App\Models\Bidding;
 use App\Models\Form;
 use App\Models\McdInformation;
 use App\Models\MepeoInformation;
+use App\Models\ManagerInformation;
 use App\Models\WasteCharacteristic;
 use App\Models\WasteClassification;
 use App\Models\Workflow;
@@ -253,104 +254,6 @@ class AssetController extends Controller
         return redirect()->back()->with('success', 'Stage authorization processed successfully.');
     }
 
-    public function asidEvaluate($id): Response
-    {
-        $asset = Asset::findOrFail($id);
-        $asidInformation = AsidInformation::where('asset_id', $id)->first();
-
-        $asset->asid_information = $asidInformation;
-
-        return Inertia::render('asid/evaluate', [
-            'asset' => $asset,
-        ]);
-    }
-
-    public function asidEvaluateAction(Request $request, $id)
-    {
-        // dd($request);
-        $validated = $request->validate([
-            'remarks' => 'required|string|min:2|max:1000',
-            'disposition' => 'required|string|min:2|max:1000',
-            'checked_by' => 'required|string|min:2|max:1000',
-        ]);
-
-        $validated['status'] = 'Approved';
-        $validated['reviewed_by'] = 'MS Dela Peña';
-
-        $asset = Asset::findOrFail($id);
-
-        try {
-
-            DB::transaction(function () use ($asset, $validated) {
-
-                $currentApproval = $asset->approvals()->where('is_current', true)->first();
-                $currentSeq = $currentApproval ? $currentApproval->seq_no : 1;
-
-                $asset->update(['status' => 'On-going']);
-                // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'On-going']);
-
-                $asset->approvals()->where('seq_no', $currentSeq)->update([
-                    'is_current' => false,
-                    'status' => $validated['status'],
-                    'approver_id' => Auth::id(),
-                    'approval_date' => now(),
-                    'remarks' => $validated['remarks'],
-                ]);
-
-                $targetActiveSeq = $currentSeq;
-
-                $nextApprovalExists = $asset->approvals()->where('seq_no', $currentSeq + 1)->exists();
-
-                if ($nextApprovalExists) {
-                    $targetActiveSeq = $currentSeq + 1;
-
-                    $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
-                        'is_current' => true,
-                        'status' => 'On-going',
-                        'approver_id' => null,
-                        'approval_date' => null,
-                        'remarks' => null,
-                    ]);
-                } else {
-                    $asset->update(['status' => 'Completed']);
-                    // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'Completed']);
-                }
-
-                AsidInformation::updateOrCreate(
-                    ['asset_id' => $asset->id],
-                    [
-                        'role' => 'asid',
-                        'remarks' => $validated['remarks'],
-                        'disposition' => $validated['disposition'],
-                        'checked_by' => $validated['checked_by'],
-                        'reviewed_by' => $validated['reviewed_by'],
-                        'status' => $validated['status'],
-                        'approver_id' => Auth::id(),
-                    ]
-                );
-
-                // Log details explicitly onto the row the user just interacted with
-                AssetStatus::where('asset_id', $asset->id)
-                    ->update([
-                        'seq_no' => $targetActiveSeq,
-                        'status' => $validated['status'],
-                        'approver_id' => Auth::id(),
-                        'approval_date' => now(),
-                        'remarks' => $validated['remarks'],
-                    ]);
-            });
-
-            return redirect()->route('asid-dashboard')->with('success', "Asset application state updated to: {$validated['status']}.");
-        } catch (\Exception $e) {
-            // Log the exact issue behind the scenes if something goes wrong
-            Log::error("ASID Evaluation pipeline failure for Asset ID {$id}: ".$e->getMessage());
-
-            return back()->withErrors([
-                'error' => 'An internal database issue prevented completing the approval. Please re-submit.',
-            ]);
-        }
-    }
-
     public function asidViewAsset($id)
     {
         $asset = Asset::with(['user', 'classification'])->findOrFail($id);
@@ -450,6 +353,148 @@ class AssetController extends Controller
 
         return redirect()->route('asid-dashboard')->with('success', "Asset application state updated to: {$validated['status']}.");
     }
+
+    public function asidEvaluate($id): Response
+    {
+        $asset = Asset::findOrFail($id);
+        $asidInformation = AsidInformation::where('asset_id', $id)->first();
+
+        $asset->asid_information = $asidInformation;
+
+        return Inertia::render('asid/evaluate', [
+            'asset' => $asset,
+        ]);
+    }
+
+    public function asidEvaluateAction(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'remarks' => 'required|string|min:2|max:1000',
+            'disposition' => 'required|string|min:2|max:1000',
+            'checked_by' => 'required|string|min:2|max:1000',
+        ]);
+        
+        $validated['status'] = 'Approved';
+        $validated['reviewed_by'] = 'MS Dela Peña';
+        
+        $asset = Asset::findOrFail($id);
+        
+        AsidInformation::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    [
+                        'role' => 'asid',
+                        'remarks' => $validated['remarks'],
+                        'disposition' => $validated['disposition'],
+                        'checked_by' => $validated['checked_by'],
+                        'reviewed_by' => $validated['reviewed_by'],
+                        'status' => $validated['status'],
+                        'approver_id' => Auth::id(),
+                    ]
+        );
+
+        return redirect()->route('asid-dashboard')->with('success', "Asset Request pass to ASID MANAGER. Asset application state updated to: {$validated['status']}.");
+    }
+
+    // Manager Functions
+    public function managerEvaluate(Request $request, $id)
+    {
+        $asset = Asset::findOrFail($id);
+        $asidInformation = AsidInformation::where('asset_id', $id)->first();
+        $managerInformation = ManagerInformation::where('asset_id', $id)->first();
+
+        $asset->asid_information = $asidInformation;
+        $asset->manager_information = $managerInformation;
+
+        return Inertia::render('manager/evaluate', [
+            'asset' => $asset,
+        ]);
+    }
+
+    public function managerEvaluateAction(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'asset_direction' => 'required',
+            'bidding_price' => 'nullable|number',
+            'manager_disposition' => 'nullable|string|max:1000',
+        ]);
+
+        $asset = Asset::findOrFail($id);
+        dd($asset);
+
+        try {
+
+            DB::transaction(function () use ($asset, $validated) {
+
+                $currentApproval = $asset->approvals()->where('is_current', true)->first();
+                $currentSeq = $currentApproval ? $currentApproval->seq_no : 1;
+
+                $asset->update(['status' => 'On-going']);
+                // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'On-going']);
+
+                $asset->approvals()->where('seq_no', $currentSeq)->update([
+                    'is_current' => false,
+                    'status' => $validated['status'],
+                    'approver_id' => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks' => $validated['remarks'],
+                ]);
+
+                $targetActiveSeq = $currentSeq;
+
+                $nextApprovalExists = $asset->approvals()->where('seq_no', $currentSeq + 1)->exists();
+
+                if ($nextApprovalExists) {
+                    $targetActiveSeq = $currentSeq + 1;
+
+                    $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
+                        'is_current' => true,
+                        'status' => 'On-going',
+                        'approver_id' => null,
+                        'approval_date' => null,
+                        'remarks' => null,
+                    ]);
+                } else {
+                    $asset->update(['status' => 'Completed']);
+                    // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'Completed']);
+                }
+
+                ManagerInformation::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    [
+                        'user_id' => Auth::id(),
+                        'asset_direction' => $validated['asset_direction'],
+                        'manager_disposition' => $validated['disposition'],
+                        'bidding_price' => $validated['bidding_price'],
+                        'reviewed_by' => Auth::id(),
+                    ]
+                );
+
+                // Log details explicitly onto the row the user just interacted with
+                AssetStatus::where('asset_id', $asset->id)
+                    ->update([
+                        'seq_no' => $targetActiveSeq,
+                        'status' => $validated['status'],
+                        'approver_id' => Auth::id(),
+                        'approval_date' => now(),
+                        'remarks' => $validated['remarks'],
+                    ]);
+            });
+
+            return redirect()->route('manager-dashboard')->with('success', "Asset Request Approval forwarded to WORKFLOW.");
+
+        } catch (\Exception $e) {
+            // Log the exact issue behind the scenes if something goes wrong
+            Log::error("ASID MANAGER Evaluation pipeline failure for Asset ID {$id}: ".$e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An internal database issue prevented completing the approval. Please re-submit.',
+            ]);
+        }
+
+
+      
+    }
+    // End managers functions
 
     public function accountingEvaluate($id)
     {

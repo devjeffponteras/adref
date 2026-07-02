@@ -25,7 +25,9 @@ export interface Asset {
     asset_classification_id: AssetClassification | null;
     status: string;
     user?: User;
-    mepeo_info: MepeoInfo | null;
+    mepeo_information?: MepeoInfo | null;
+    manager_information?: ManagerInfo | null;
+    asid_information?: AsidInfo | null;
 }
 
 export interface Approver {
@@ -56,4 +58,20 @@ export interface MepeoInfo {
     id: number;
     waste_classification_id: number;
     waste_characteristic_id: number;
+}
+
+export interface ManagerInfo {
+    id: number;
+    asset_direction: string;
+    manager_reviewd_by: string;
+    manager_disposition: string;
+    bidding_price: number;
+}
+
+export interface AsidInfo {
+    id: number;
+    remarks: string;
+    checked_by: string;
+    disposition: string;
+    reviewed_by: string;
 }
