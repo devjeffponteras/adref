@@ -1,6 +1,5 @@
 import { Head, useForm, Link, usePage} from '@inertiajs/react';
 import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User, Building2, CalendarDays, ShieldAlert, BadgeHelp, BadgeCheckIcon } from 'lucide-react';
-import React from 'react';
 
 interface Approver {
     id: number;
@@ -21,10 +20,23 @@ interface assetStatus {
     approver?: Approver | null;
 }
 
-// 1. Added nested relationship interfaces to match backend query
 interface Department {
     id: number;
     name: string;
+}
+
+interface AsidInfo {
+    id: number;
+    remarks: string;
+    checked_by: string;
+    disposition: string;
+    reviewed_by: string;
+}
+
+interface ManagerInfo {
+    id: number;
+    manager_disposition: string;
+    reviewed_by: string;
 }
 
 interface UserProfile {
@@ -41,13 +53,17 @@ interface Props {
         model: string;
         brand_make: string;
         approvals: assetStatus[];
-        user?: UserProfile | null; // 2. Added the 'user' object relation
+        user?: UserProfile | null;
+        asid_information?: AsidInfo | null;
+        manager_information?: ManagerInfo | null;
     };
     currentUserId: number;
 }
 
 export default function AssetTimeline({ asset, currentUserId }: Props) {
     const { auth, flash } = usePage().props as any;
+
+    const isLockedAsid = !!asset?.asid_information && !asset?.manager_information;
 
     const { data, setData, post, processing, errors } = useForm({
         remarks: '',
@@ -212,11 +228,17 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                                 <BadgeCheckIcon /> <span className='pe-2'>Done</span>
                                             </span>
                                         )}
+                                        {isLockedAsid && isStrictlyCurrent && !isLast && (
+                                            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs shadow-amber-500/20">
+                                                <span className="h-1 w-1 rounded-full bg-white animate-ping" /> Manager is Reviewing..
+                                            </span>
+                                        )}
                                         {isStrictlyCurrent && !isLast && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs shadow-amber-500/20">
                                                 <span className="h-1 w-1 rounded-full bg-white animate-ping" /> Current Stage
                                             </span>
                                         )}
+                                        
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-slate-100 pt-3.5 text-slate-600">

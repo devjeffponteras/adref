@@ -92,7 +92,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                             {isLockedAsid && 
                             <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                                 <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
-                                Submitted to Workflow
+                                APPROVED SUBMITTED TO ASID MANAGER
                             </span>
                             }
 
@@ -143,7 +143,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
 
                         {/* Section 2: Disposition */}
                         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-                            <div className="xl:col-span-5 flex flex-col gap-1.5">
+                            <div className="xl:col-span-6 flex flex-col gap-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Disposition
                                 </label>
@@ -160,11 +160,8 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                     placeholder="Recommended disposal action..."
                                 />
                             </div>
-                        </div>
 
-                        {/* Section 3: Reviewed and Noted By */}
-                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
-                            <div className="xl:col-span-5 flex flex-col gap-1.5">
+                            <div className="xl:col-span-6 flex flex-col gap-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Reviewed and Noted By
                                 </label>
@@ -178,12 +175,9 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                                 ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
                                                 : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                             }`}
-                                    placeholder="Name of manager"
+                                    placeholder="Auto Assigned by System"
                                 />
                             </div>
-
-                            <div className="xl:col-span-5 hidden xl:block"></div>
-
                         </div>
 
                         {/* Bottom Footer Actions */}
@@ -207,7 +201,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                     'Saving...'
                                 ) : (
                                     <>
-                                        Approve & Submit to <span className="text-yellow-400 font-bold ml-1">Workflow</span>
+                                        Approve & Submit to <span className="text-yellow-400 font-bold ml-1">MANAGER</span>
                                     </>
                                 )}
                             </button>

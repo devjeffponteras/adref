@@ -7,7 +7,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ManagerInformation extends Model
+class ManagerInformation extends Model implements Auditable 
 {
     use AuditableTrait;
     
@@ -17,7 +17,7 @@ class ManagerInformation extends Model
         'asset_id',
         'user_id',
         'asset_direction',
-        'biddin_price',
+        'bidding_price',
         'manager_disposition',
         'reviewed_by',
     ];

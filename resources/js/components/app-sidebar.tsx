@@ -95,10 +95,10 @@ const mainNavItems: NavItem[] = [
     //     icon: SquareUserRound,
     // },
     {
-        title: 'Bidding',
+        title: 'Biddings',
         href: '/admin/bidding/index',
         icon: Gavel,
-        roles: ['admin'],
+        roles: ['admin', 'manager'],
     },
     {
         title: 'User Management',

@@ -194,6 +194,8 @@ class AssetController extends Controller
             'user',
             'user.department',
             'approvals.approver',
+            'asid_information',
+            'manager_information'
         ])->findOrFail($id);
 
         // dd($asset->toArray());
@@ -414,12 +416,14 @@ class AssetController extends Controller
     {
         $validated = $request->validate([
             'asset_direction' => 'required',
-            'bidding_price' => 'nullable|number',
+            'bidding_price' => 'nullable|numeric',
             'manager_disposition' => 'nullable|string|max:1000',
         ]);
 
+        $validated['status'] = 'Approved';
+
         $asset = Asset::findOrFail($id);
-        dd($asset);
+        // dd($validated);
 
         try {
 
@@ -436,7 +440,7 @@ class AssetController extends Controller
                     'status' => $validated['status'],
                     'approver_id' => Auth::id(),
                     'approval_date' => now(),
-                    'remarks' => $validated['remarks'],
+                    'remarks' => $validated['manager_disposition'],
                 ]);
 
                 $targetActiveSeq = $currentSeq;
@@ -463,9 +467,9 @@ class AssetController extends Controller
                     [
                         'user_id' => Auth::id(),
                         'asset_direction' => $validated['asset_direction'],
-                        'manager_disposition' => $validated['disposition'],
+                        'manager_disposition' => $validated['manager_disposition'],
                         'bidding_price' => $validated['bidding_price'],
-                        'reviewed_by' => Auth::id(),
+                        'reviewed_by' => Auth::user()->name,
                     ]
                 );
 
@@ -476,7 +480,7 @@ class AssetController extends Controller
                         'status' => $validated['status'],
                         'approver_id' => Auth::id(),
                         'approval_date' => now(),
-                        'remarks' => $validated['remarks'],
+                        'remarks' => $validated['manager_disposition'],
                     ]);
             });
 
@@ -870,6 +874,7 @@ class AssetController extends Controller
     {
         $assetOnBidding = AssetBidding::with([
             'asset.accounting_information',
+            'asset.manager_information',
             'asset.bids' => function ($query) {
                 $query->where('user_id', Auth::id());
             },

@@ -94,7 +94,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
 
                         <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                             <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
-                            APPROVED
+                            APPROVED SUBMITTED TO ASID MANAGER
                         </span>
 
                     </h3>
@@ -197,6 +197,14 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
                         <h3 className="text-gray-900 font-bold text-lg tracking-tight">
                             Evaluation Information for Managers
+                            
+                            {isLockedManager && 
+                            <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
+                                <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
+                                SUBMITTED TO WORKFLOW FOR APPROVAL
+                            </span>
+                            }
+                            
                         </h3>
 
                         {/* Section 1: Dropdown for choices and Disposition*/}
