@@ -19,6 +19,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('forms/form-upload', [AssetController::class, 'formUpload'])->name('form-upload');
     Route::post('forms/form-update/{id}', [AssetController::class, 'formUpdate'])->name('form-update');
     Route::post('forms/form-delete/{id}', [AssetController::class, 'formDelete'])->name('form-delete');
+
+    Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
+    Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
 });
 
 // Add routes here for admin account
@@ -36,9 +39,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('admin/user-management/update', [AdminController::class, 'userManagementUpdate'])->name('user-management.update');
     Route::post('admin/user-management/delete/{id}', [AdminController::class, 'userManagementDelete'])->name('user-management.delete');
 
-    Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
-    Route::get('admin/bidding/create', [AdminController::class, 'biddingCreate'])->name('bidding.create');
-    Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
+    // Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
+    // Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
 
     // Secret Options
     Route::get('admin/secret/assets', [AdminController::class, 'assetPass'])->name('admin.asset-pass');
@@ -53,6 +55,19 @@ Route::middleware(['auth', 'verified', 'role:asid'])->group(function () {
     Route::post('asid-view/{id}/action', [AssetController::class, 'asidViewAssetAction'])->name('asid-view-asset-action');
     Route::get('asid-evaluate/{id}', [AssetController::class, 'asidEvaluate'])->name('asid-evaluate');
     Route::post('asid-evaluate/{id}/action', [AssetController::class, 'asidEvaluateAction'])->name('asid-evaluate-action');
+
+    Route::get('asid-evaluate-manager/{id}', [AssetController::class, 'asidEvaluateManager'])->name('asid-evaluate-manager');
+
+});
+
+// Add routes here for MANAGER account
+Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
+    Route::get('manager-dashboard', [DashboardController::class, 'managerDashboard'])->name('manager-dashboard');
+    Route::get('manager-evaluate/{id}', [AssetController::class, 'managerEvaluate'])->name('manager-evaluate');
+    Route::post('manager-evaluate/{id}/action', [AssetController::class, 'managerEvaluateAction'])->name('manager-evaluate-action');
+
+    // Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
+    // Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
 });
 
 // Add routes here for Accounting account

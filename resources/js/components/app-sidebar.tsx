@@ -32,6 +32,7 @@ import {
 import {
     dashboard,
     asidDashboard,
+    managerDashboard,
     mcdDashboard,
     userDashboard,
     mepeoDashboard,
@@ -51,7 +52,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         icon: LayoutGrid,
-        roles: ['admin', 'asid', 'mcd', 'user', 'mepeo', 'accounting'],
+        roles: ['admin', 'asid', 'mcd', 'user', 'mepeo', 'accounting', 'manager'],
         href: '/dashboard',
     },
     {
@@ -94,10 +95,10 @@ const mainNavItems: NavItem[] = [
     //     icon: SquareUserRound,
     // },
     {
-        title: 'Bidding',
+        title: 'Biddings',
         href: '/admin/bidding/index',
         icon: Gavel,
-        roles: ['admin'],
+        roles: ['admin', 'manager'],
     },
     {
         title: 'User Management',
@@ -124,6 +125,7 @@ export function AppSidebar() {
     const resolveDashboardRoute = (role: string) => {
         const routes: Record<string, any> = {
             admin: dashboard(),
+            manager: managerDashboard(),
             asid:  asidDashboard(),
             mcd:   mcdDashboard(),
             user:  userDashboard(),

@@ -9,6 +9,11 @@ interface AccountingInfo {
     book_price: number | string | null;
 }
 
+interface ManagerInfo {
+    id: number;
+    bidding_price: number | string | null;
+}
+
 interface BidRecord {
     id: number;
     user_id: number;
@@ -23,6 +28,7 @@ interface Asset {
     end_user_department: string;
     description: string | null;
     accounting_information?: AccountingInfo;
+    manager_information?: ManagerInfo;
     bids?: BidRecord[];
 }
 
@@ -78,9 +84,8 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
 
     const hasCurrentUserBidded = (asset?: Asset) => {
         if (!asset || !asset.bids || !authUser) {
-return false;
-}
-
+            return false;
+        }
         return asset.bids.some(bid => Number(bid.user_id) === Number(authUser.id));
     };
 
@@ -96,10 +101,9 @@ return false;
 
     const handleSubmittingBid = (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!selectedListing || !selectedListing.asset) {
-return;
-}
+    return;
+    }
 
         post(`/user/bidding/entry/${selectedListing.asset.id}`, {
             onSuccess: () => handleCloseBidModal(),
@@ -116,7 +120,7 @@ return;
     return (
         <>
             <Head title="Assets for Bidding" />
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             <div className="w-full p-6 bg-gray-50/50 min-h-screen">
                 {flash?.success && (
@@ -165,7 +169,7 @@ return;
                                         <th className="py-3.5 pl-6 pr-3 font-semibold">Control Number</th>
                                         <th className="px-4 py-3.5 font-semibold">Name of Asset / Details</th>
                                         <th className="px-4 py-3.5 font-semibold">Department</th>
-                                        <th className="px-4 py-3.5 font-semibold">Appraised Value</th>
+                                        <th className="px-4 py-3.5 font-semibold">Minimum Bid</th>
                                         <th className="py-3.5 pr-6 font-semibold text-center">Bidding Application</th>
                                     </tr>
                                 </thead>
@@ -184,8 +188,8 @@ return;
                                                 </span>
                                             </td>
                                             <td className="px-4 py-4 font-semibold text-gray-900">
-                                                {listing.asset?.accounting_information?.book_price ? (
-                                                    `₱${Number(listing.asset.accounting_information.book_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                                {listing.asset?.manager_information?.bidding_price ? (
+                                                    `₱${Number(listing.asset?.manager_information?.bidding_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                                                 ) : (
                                                     '₱0.00'
                                                 )}
@@ -341,9 +345,9 @@ return;
                                         <input type="number" required min="0" step="0.01" value={data.bidding_price} onChange={e => setData('bidding_price', e.target.value)} placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 rounded-xl text-base font-semibold text-emerald-700 bg-emerald-50/20 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden" />
                                     </div>
                                     <div className="text-xs text-gray-500 pb-2 italic">
-                                        Base Value / Book Value Reference: 
+                                        Minimum Bid Price: 
                                         <span className="font-bold text-gray-800">
-                                            {selectedListing.asset.accounting_information?.book_price ? ` ₱${Number(selectedListing.asset.accounting_information.book_price).toLocaleString()}` : ' ₱0.00'}
+                                            {selectedListing.asset.manager_information?.bidding_price ? ` ₱${Number(selectedListing.asset.manager_information?.bidding_price).toLocaleString()}` : ' ₱0.00'}
                                         </span>
                                     </div>
                                 </div>

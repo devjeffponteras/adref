@@ -131,14 +131,18 @@ class AdminController extends Controller
             ->with('success', 'User deleted successfully!');
     }
 
-    // bidding
+    // admin bidding
     public function biddingIndex(): Response
     {
         $assets = Asset::where('status', 'Approved')
-            ->whereDoesntHave('biddingListing')
-            ->get();
+        ->whereDoesntHave('biddingListing')
+        ->get();
 
-        $assetOnBidding = AssetBidding::with('asset.accounting_information')->get();
+        $assetOnBidding = AssetBidding::with([
+            'asset.accounting_information', 
+            'asset.manager_information',
+            'biddings' 
+        ])->get();
 
         return Inertia::render('admin/bidding/index', [
             'assets' => $assets,
@@ -154,7 +158,7 @@ class AdminController extends Controller
             'asset_id' => $asset->id,
         ]);
 
-        return redirect('/admin/bidding/index')->with('success', 'Asset successfully published for bidding entry!');
+        return redirect()->back()->with('/admin/bidding/index')->with('success', 'Asset successfully published for bidding entry!');
     }
 
     public function assetPass()

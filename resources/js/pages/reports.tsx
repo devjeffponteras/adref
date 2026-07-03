@@ -7,7 +7,7 @@ export default function Reports() {
     return (
         <>
             <Head title="Assets for Bidding" />
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             {/* Content Container */}
             <div className="container-fluid p-4 min-h-[calc(100vh-12rem)] flex items-center justify-center">

@@ -98,7 +98,7 @@ return;
         <>
             <Head title={`View Asset`} />
 
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             <div className="container-fluid p-4 max-w-7xl mx-auto">
 

@@ -43,7 +43,7 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
             <Head title="Create User - Management" />
 
             {/* Sub Header */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             {/* Main Content Container */}
             <div className="container-fluid p-6 max-w-3xl mx-auto">

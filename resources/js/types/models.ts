@@ -22,8 +22,12 @@ export interface Asset {
     serial_plate_id_number: string | null;
     end_user_department: string;
     description: string | null;
+    asset_classification_id: AssetClassification | null;
     status: string;
     user?: User;
+    mepeo_information?: MepeoInfo | null;
+    manager_information?: ManagerInfo | null;
+    asid_information?: AsidInfo | null;
 }
 
 export interface Approver {
@@ -43,3 +47,31 @@ export interface AssetStatusData {
     approver: Approver | null;
 }
 
+export interface AssetClassification {
+    id: number;
+    name: string;
+    code: string;
+    description: string;
+}
+
+export interface MepeoInfo {
+    id: number;
+    waste_classification_id: number;
+    waste_characteristic_id: number;
+}
+
+export interface ManagerInfo {
+    id: number;
+    asset_direction: string;
+    manager_reviewd_by: string;
+    manager_disposition: string;
+    bidding_price: number;
+}
+
+export interface AsidInfo {
+    id: number;
+    remarks: string;
+    checked_by: string;
+    disposition: string;
+    reviewed_by: string;
+}

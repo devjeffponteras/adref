@@ -107,7 +107,7 @@ export default function Forms() {
     return (
         <>
             <Head title="Forms - File Upload Staging" />
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
 
             <div className="w-full p-6 bg-gray-50/50 min-h-screen">
                 {/* Flash Messages */}

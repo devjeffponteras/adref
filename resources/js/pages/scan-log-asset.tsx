@@ -15,7 +15,7 @@ export default function  ScanLogAsset() {
         <Head title="My Assets" />
 
             {/* Welcome note */}
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             <div className="w-full p-4">
 

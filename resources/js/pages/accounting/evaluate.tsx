@@ -93,11 +93,10 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
 
     const handleActionSubmit = (actionType: 'submit-workflow' | 'approve-workflow' | 'save-only') => {
         if (actionType === 'submit-workflow') {
-            post(`/accounting-evaluate/${asset.id}/workflow-action`);
-        } else if (actionType === 'save-only') {
-            post(`/accounting-evaluate/${asset.id}/save-only`);
-        } else {
+            // post(`/accounting-evaluate/${asset.id}/workflow-action`);
             post(`/accounting-evaluate/${asset.id}/action`);
+        } else {
+            post(`/accounting-evaluate/${asset.id}/save-only`);
         }
     };
 
@@ -105,7 +104,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
         <>
             <Head title="Asset Evaluation - Accounting" />
 
-            <WelcomeNote />
+            {/* <WelcomeNote /> */}
             
             <div className="container-fluid p-4">
 

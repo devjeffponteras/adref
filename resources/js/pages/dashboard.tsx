@@ -145,7 +145,7 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
       <WelcomeNote />
 
       <div className="container-fluid p-4">
-        <WelcomeNoteMini />
+        {/* <WelcomeNoteMini /> */}
         
         {/* Metric Cards Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
