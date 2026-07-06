@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag } from 'lucide-react';
+import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { WelcomeNote } from '@/components/welcome-note';
@@ -190,6 +190,17 @@ return sortDirection === 'asc' ? 1 : -1;
                             <FileDown className="h-4 w-4" />
                             Export Excel
                         </button>
+
+                        {/* Action Button - Converted to Inertia Link */}
+                        <Link 
+                            href="/create-asset" 
+                            className="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-colors"
+                        >
+                            <Plus className="h-4 w-4" />
+                            <span className="font-medium">
+                                Create Asset Request
+                            </span>
+                        </Link>
                     </div>
                 </div>
 
