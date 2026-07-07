@@ -1,6 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Link, useForm } from '@inertiajs/react';
-import { FileText, Plus, X, Upload } from 'lucide-react';
+import { FileText, Plus, X, Upload, Send } from 'lucide-react';
 import React from 'react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { createAsset } from '@/routes';
@@ -85,8 +85,6 @@ export default function CreateAsset({ classifications }: Props) {
         <>
             <Head title="Scan / Log Asset" />
 
-            {/* <WelcomeNote /> */}
-
             {errors['assessment_reports.0.file'] && (
                 <span className="text-red-500">{errors['assessment_reports.0.file']}</span>
             )}
@@ -95,10 +93,10 @@ export default function CreateAsset({ classifications }: Props) {
                 <span className="text-red-500">{errors['asset_photos.0.file']}</span>
             )}
 
-            <div className="w-full p-4 max-w-6xl mx-auto space-y-6">
+            <div className="w-full p-4 space-y-6">
             
-                <div className="bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-800">
-                    <div className="flex justify-between items-center text-white">
+                <div className="bg-zinc-200 p-5 rounded-lg shadow border border-zinc-300">
+                    <div className="flex justify-between items-center text-dark">
                         <div className="flex items-center gap-2.5">
                             <FileText className="h-5 w-5 opacity-90" />
                             <h5 className="font-semibold text-lg tracking-tight">Asset Information</h5>
@@ -368,7 +366,7 @@ export default function CreateAsset({ classifications }: Props) {
                                             { id: generateUUID(), file: null, description: '' }
                                         ]);
                                     }}
-                                    className="w-fit text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 rounded hover:bg-emerald-600 hover:text-white"
+                                    className="w-fit text-xs rounded-lg font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 hover:bg-emerald-600 hover:text-white"
                                 >
                                     + Add More Reports
                                 </button>
@@ -444,7 +442,7 @@ export default function CreateAsset({ classifications }: Props) {
                                             { id: generateUUID(), file: null, description: '' }
                                         ]);
                                     }}
-                                    className="w-fit text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 rounded hover:bg-emerald-600 hover:text-white"
+                                    className="w-fit text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 rounded-lg hover:bg-emerald-600 hover:text-white"
                                 >
                                     + Add More Photos
                                 </button>
@@ -465,7 +463,7 @@ export default function CreateAsset({ classifications }: Props) {
                                 disabled={processing}
                                 className="inline-flex items-center cursor-pointer gap-1.5 px-5 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition-colors disabled:opacity-50"
                             >
-                                <Plus className="h-4 w-4" /> Create Document
+                                <Send className="h-4 w-4" /> Submit Request
                             </button>
                         </div>
 

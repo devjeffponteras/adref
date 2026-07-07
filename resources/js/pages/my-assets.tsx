@@ -175,22 +175,6 @@ return sortDirection === 'asc' ? 1 : -1;
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleRefresh}
-                            className="p-2 border rounded-lg hover:bg-gray-50 text-gray-600 transition-colors"
-                            title="Refresh Table"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        </button>
-                        
-                        <button
-                            onClick={exportToExcel}
-                            className="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-colors"
-                        >
-                            <FileDown className="h-4 w-4" />
-                            Export Excel
-                        </button>
-
                         {/* Action Button - Converted to Inertia Link */}
                         <Link 
                             href="/create-asset" 
@@ -201,6 +185,22 @@ return sortDirection === 'asc' ? 1 : -1;
                                 Create Asset Request
                             </span>
                         </Link>
+                        
+                        <button
+                            onClick={exportToExcel}
+                            className="cursor-pointer flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-colors"
+                        >
+                            <FileDown className="h-4 w-4" />
+                            Export Excel
+                        </button>
+
+                        <button
+                            onClick={handleRefresh}
+                            className="cursor-pointer p-2 border rounded-lg hover:bg-gray-50 text-gray-600 transition-colors"
+                            title="Refresh Table"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </button>
                     </div>
                 </div>
 

@@ -72,7 +72,6 @@ export default function Forms() {
     const processedFilesList = useMemo(() => {
         let result = [...filesList];
 
-        // 1. Filter / Search
         if (searchTerm.trim() !== '') {
             const term = searchTerm.toLowerCase();
             result = result.filter(file => 
@@ -82,7 +81,6 @@ export default function Forms() {
             );
         }
 
-        // 2. Sort
         if (sortConfig !== null) {
             result.sort((a, b) => {
                 let aValue = '';
@@ -108,7 +106,6 @@ export default function Forms() {
         return result;
     }, [filesList, searchTerm, sortConfig]);
 
-    // 3. Paginate
     const totalPages = Math.max(1, Math.ceil(processedFilesList.length / itemsPerPage));
     const paginatedFilesList = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -130,7 +127,7 @@ export default function Forms() {
             direction = 'desc';
         }
         setSortConfig({ key, direction });
-        setCurrentPage(1); // Reset to page 1 on sort change
+        setCurrentPage(1);
     };
 
     const renderSortIcon = (key: SortableKeys) => {
@@ -149,12 +146,12 @@ export default function Forms() {
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
-        setCurrentPage(1); // Reset to page 1 on query change
+        setCurrentPage(1);
     };
 
     const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setItemsPerPage(Number(e.target.value));
-        setCurrentPage(1); // Fallback to safe step page 1
+        setCurrentPage(1);
     };
 
     const handleOpenUploadModal = () => {
