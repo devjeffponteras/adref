@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag, Plus } from 'lucide-react';
+import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { WelcomeNote } from '@/components/welcome-note';
@@ -31,9 +31,13 @@ interface MyAssetsProps {
 export default function MyAssets({ assets = [] }: MyAssetsProps) {
 
     const [search, setSearch] = useState('');
-    const [sortField, setSortField] = useState<keyof Asset | 'classification'>('id'); // Updated typing to explicitly allow our sort tracking
+    const [sortField, setSortField] = useState<keyof Asset | 'classification'>('id'); 
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); 
     const [isRefreshing, setIsRefreshing] = useState(false);
+    
+    // Pagination States
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -42,20 +46,20 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
 
     const getStatusStyles = (status: string = '') => {
         if (status.includes('On-going')) {
-return 'bg-amber-50 text-amber-700 border-amber-200';
-}
+            return 'bg-amber-50 text-amber-700 border-amber-200';
+        }
 
         if (status.includes('Pending')) {
-return 'bg-gray-50 text-gray-700 border-gray-200';
-}
+            return 'bg-gray-50 text-gray-700 border-gray-200';
+        }
 
         if (status.includes('Returned')) {
-return 'bg-orange-50 text-orange-700 border-orange-200';
-}
+            return 'bg-orange-50 text-orange-700 border-orange-200';
+        }
 
         if (status.includes('Approved')) {
-return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-}
+            return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        }
 
         return 'bg-rose-50 text-rose-700 border-rose-200'; 
     };
@@ -75,7 +79,6 @@ return 'bg-emerald-50 text-emerald-700 border-emerald-200';
             let valA: any;
             let valB: any;
 
-            // FIX: If sorting by classification column, pull out the nested string name
             if (sortField === 'classification') {
                 valA = a.classification?.name?.toLowerCase() || '';
                 valB = b.classification?.name?.toLowerCase() || '';
@@ -84,29 +87,29 @@ return 'bg-emerald-50 text-emerald-700 border-emerald-200';
                 valB = b[sortField as keyof Asset];
                 
                 if (valA === null || valA === undefined) {
-valA = '';
-}
+                    valA = '';
+                }
 
                 if (valB === null || valB === undefined) {
-valB = '';
-}
+                    valB = '';
+                }
 
                 if (typeof valA === 'string') {
-valA = valA.toLowerCase();
-}
+                    valA = valA.toLowerCase();
+                }
 
                 if (typeof valB === 'string') {
-valB = valB.toLowerCase();
-}
+                    valB = valB.toLowerCase();
+                }
             }
 
             if (valA < valB) {
-return sortDirection === 'asc' ? -1 : 1;
-}
+                return sortDirection === 'asc' ? -1 : 1;
+            }
 
             if (valA > valB) {
-return sortDirection === 'asc' ? 1 : -1;
-}
+                return sortDirection === 'asc' ? 1 : -1;
+            }
 
             return 0;
         });
@@ -114,7 +117,24 @@ return sortDirection === 'asc' ? 1 : -1;
         return result;
     }, [assets, search, sortField, sortDirection]);
 
-    // Updated handler function signature to accept 'classification' safely
+    // Derived Pagination Calculations
+    const totalItems = filteredAndSortedAssets.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    
+    const paginatedAssets = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredAndSortedAssets.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredAndSortedAssets, currentPage, itemsPerPage]);
+
+    // Track dynamic numbers jump list array
+    const pageNumbers = useMemo(() => {
+        const numbers = [];
+        for (let i = 1; i <= totalPages; i++) {
+            numbers.push(i);
+        }
+        return numbers;
+    }, [totalPages]);
+
     const handleSort = (field: keyof Asset | 'classification') => {
         if (sortField === field) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -122,6 +142,7 @@ return sortDirection === 'asc' ? 1 : -1;
             setSortField(field);
             setSortDirection('asc');
         }
+        setCurrentPage(1);
     };
 
     const formatDate = (dateString: string) => {
@@ -134,15 +155,14 @@ return sortDirection === 'asc' ? 1 : -1;
 
     const exportToExcel = () => {
         const dataToExport = filteredAndSortedAssets.map(item => ({
-            // 'Asset ID': item.id,
-            'Control / Serial Number': item.serial_plate_id_number || 'N/A', // N/A if no data
+            'Control / Serial Number': item.serial_plate_id_number || 'N/A', 
             'Status': item.status || 'Pending',
-            'Brand Make': item.brand_make || 'N/A', // N/A for now
-            'Model Description': item.model || 'N/A', // N/A for now
+            'Brand Make': item.brand_make || 'N/A', 
+            'Model Description': item.model || 'N/A', 
             'Classification': item.classification?.name || 'Unclassified',
             'Accountable Personnel': item.accountable_personnel,
             'End User Department': item.end_user_department,
-            'Asset Location': item.asset_location || 'N/A', // N/A for now
+            'Asset Location': item.asset_location || 'N/A', 
             'Date Created': formatDate(item.created_at)
         }));
 
@@ -156,9 +176,6 @@ return sortDirection === 'asc' ? 1 : -1;
         <>
             <Head title="My Assets" />
 
-            {/* sub header */}
-            {/* <WelcomeNote /> */}
-
             <div className="container mx-auto p-6 space-y-6">
             
                 {/* Top Toolbar: Search, Refresh, and Export controls */}
@@ -169,13 +186,15 @@ return sortDirection === 'asc' ? 1 : -1;
                             type="text"
                             placeholder="Search serials, status, models, or departments..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                setCurrentPage(1); 
+                            }}
                             className="pl-9 pr-4 py-2 w-full text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                         />
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        {/* Action Button - Converted to Inertia Link */}
                         <Link 
                             href="/create-asset" 
                             className="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-colors"
@@ -206,9 +225,12 @@ return sortDirection === 'asc' ? 1 : -1;
 
                 {/* Semantic Layout Table Data Grid Wrap */}
                 <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                    <h5 className="text-sm font-bold uppercase tracking-wider text-slate-800 px-5 py-6">
+                        Asset Request Registry
+                    </h5>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-sm">
-                            <thead className="bg-gray-50 border-b border-gray-100 text-gray-600 font-medium">
+                            <thead className="bg-zinc-100 border-b border-zinc-100 text-zinc-600 font-medium">
                                 <tr>
                                     <th className="px-6 py-4 w-28">Action</th>
                                     
@@ -220,7 +242,6 @@ return sortDirection === 'asc' ? 1 : -1;
                                         <div className="flex items-center gap-1.5">Status <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
                                     
-                                    {/* FIXED: Keeps standard handleSort parameter pattern cleanly intact */}
                                     <th onClick={() => handleSort('classification')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
                                         <div className="flex items-center gap-1.5">Classification <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
@@ -239,20 +260,20 @@ return sortDirection === 'asc' ? 1 : -1;
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-gray-700">
-                                {filteredAndSortedAssets.length > 0 ? (
-                                    filteredAndSortedAssets.map((asset) => (
+                                {paginatedAssets.length > 0 ? (
+                                    paginatedAssets.map((asset) => (
                                         <tr key={asset.id} className="hover:bg-gray-50/70 transition-colors">
                                             <td className="px-6 py-3.5">
                                                 <Link 
                                                     href={`/assets/${asset.id}/asset-status`} 
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-50 text-zinc-700 hover:bg-zinc-100 border border-zinc-200 rounded-md transition-colors"
                                                 >
                                                     <Eye className="h-3.5 w-3.5" />
                                                     View
                                                 </Link>
                                             </td>
 
-                                            <td className="px-6 py-3.5 font-mono font-medium text-gray-900">
+                                            <td className="px-6 py-3.5 font-mono font-medium text-base text-gray-900 uppercase">
                                                 {asset.serial_plate_id_number || <span className="text-gray-300 italic">No SN Tag</span>}
                                             </td>
 
@@ -263,7 +284,7 @@ return sortDirection === 'asc' ? 1 : -1;
                                             </td>
 
                                             <td className="px-6 py-3.5">
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-purple-50 text-purple-700 border-purple-200">
                                                     <Tag className="h-2.5 w-2.5" />
                                                     {asset.classification?.name || 'Unclassified'}
                                                 </span>
@@ -297,6 +318,94 @@ return sortDirection === 'asc' ? 1 : -1;
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Pagination Footer Controls Section */}
+                    <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 bg-gray-50/50 text-xs text-gray-600">
+                        <div className="flex items-center gap-4">
+                            <span>
+                                Showing {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
+                            </span>
+                        </div>
+
+                        {/* Pagination Button Control Group */}
+                        <div className="inline-flex space-x-1 items-center">
+                            <div className="flex items-center gap-2">
+                                <span>Rows:</span>
+                                <select
+                                    value={itemsPerPage}
+                                    onChange={(e) => {
+                                        setItemsPerPage(Number(e.target.value));
+                                        setCurrentPage(1); 
+                                    }}
+                                    className="px-2 py-1 rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-xs font-medium text-gray-700 cursor-pointer"
+                                >
+                                    <option value={5}>5</option>
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                </select>
+                            </div>
+                            {/* First Page */}
+                            <button
+                                type="button"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(1)}
+                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                title="First Page"
+                            >
+                                <ChevronsLeft className="w-4 h-4" />
+                            </button>
+
+                            {/* Previous Page */}
+                            <button
+                                type="button"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                title="Previous Page"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            
+                            {/* Dynamic Numeric Page Jumps */}
+                            {pageNumbers.map((page) => (
+                                <button
+                                    key={page}
+                                    type="button"
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
+                                        currentPage === page
+                                            ? 'bg-zinc-600 text-white border-zinc-600 shadow-xs'
+                                            : 'bg-white text-slate-700 border-gray-200 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+
+                            {/* Next Page */}
+                            <button
+                                type="button"
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                title="Next Page"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+
+                            {/* Last Page */}
+                            <button
+                                type="button"
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(totalPages)}
+                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                title="Last Page"
+                            >
+                                <ChevronsRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 

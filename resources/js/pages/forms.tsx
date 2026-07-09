@@ -224,7 +224,7 @@ export default function Forms() {
                         <button
                             type="button"
                             onClick={handleOpenUploadModal}
-                            className="inline-flex items-center justify-center px-4 py-2.5 bg-white text-slate-900 rounded-lg text-xs font-bold shadow-sm hover:bg-slate-100 transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center px-4 py-2.5 bg-white text-slate-900 rounded-lg text-xs font-bold shadow-sm hover:bg-zinc-100 transition-colors cursor-pointer"
                         >
                             <Plus className="w-4 h-4 mr-1.5" />
                             Upload New Document
@@ -233,7 +233,7 @@ export default function Forms() {
                 </div>
 
                 {/* Main Documents Workspace */}
-                <div className="mb-6 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+                <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
                     {/* Header bar with Context Title & Live Search Bar */}
                     <div className="border-b border-emerald-100/50 bg-linear-to-r from-emerald-50/20 to-transparent px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <h5 className="text-sm font-bold uppercase tracking-wider text-slate-800">
@@ -268,11 +268,11 @@ export default function Forms() {
                         {paginatedFilesList.length > 0 ? (
                             <>
                                 <table className="w-full min-w-full divide-y divide-slate-100/40 text-left align-middle text-sm">
-                                    <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-800 select-none">
+                                    <thead className="bg-zinc-100 text-xs font-bold uppercase tracking-wider text-slate-800 select-none">
                                         <tr>
                                             <th 
                                                 onClick={() => handleSort('file_name')}
-                                                className="py-3.5 pl-6 pr-3 font-semibold w-[25%] cursor-pointer hover:bg-slate-100/70 group transition-colors"
+                                                className="py-3.5 pl-6 pr-3 font-semibold w-[25%] cursor-pointer hover:bg-zinc-100/70 group transition-colors"
                                             >
                                                 <div className="flex items-center">
                                                     File Name {renderSortIcon('file_name')}
@@ -280,7 +280,7 @@ export default function Forms() {
                                             </th>
                                             <th 
                                                 onClick={() => handleSort('purpose')}
-                                                className="px-4 py-3.5 font-semibold w-[40%] cursor-pointer hover:bg-slate-100/70 group transition-colors"
+                                                className="px-4 py-3.5 font-semibold w-[40%] cursor-pointer hover:bg-zinc-100/70 group transition-colors"
                                             >
                                                 <div className="flex items-center">
                                                     Purpose / Description {renderSortIcon('purpose')}
@@ -288,7 +288,7 @@ export default function Forms() {
                                             </th>
                                             <th 
                                                 onClick={() => handleSort('uploader')}
-                                                className="px-4 py-3.5 font-semibold w-[20%] cursor-pointer hover:bg-slate-100/70 group transition-colors"
+                                                className="px-4 py-3.5 font-semibold w-[20%] cursor-pointer hover:bg-zinc-100/70 group transition-colors"
                                             >
                                                 <div className="flex items-center">
                                                     Uploader {renderSortIcon('uploader')}
@@ -306,10 +306,10 @@ export default function Forms() {
                                                         <span className="truncate">{file.file_name}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-4 text-gray-600 wrap-break-word line-clamp-2 max-w-sm">
+                                                <td className="px-4 py-4 text-gray-700 wrap-break-word line-clamp-2 max-w-sm">
                                                     {file.purpose || <span className="text-gray-400 italic">No explicit purpose assigned</span>}
                                                 </td>
-                                                <td className="px-4 py-4 text-gray-600 max-w-sm">
+                                                <td className="px-4 py-4 text-gray-700 max-w-sm capitalize">
                                                     {file?.user?.name || <span className="text-gray-400 italic">No user info</span>}
                                                 </td>
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
@@ -355,7 +355,7 @@ export default function Forms() {
                                 </table>
 
                                 {/* Pagination Footer Toolbar */}
-                                <div className="border-t border-slate-100 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-50/50">
+                                <div className="border-t border-zinc-100 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 bg-zinc-50/50">
                                     <div className="text-xs text-gray-500">
                                         Showing <span className="font-semibold">{Math.min((currentPage - 1) * itemsPerPage + 1, processedFilesList.length)}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, processedFilesList.length)}</span> of <span className="font-semibold">{processedFilesList.length}</span> documents
                                     </div>
@@ -465,7 +465,7 @@ export default function Forms() {
                                     <Upload className="h-4 w-4" />
                                 </div>
                                 <h3 className="text-base font-bold text-gray-900">
-                                    {editingFile ? 'Modify Document Properties' : 'Upload Core Document'}
+                                    {editingFile ? 'Modify Document Properties' : 'Upload Document'}
                                 </h3>
                             </div>
                             <button type="button" onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">

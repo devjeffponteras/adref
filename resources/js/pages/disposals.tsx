@@ -237,20 +237,6 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
                         </div>
                         
                         <div className="flex items-center gap-3 self-end sm:self-auto">
-                            {/* Items per Page Dropdown */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-zinc-500">Rows:</span>
-                                <select 
-                                    value={itemsPerPage} 
-                                    onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                                    className="text-xs bg-white border border-zinc-300 text-zinc-700 px-2 py-1 rounded-lg focus:outline-none focus:border-zinc-400 cursor-pointer font-semibold"
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={25}>25</option>
-                                    <option value={50}>50</option>
-                                </select>
-                            </div>
-
                             <button 
                                 onClick={handleRefresh}
                                 id="btn-refresh-dt" 
@@ -353,6 +339,22 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
                         </div>
                         
                         <div className="flex items-center gap-1">
+
+                            {/* Items per Page Dropdown */}
+                            <div className="flex items-center gap-2 pe-4">
+                                <span className="text-xs font-medium text-zinc-500">Rows:</span>
+                                <select 
+                                    value={itemsPerPage} 
+                                    onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                                    className="text-xs bg-white border border-zinc-300 text-zinc-700 px-2 py-1 rounded-lg focus:outline-none focus:border-zinc-400 cursor-pointer font-semibold"
+                                >
+                                    <option value={5}>5</option>
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                </select>
+                            </div>
+
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                                 disabled={currentPage === 1}

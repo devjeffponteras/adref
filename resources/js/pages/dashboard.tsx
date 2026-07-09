@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Package, Clock, CircleCheck, RefreshCw } from 'lucide-react';
+import { Package, Clock, CircleCheck, RefreshCw, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import FilterDropdown from '@/components/ui/filter-dropdown';
 import { WelcomeNote } from '@/components/welcome-note';
@@ -44,8 +44,18 @@ interface DashboardProps {
   assetStatuses: AssetStatusRecord[];
 }
 
+type SortableFields = 'control_number' | 'department' | 'created_by' | 'created_at' | 'updated_at' | 'status';
+
 export default function Dashboard({ assetStatuses }: DashboardProps) {
     const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | 'on-going' | 'all'>('all');
+    
+    // Sorting States
+    const [sortField, setSortField] = useState<SortableFields>('created_at');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+    // Pagination States
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
     const stats = useMemo(() => {
     const totalRequests = assetStatuses.length;
@@ -84,15 +94,82 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
         ];
     }, [assetStatuses]);
 
-    const displayedRecentRecords = useMemo(() => {
-        if (filterStatus === 'all') {
-          return assetStatuses;
+    // Sorting Handler
+    const handleSort = (field: SortableFields) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
         }
-        
-        return assetStatuses.filter(record => {
-        return record.status.toLowerCase() === filterStatus;
+        setCurrentPage(1); // Reset page on sort
+    };
+
+    // Filtered and Sorted Computations Combine Block
+    const filteredAndSortedRecords = useMemo(() => {
+        // 1. Filter raw array items first
+        let filtered = assetStatuses;
+        if (filterStatus !== 'all') {
+            filtered = assetStatuses.filter(record => record.status.toLowerCase() === filterStatus);
+        }
+
+        // 2. Sort the array mutation copies cleanly 
+        return [...filtered].sort((a, b) => {
+            let valA: any = '';
+            let valB: any = '';
+
+            switch (sortField) {
+                case 'control_number':
+                    valA = a.asset?.control_number || '';
+                    valB = b.asset?.control_number || '';
+                    break;
+                case 'department':
+                    valA = a.asset?.end_user_department || '';
+                    valB = b.asset?.end_user_department || '';
+                    break;
+                case 'created_by':
+                    valA = a.asset?.user?.name || a.asset?.accountable_personnel || '';
+                    valB = b.asset?.user?.name || b.asset?.accountable_personnel || '';
+                    break;
+                case 'created_at':
+                    valA = new Date(a.created_at).getTime();
+                    valB = new Date(b.created_at).getTime();
+                    break;
+                case 'updated_at':
+                    valA = new Date(a.updated_at).getTime();
+                    valB = new Date(b.updated_at).getTime();
+                    break;
+                case 'status':
+                    valA = a.status || '';
+                    valB = b.status || '';
+                    break;
+            }
+
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
         });
-    }, [assetStatuses, filterStatus]);
+    }, [assetStatuses, filterStatus, sortField, sortDirection]);
+
+    // Slice array targets dynamically based on page boundaries
+    const totalItems = filteredAndSortedRecords.length;
+    const totalPages = Math.ceil(totalItems / rowsPerPage);
+    
+    const displayedRecentRecords = useMemo(() => {
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        return filteredAndSortedRecords.slice(start, end);
+    }, [filteredAndSortedRecords, currentPage, rowsPerPage]);
+
+    const entryRange = useMemo(() => {
+        if (totalItems === 0) return { start: 0, end: 0 };
+        const start = (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, totalItems);
+        return { start, end };
+    }, [currentPage, rowsPerPage, totalItems]);
 
     const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -114,10 +191,12 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
 
     const handleFilterSelection = (status: 'pending' | 'approved' | 'on-going') => {
         setFilterStatus(status);
+        setCurrentPage(1);
     };
 
     const handleResetFilters = () => {
         setFilterStatus('all');
+        setCurrentPage(1);
     };
 
     const handleRefresh = () => {
@@ -190,7 +269,7 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
 
         </div>
 
-        <div className='flex flex-row w-full gap-4'>
+        <div className='flex flex-col md:flex-row w-full gap-4'>
           {/* Recent Records Table */}
           <div className="my-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm w-full md:w-2/3">
             <div className="flex items-center justify-between border-b border-slate-100 bg-white/80 backdrop-blur-sm px-6 py-4">
@@ -217,14 +296,26 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
 
             <div className="overflow-x-auto">
               <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-800/80">
+                <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-slate-800/80">
                   <tr>
-                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
-                    <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
-                    <th scope="col" className="px-4 py-3.5 font-semibold">Department</th>
-                    <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th>
-                    <th scope="col" className="px-4 py-3.5 font-semibold">Updated At</th>
-                    <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
+                    <th scope="col" onClick={() => handleSort('control_number')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
+                      <div className="flex items-center gap-1.5">Asset Control Number <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                    </th>
+                    <th scope="col" onClick={() => handleSort('department')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
+                      <div className="flex items-center gap-1.5">Department <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                    </th>
+                    <th scope="col" onClick={() => handleSort('created_by')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
+                      <div className="flex items-center gap-1.5">Created By <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                    </th>
+                    <th scope="col" onClick={() => handleSort('created_at')} className="py-3.5 pl-6 pr-3 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
+                      <div className="flex items-center gap-1.5">Application Date &amp; Time <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                    </th>
+                    <th scope="col" onClick={() => handleSort('updated_at')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
+                      <div className="flex items-center gap-1.5">Updated At <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                    </th>
+                    <th scope="col" onClick={() => handleSort('status')} className="py-3.5 pr-6 font-semibold text-center cursor-pointer hover:bg-gray-200 select-none transition-colors">
+                      <div className="flex items-center justify-center gap-1.5">Status <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                    </th>
                   </tr>
                 </thead>
                 
@@ -238,7 +329,16 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
                   ) : (
                     displayedRecentRecords.map((record) => (
                       <tr key={record.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
-                        <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
+                        <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                          {record.asset?.control_number || 'N/A'}
+                        </td>
+                        <td className="px-4 py-4 max-w-xs truncate font-medium text-gray-900 group-hover:text-gray-700">
+                          {record.asset?.end_user_department || 'N/A'}
+                        </td>
+                        <td className="px-4 py-4 font-medium text-gray-700 capitalize">
+                          {record.asset?.user?.name || record.asset?.accountable_personnel || 'Unknown'}
+                        </td>
+                        <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors text-xs">
                           {new Date(record.created_at).toLocaleString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -248,16 +348,7 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
                             hour12: true
                           })}
                         </td>
-                        <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                          {record.asset?.control_number || 'N/A'}
-                        </td>
-                        <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
-                          {record.asset?.end_user_department || 'N/A'}
-                        </td>
-                        <td className="px-4 py-4 font-medium text-gray-700">
-                          {record.asset?.user?.name || record.asset?.accountable_personnel || 'Unknown'}
-                        </td>
-                        <td className="px-4 py-4 text-xs text-gray-400 group-hover:text-gray-500">
+                        <td className="px-4 py-4 text-sm text-gray-400 group-hover:text-gray-500">
                           {formatTimeAgo(record.updated_at)}
                         </td>
                         <td className="py-4 pr-6 text-center whitespace-nowrap">
@@ -276,6 +367,65 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Segment */}
+            {totalItems > 0 && (
+              <div className="flex items-center justify-between border-t border-gray-100 bg-white px-6 py-4">
+                <div className="text-xs text-gray-500">
+                  Showing <span className="font-semibold text-gray-700">{entryRange.start}</span> to{' '}
+                  <span className="font-semibold text-gray-700">{entryRange.end}</span> of{' '}
+                  <span className="font-semibold text-gray-700">{totalItems}</span> items
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 mr-1">
+                    <span className="text-xs text-gray-500 whitespace-nowrap">Rows:</span>
+                    <select 
+                      value={rowsPerPage} 
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="rounded-md border border-gray-300 bg-white py-1 px-2 text-xs font-medium text-gray-700 shadow-xs focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-2xs hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold shadow-2xs transition-colors cursor-pointer ${
+                        currentPage === page
+                          ? 'bg-zinc-800 text-white hover:bg-zinc-900'
+                          : 'border border-gray-200 bg-white text-gray-600 hover:bg-zinc-100'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-2xs hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Summary Table */}
@@ -306,10 +456,6 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
             </div>
           </div>
         </div>
-        
-
-        
-        
       </div>
     </>
   );

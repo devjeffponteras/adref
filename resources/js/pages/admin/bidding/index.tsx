@@ -499,7 +499,7 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                                     onClick={() => setCurrentPage(page)}
                                                     className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
                                                         currentPage === page
-                                                            ? 'bg-blue-950 text-white border-blue-950'
+                                                            ? 'bg-zinc-700 text-white'
                                                             : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                                                     }`}
                                                 >

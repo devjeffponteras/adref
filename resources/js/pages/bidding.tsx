@@ -1,6 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Calendar, Loader, FileWarning, RefreshCw, Gavel, XIcon, FolderOpen, Send, Layers } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar, Loader, FileWarning, RefreshCw, Gavel, XIcon, FolderOpen, Send, Layers, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { bidding } from '@/routes';
 
@@ -49,7 +49,6 @@ interface PageProps extends Record<string, unknown> {
         user: {
             id: number;
             name: string;
-            // add other user fields if necessary
         };
     };
     flash: {
@@ -57,6 +56,8 @@ interface PageProps extends Record<string, unknown> {
     };
     assetOnBidding?: AssetBiddingData[];
 }
+
+type SortableFields = 'control_number' | 'asset_name' | 'department' | 'min_bid';
 
 export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: BiddingProps) {
 
@@ -69,6 +70,14 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
 
     const flash = props.flash;
     const [selectedListing, setSelectedListing] = useState<AssetBiddingData | null>(null);
+
+    // Sorting States
+    const [sortField, setSortField] = useState<SortableFields>('control_number');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    // Pagination States
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const { data, setData, post, processing, reset, errors } = useForm({
         bidder_name: '',
@@ -102,25 +111,89 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
     const handleSubmittingBid = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedListing || !selectedListing.asset) {
-    return;
-    }
+            return;
+        }
 
         post(`/user/bidding/entry/${selectedListing.asset.id}`, {
             onSuccess: () => handleCloseBidModal(),
         });
     };
 
+    // Table Header Sorting Engine handler
+    const handleSort = (field: SortableFields) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+        setCurrentPage(1);
+    };
+
+    // Dynamic Filtered and Sorted Array Core
+    const sortedAssetOnBidding = useMemo(() => {
+        const result = [...assetOnBidding];
+
+        result.sort((a, b) => {
+            let valA: any = '';
+            let valB: any = '';
+
+            switch (sortField) {
+                case 'control_number':
+                    valA = a.asset?.control_number || '';
+                    valB = b.asset?.control_number || '';
+                    break;
+                case 'asset_name':
+                    valA = `${a.asset?.brand_make || ''} ${a.asset?.model || ''}`.trim();
+                    valB = `${b.asset?.brand_make || ''} ${b.asset?.model || ''}`.trim();
+                    break;
+                case 'department':
+                    valA = a.asset?.end_user_department || 'General';
+                    valB = b.asset?.end_user_department || 'General';
+                    break;
+                case 'min_bid':
+                    valA = Number(a.asset?.manager_information?.bidding_price || 0);
+                    valB = Number(b.asset?.manager_information?.bidding_price || 0);
+                    break;
+            }
+
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        return result;
+    }, [assetOnBidding, sortField, sortDirection]);
+
+    // Derived Pagination Calculations from Sorted items
+    const totalItems = sortedAssetOnBidding.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+    const paginatedBiddingAssets = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return sortedAssetOnBidding.slice(startIndex, startIndex + itemsPerPage);
+    }, [sortedAssetOnBidding, currentPage, itemsPerPage]);
+
+    const pageNumbers = useMemo(() => {
+        const numbers = [];
+        for (let i = 1; i <= totalPages; i++) {
+            numbers.push(i);
+        }
+        return numbers;
+    }, [totalPages]);
+
     const isEmployee = data.bidder_classification === 'PMC Employee' || data.bidder_classification === 'MMPRC Employee';
 
     const currentDate = new Date();
-
     const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
     const currentYear = currentDate.getFullYear();
 
     return (
         <>
             <Head title="Assets for Bidding" />
-            {/* <WelcomeNote /> */}
 
             <div className="w-full p-6 bg-gray-50/50 min-h-screen">
                 {flash?.success && (
@@ -130,14 +203,10 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                 )}
 
                 <div className="relative overflow-hidden bg-gray-100 border border-zinc-200 shadow p-6 rounded-xl mb-6">
-                    {/* Subtle background structural accent */}
                     <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-zinc-100/50 rounded-full blur-xl pointer-events-none" />
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between relative z-10">
-                        
-                        {/* Left Section: Icon and Pool Information */}
                         <div className="flex items-center gap-4">
-                            {/* Icon Container stylized like the status badge */}
                             <div className="p-2.5 bg-white shadow rounded-xl border border-zinc-300/40 text-zinc-600">
                                 <Layers className="h-5 w-5" />
                             </div>
@@ -151,7 +220,6 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                             </div>
                         </div>
                         
-                        {/* Right Section: High-visibility Timeframe Badge matching system status */}
                         <div className="flex flex-col items-start sm:items-end gap-1.5 border-t border-zinc-200/60 pt-3 sm:border-t-0 sm:pt-0">
                             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white shadow rounded-xl border border-zinc-300/30">
                                 <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
@@ -160,76 +228,170 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                 </span>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
                 <div className="mb-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
                     <div className="border-b border-emerald-100/50 bg-white/80 backdrop-blur-xs px-6 py-4">
-                        <h5 className="text-center text-sm font-bold uppercase tracking-wider text-slate-800">
+                        <h5 className="text-sm font-bold uppercase tracking-wider text-slate-800">
                             Active Marketplace Inventories Open for Bidding Proposals
                         </h5>
                     </div>
 
                     <div className="overflow-x-auto w-full">
-                        {assetOnBidding.length > 0 ? (
-                            <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                                <thead className="bg-gray-200 text-xs font-bold uppercase tracking-wider text-slate-800">
-                                    <tr>
-                                        <th className="py-3.5 pl-6 pr-3 font-semibold">Control Number</th>
-                                        <th className="px-4 py-3.5 font-semibold">Name of Asset / Details</th>
-                                        <th className="px-4 py-3.5 font-semibold">Department</th>
-                                        <th className="px-4 py-3.5 font-semibold">Minimum Bid</th>
-                                        <th className="py-3.5 pr-6 font-semibold text-center">Bidding Application</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                    {assetOnBidding.map((listing) => (
-                                        <tr key={listing.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
-                                            <td className="py-4 pl-6 pr-3 font-mono text-xs font-bold text-gray-900 group-hover:text-emerald-900 uppercase">
-                                                {listing.asset?.control_number || 'N/A'}
-                                            </td>
-                                            <td className="px-4 py-4 font-medium text-gray-700">
-                                                {listing.asset?.brand_make || ''} {listing.asset?.model || 'Generic Asset'}
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                                    {listing.asset?.end_user_department || 'General'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-4 font-semibold text-gray-900">
-                                                {listing.asset?.manager_information?.bidding_price ? (
-                                                    `₱${Number(listing.asset?.manager_information?.bidding_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-                                                ) : (
-                                                    '₱0.00'
-                                                )}
-                                            </td>
-                                            
-                                            {/* Interactive Action Button Cell */}
-                                            <td className="py-4 pr-6 text-center whitespace-nowrap">
-                                                {hasCurrentUserBidded(listing.asset) ? (
-                                                    <button 
-                                                        type="button" 
-                                                        disabled
-                                                        className="inline-flex items-center justify-center px-4 py-2 rounded bg-gray-100 text-xs font-semibold text-gray-400 shadow-xs cursor-not-allowed border border-gray-200"
-                                                    >
-                                                        Done Bid
-                                                    </button>
-                                                ) : (
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => handleOpenBidModal(listing)}
-                                                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer"
-                                                    >
-                                                        <Gavel className="w-3.5 h-3.5 mr-1" />
-                                                        Post Bid Entry
-                                                    </button>
-                                                )}
-                                            </td>
+                        {paginatedBiddingAssets.length > 0 ? (
+                            <>
+                                <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
+                                    <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-slate-800">
+                                        <tr>
+                                            <th onClick={() => handleSort('control_number')} className="py-3.5 pl-6 pr-3 font-semibold cursor-pointer hover:bg-gray-300 select-none transition-colors">
+                                                <div className="flex items-center gap-1.5">Control Number <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                                            </th>
+                                            <th onClick={() => handleSort('asset_name')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-300 select-none transition-colors">
+                                                <div className="flex items-center gap-1.5">Name of Asset / Details <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                                            </th>
+                                            <th onClick={() => handleSort('department')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-300 select-none transition-colors">
+                                                <div className="flex items-center gap-1.5">Department <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                                            </th>
+                                            <th onClick={() => handleSort('min_bid')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-300 select-none transition-colors">
+                                                <div className="flex items-center gap-1.5">Minimum Bid <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                                            </th>
+                                            <th className="py-3.5 pr-6 font-semibold text-center select-none">Bidding Application</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                        {paginatedBiddingAssets.map((listing) => (
+                                            <tr key={listing.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                <td className="py-4 pl-6 pr-3 font-mono text-base font-bold text-gray-900 group-hover:text-emerald-900 uppercase">
+                                                    {listing.asset?.control_number || 'N/A'}
+                                                </td>
+                                                <td className="px-4 py-4 font-medium text-gray-700">
+                                                    {listing.asset?.brand_make || ''} {listing.asset?.model || 'Generic Asset'}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <span className="px-2 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+                                                        {listing.asset?.end_user_department || 'General'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4 font-semibold text-gray-900">
+                                                    {listing.asset?.manager_information?.bidding_price ? (
+                                                        `₱${Number(listing.asset?.manager_information?.bidding_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                                    ) : (
+                                                        '₱0.00'
+                                                    )}
+                                                </td>
+                                                
+                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
+                                                    {hasCurrentUserBidded(listing.asset) ? (
+                                                        <button 
+                                                            type="button" 
+                                                            disabled
+                                                            className="inline-flex items-center justify-center px-4 py-2 rounded bg-gray-100 text-xs font-semibold text-gray-400 shadow-xs cursor-not-allowed border border-gray-200"
+                                                        >
+                                                            Done Bid
+                                                        </button>
+                                                    ) : (
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => handleOpenBidModal(listing)}
+                                                            className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-emerald-600 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors cursor-pointer"
+                                                        >
+                                                            <Gavel className="w-3.5 h-3.5 mr-1" />
+                                                            Post Bid Entry
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+
+                                {/* Exact Configured Reference Pagination Controls Block */}
+                                <div className="px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 bg-gray-50/50 text-xs text-gray-600">
+                                    <div className="flex items-center gap-4">
+                                        <span>
+                                            Showing {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
+                                        </span>
+                                    </div>
+
+                                    <div className="inline-flex space-x-1 items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span>Rows:</span>
+                                            <select
+                                                value={itemsPerPage}
+                                                onChange={(e) => {
+                                                    setItemsPerPage(Number(e.target.value));
+                                                    setCurrentPage(1); 
+                                                }}
+                                                className="px-2 py-1 rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-xs font-medium text-gray-700 cursor-pointer"
+                                            >
+                                                <option value={10}>10</option>
+                                                <option value={25}>25</option>
+                                                <option value={50}>50</option>
+                                            </select>
+                                        </div>
+                                        {/* First Page */}
+                                        <button
+                                            type="button"
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(1)}
+                                            className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                            title="First Page"
+                                        >
+                                            <ChevronsLeft className="w-4 h-4" />
+                                        </button>
+
+                                        {/* Previous Page */}
+                                        <button
+                                            type="button"
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                            className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                            title="Previous Page"
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </button>
+                                        
+                                        {/* Dynamic Numeric Page Jumps */}
+                                        {pageNumbers.map((page) => (
+                                            <button
+                                                key={page}
+                                                type="button"
+                                                onClick={() => setCurrentPage(page)}
+                                                className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
+                                                    currentPage === page
+                                                        ? 'bg-zinc-600 text-white border-zinc-600 shadow-xs'
+                                                        : 'bg-white text-slate-700 border-gray-200 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+
+                                        {/* Next Page */}
+                                        <button
+                                            type="button"
+                                            disabled={currentPage === totalPages}
+                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                            className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                            title="Next Page"
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </button>
+
+                                        {/* Last Page */}
+                                        <button
+                                            type="button"
+                                            disabled={currentPage === totalPages}
+                                            onClick={() => setCurrentPage(totalPages)}
+                                            className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                            title="Last Page"
+                                        >
+                                            <ChevronsRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
                         ) : (
                             <div className="flex flex-col items-center justify-center p-12 text-center bg-white">
                                 <FolderOpen className="h-10 w-10 text-emerald-200 mb-2" />
@@ -258,8 +420,6 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                         </div>
 
                         <form onSubmit={handleSubmittingBid} className="space-y-5">
-                            
-                            {/* SECTION: Bidder Details */}
                             <div>
                                 <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Bidder Details</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -274,7 +434,6 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                 </div>
                             </div>
 
-                            {/* SECTION: Automated Info Card Layout Layer */}
                             <div>
                                 <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Asset Details</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -297,7 +456,6 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                 </div>
                             </div>
 
-                            {/* SECTION: Bidder Classification */}
                             <div>
                                 <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Bidder Classification</h4>
                                 <div className="w-full sm:w-1/2">
@@ -312,7 +470,6 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                 </div>
                             </div>
 
-                            {/* SECTION: Employee Conditional Subsection */}
                             <div>
                                 <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${isEmployee ? 'text-emerald-900' : 'text-gray-400'}`}>
                                     If PMC or MMPRC Employee
@@ -344,7 +501,6 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                 </div>
                             </div>
 
-                            {/* SECTION: Bidding Price */}
                             <div className="pt-2 border-t border-gray-100">
                                 <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Bidding Price</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
@@ -363,7 +519,6 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                 </div>
                             </div>
 
-                            {/* Footer Submit Actions */}
                             <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100">
                                 <button type="button" onClick={handleCloseBidModal} disabled={processing} className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer">
                                     Cancel
