@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Head, usePage, Link, router } from '@inertiajs/react';
 import { 
     CircleCheck, 
@@ -8,7 +8,10 @@ import {
     Trash2Icon, 
     UserIcon,
     ShieldIcon,
-    AlertTriangleIcon
+    AlertTriangleIcon,
+    ArrowUpDown,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import type { User } from '@/types/models';
@@ -17,11 +20,21 @@ export interface DashboardProps {
     users: User[];
 }
 
+type SortableFields = 'name' | 'role' | 'status';
+
 export default function UserManagement({ users = [] }: DashboardProps) {
     const { flash } = usePage().props as any;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+    // Sorting States
+    const [sortField, setSortField] = useState<SortableFields>('name');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    // Pagination States
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
     const openDeleteConfirmation = (user: User) => {
         setUserToDelete(user);
@@ -41,6 +54,64 @@ export default function UserManagement({ users = [] }: DashboardProps) {
             onError: () => closeDeleteModal(),
         });
     };
+
+    // Sorting Handler
+    const handleSort = (field: SortableFields) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+        setCurrentPage(1); // Reset page balance on sort matrix shift
+    };
+
+    // Sort Computational Pipeline
+    const sortedUsers = useMemo(() => {
+        return [...users].sort((a, b) => {
+            let valA: string = '';
+            let valB: string = '';
+
+            switch (sortField) {
+                case 'name':
+                    valA = a.name || '';
+                    valB = b.name || '';
+                    break;
+                case 'role':
+                    valA = a.role?.name || 'Staff Operator';
+                    valB = b.role?.name || 'Staff Operator';
+                    break;
+                case 'status':
+                    valA = a.status || 'Active';
+                    valB = b.status || 'Active';
+                    break;
+            }
+
+            valA = valA.toLowerCase();
+            valB = valB.toLowerCase();
+
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [users, sortField, sortDirection]);
+
+    // Dynamic Pagination Splits
+    const totalItems = sortedUsers.length;
+    const totalPages = Math.ceil(totalItems / rowsPerPage);
+
+    const displayedUsers = useMemo(() => {
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        return sortedUsers.slice(start, end);
+    }, [sortedUsers, currentPage, rowsPerPage]);
+
+    const entryRange = useMemo(() => {
+        if (totalItems === 0) return { start: 0, end: 0 };
+        const start = (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, totalItems);
+        return { start, end };
+    }, [currentPage, rowsPerPage, totalItems]);
 
     return (
         <>
@@ -81,7 +152,25 @@ export default function UserManagement({ users = [] }: DashboardProps) {
                                 Manage operational permissions, credentials, and active staff directory access lines.
                             </p>
                         </div>
-                        <div className="mt-4 sm:mt-0">
+                        <div className="mt-4 sm:mt-0 flex items-center gap-3">
+                            {/* Rows Limit Controls */}
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-gray-500 whitespace-nowrap">Rows:</span>
+                                <select 
+                                    value={rowsPerPage} 
+                                    onChange={(e) => {
+                                        setRowsPerPage(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="rounded-md border border-gray-300 bg-white py-1 px-2 text-xs font-medium text-gray-700 shadow-xs focus:border-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-500 cursor-pointer"
+                                >
+                                    <option value={5}>5</option>
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                </select>
+                            </div>
+
                             <Link
                                 href="/admin/user-management/create"
                                 className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-semibold rounded-lg text-white bg-emerald-700 hover:bg-emerald-800 shadow-xs focus:outline-hidden transition-colors duration-150"
@@ -97,21 +186,27 @@ export default function UserManagement({ users = [] }: DashboardProps) {
                         <table className="min-w-full divide-y divide-gray-200 text-left">
                             <thead className="bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3.5">User Details</th>
-                                    <th scope="col" className="px-6 py-3.5">System Roles</th>
-                                    <th scope="col" className="px-6 py-3.5">Status Check</th>
+                                    <th scope="col" onClick={() => handleSort('name')} className="px-6 py-3.5 cursor-pointer hover:bg-gray-100 select-none transition-colors">
+                                        <div className="flex items-center gap-1.5">User Details <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
+                                    </th>
+                                    <th scope="col" onClick={() => handleSort('role')} className="px-6 py-3.5 cursor-pointer hover:bg-gray-100 select-none transition-colors">
+                                        <div className="flex items-center gap-1.5">System Roles <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
+                                    </th>
+                                    <th scope="col" onClick={() => handleSort('status')} className="px-6 py-3.5 cursor-pointer hover:bg-gray-100 select-none transition-colors">
+                                        <div className="flex items-center gap-1.5">Status Check <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
+                                    </th>
                                     <th scope="col" className="px-6 py-3.5 text-right">Actions Matrix</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 text-sm text-gray-700 bg-white">
-                                {users.length === 0 ? (
+                                {displayedUsers.length === 0 ? (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-10 text-center text-sm text-gray-400 font-medium">
                                             No registered profiles matched active data pools. Click "Create User" to establish entries.
                                         </td>
                                     </tr>
                                 ) : (
-                                    users.map((user) => (
+                                    displayedUsers.map((user) => (
                                         <tr key={user.id} className="hover:bg-gray-50/70 transition-colors duration-100">
                                             {/* Primary Info Segment */}
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -157,7 +252,6 @@ export default function UserManagement({ users = [] }: DashboardProps) {
                                                         <PencilIcon className="h-4 w-4" />
                                                     </Link>
                                                     
-                                                    {/* 🔄 CHANGED: Converted from an instant Link trigger to a local state button click handler */}
                                                     <button
                                                         type="button"
                                                         onClick={() => openDeleteConfirmation(user)}
@@ -174,6 +268,66 @@ export default function UserManagement({ users = [] }: DashboardProps) {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Segment */}
+                    {totalItems > 0 && (
+                        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-6 py-4">
+                            <div className="text-xs text-gray-500">
+                                Showing <span className="font-semibold text-gray-700">{entryRange.start}</span> to{' '}
+                                <span className="font-semibold text-gray-700">{entryRange.end}</span> of{' '}
+                                <span className="font-semibold text-gray-700">{totalItems}</span> items
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                                {/* Rows Limit Controls */}
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-gray-500 whitespace-nowrap">Rows:</span>
+                                    <select 
+                                        value={rowsPerPage} 
+                                        onChange={(e) => {
+                                            setRowsPerPage(Number(e.target.value));
+                                            setCurrentPage(1);
+                                        }}
+                                        className="rounded-md border border-gray-300 bg-white py-1 px-2 text-xs font-medium text-gray-700 shadow-xs focus:border-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-500 cursor-pointer"
+                                    >
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                </div>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-2xs hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer focus:outline-hidden"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </button>
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus:outline-hidden ${
+                                            currentPage === page
+                                                ? 'bg-zinc-800 text-white hover:bg-zinc-900'
+                                                : 'border border-gray-200 bg-white text-gray-600 hover:bg-zinc-100'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-2xs hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white transition-colors cursor-pointer focus:outline-hidden"
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
             </div>

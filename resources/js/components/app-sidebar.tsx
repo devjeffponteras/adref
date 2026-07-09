@@ -66,12 +66,12 @@ const mainNavItems: NavItem[] = [
         href: bidding(),
         icon: Inbox,
     },
-    {
-        title: 'Scan/Log Asset',
-        href: scanLogAsset(),
-        icon: ScanSearch,
-        roles: ['user'],
-    },
+    // {
+    //     title: 'Scan/Log Asset',
+    //     href: scanLogAsset(),
+    //     icon: ScanSearch,
+    //     roles: ['user'],
+    // },
     {
         title: 'My Assets',
         href: myAssets(),

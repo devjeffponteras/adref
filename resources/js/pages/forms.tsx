@@ -8,11 +8,16 @@ import {
     Trash2, 
     X, 
     FolderOpen, 
-    Loader,
-    Plus
+    Plus,
+    Search,
+    ChevronUp,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight
 } from 'lucide-react';
-import { useState } from 'react';
-import { WelcomeNote } from '@/components/welcome-note';
+import { useState, useMemo } from 'react';
 import { forms } from '@/routes';
 
 interface User {
@@ -38,6 +43,12 @@ interface PageProps extends Record<string, unknown> {
     };
 }
 
+type SortableKeys = 'file_name' | 'purpose' | 'uploader';
+interface SortConfig {
+    key: SortableKeys;
+    direction: 'asc' | 'desc';
+}
+
 export default function Forms() {
     const { props } = usePage<PageProps>();
     const filesList = props.uploadedFiles || [];
@@ -46,10 +57,102 @@ export default function Forms() {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [editingFile, setEditingFile] = useState<UploadedFile | null>(null);
 
-    const { data, setData, post, put, processing, reset, errors } = useForm({
+    // --- Search, Sort & Pagination State ---
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10); // Default to 10 rows per page
+
+    const { data, setData, post, reset, errors, processing } = useForm({
         file: null as File | null,
         purpose: '',
     });
+
+    // --- Processed Files List (Search -> Sort -> Paginate) ---
+    const processedFilesList = useMemo(() => {
+        let result = [...filesList];
+
+        if (searchTerm.trim() !== '') {
+            const term = searchTerm.toLowerCase();
+            result = result.filter(file => 
+                file.file_name.toLowerCase().includes(term) ||
+                (file.purpose && file.purpose.toLowerCase().includes(term)) ||
+                (file.user?.name && file.user.name.toLowerCase().includes(term))
+            );
+        }
+
+        if (sortConfig !== null) {
+            result.sort((a, b) => {
+                let aValue = '';
+                let bValue = '';
+
+                if (sortConfig.key === 'file_name') {
+                    aValue = a.file_name.toLowerCase();
+                    bValue = b.file_name.toLowerCase();
+                } else if (sortConfig.key === 'purpose') {
+                    aValue = (a.purpose || '').toLowerCase();
+                    bValue = (b.purpose || '').toLowerCase();
+                } else if (sortConfig.key === 'uploader') {
+                    aValue = (a.user?.name || '').toLowerCase();
+                    bValue = (b.user?.name || '').toLowerCase();
+                }
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        return result;
+    }, [filesList, searchTerm, sortConfig]);
+
+    const totalPages = Math.max(1, Math.ceil(processedFilesList.length / itemsPerPage));
+    const paginatedFilesList = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return processedFilesList.slice(startIndex, startIndex + itemsPerPage);
+    }, [processedFilesList, currentPage, itemsPerPage]);
+
+    // Generate dynamic page numbers for pagination toolbar
+    const pageNumbers = useMemo(() => {
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pages.push(i);
+        }
+        return pages;
+    }, [totalPages]);
+
+    const handleSort = (key: SortableKeys) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+        setCurrentPage(1);
+    };
+
+    const renderSortIcon = (key: SortableKeys) => {
+        if (!sortConfig || sortConfig.key !== key) {
+            return (
+                <span className="flex flex-col ml-1.5 opacity-30 group-hover:opacity-100 transition-opacity">
+                    <ChevronUp className="w-3 h-3 -mb-1" />
+                    <ChevronDown className="w-3 h-3" />
+                </span>
+            );
+        }
+        return sortConfig.direction === 'asc' ? 
+            <ChevronUp className="w-3.5 h-3.5 ml-1.5 text-emerald-600" /> : 
+            <ChevronDown className="w-3.5 h-3.5 ml-1.5 text-emerald-600" />;
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
+    };
+
+    const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setItemsPerPage(Number(e.target.value));
+        setCurrentPage(1);
+    };
 
     const handleOpenUploadModal = () => {
         setEditingFile(null);
@@ -60,7 +163,7 @@ export default function Forms() {
     const handleOpenEditModal = (file: UploadedFile) => {
         setEditingFile(file);
         setData({
-            file: null, // Keep file null unless they want to upload a new version
+            file: null,
             purpose: file.purpose
         });
         setIsUploadModalOpen(true);
@@ -74,14 +177,11 @@ export default function Forms() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
         if (editingFile) {
-            // Update route: standard Inertia post spoofing or put request depending on your backend setup
             post(`/forms/form-update/${editingFile.id}`, {
                 onSuccess: () => handleCloseModal(),
             });
         } else {
-            // Store route
             post('/forms/form-upload', {
                 onSuccess: () => handleCloseModal(),
             });
@@ -96,7 +196,6 @@ export default function Forms() {
 
     const handlePrint = (filePath: string) => {
         const printWindow = window.open(filePath, '_blank');
-
         if (printWindow) {
             printWindow.addEventListener('load', () => {
                 printWindow.print();
@@ -107,7 +206,6 @@ export default function Forms() {
     return (
         <>
             <Head title="Forms - File Upload Staging" />
-            {/* <WelcomeNote /> */}
 
             <div className="w-full p-6 bg-gray-50/50 min-h-screen">
                 {/* Flash Messages */}
@@ -118,15 +216,15 @@ export default function Forms() {
                 )}
 
                 {/* Header Sub-banner */}
-                <div className="mb-6 overflow-hidden rounded-xl border border-emerald-900 bg-linear-to-br from-slate-900 to-slate-600 p-4 shadow-md">
+                <div className="mb-6 overflow-hidden rounded-lg bg-linear-to-br from-zinc-300 to-zinc-200 p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <h5 className="text-lg font-bold tracking-wide text-white">
+                        <h5 className="text-lg font-bold tracking-wide text-dark">
                             Forms Management Module
                         </h5>
                         <button
                             type="button"
                             onClick={handleOpenUploadModal}
-                            className="inline-flex items-center justify-center px-4 py-2 bg-white text-slate-900 rounded-lg text-xs font-bold shadow-sm hover:bg-emerald-50 transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center px-4 py-2.5 bg-white text-slate-900 rounded-lg text-xs font-bold shadow-sm hover:bg-zinc-100 transition-colors cursor-pointer"
                         >
                             <Plus className="w-4 h-4 mr-1.5" />
                             Upload New Document
@@ -135,92 +233,221 @@ export default function Forms() {
                 </div>
 
                 {/* Main Documents Workspace */}
-                <div className="mb-6 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                    <div className="border-b border-emerald-100/50 bg-linear-to-r from-emerald-50/20 to-transparent px-6 py-4">
+                <div className="mb-6 overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
+                    {/* Header bar with Context Title & Live Search Bar */}
+                    <div className="border-b border-emerald-100/50 bg-linear-to-r from-emerald-50/20 to-transparent px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <h5 className="text-sm font-bold uppercase tracking-wider text-slate-800">
-                            Active Repository & Uploaded Documentation
+                            Active Files & Uploaded Documentations
                         </h5>
+                        
+                        {/* Search Input Box */}
+                        <div className="relative w-full md:w-72">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <Search className="h-4 w-4 text-gray-400" />
+                            </span>
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                placeholder="Search file..."
+                                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-hidden transition-all placeholder-gray-400"
+                            />
+                            {searchTerm && (
+                                <button 
+                                    onClick={() => { setSearchTerm(''); setCurrentPage(1); }}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
                     </div>
 
+                    {/* Table Workspace */}
                     <div className="overflow-x-auto w-full">
-                        {filesList.length > 0 ? (
-                            <table className="w-full min-w-full divide-y divide-slate-100/40 text-left align-middle text-sm">
-                                <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-800">
-                                    <tr>
-                                        <th className="py-3.5 pl-6 pr-3 font-semibold w-[25%]">File Name</th>
-                                        <th className="px-4 py-3.5 font-semibold w-[40%]">Purpose / Description</th>
-                                        <th className="px-4 py-3.5 font-semibold w-[20%]">Uploader</th>
-                                        <th className="py-3.5 pr-6 font-semibold text-center w-[20%]">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                    {filesList.map((file) => (
-                                        <tr key={file.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
-                                            {/* File Name Info Layer */}
-                                            <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 truncate max-w-xs">
-                                                <div className="flex items-center space-x-2.5">
-                                                    <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
-                                                    <span className="truncate">{file.file_name}</span>
+                        {paginatedFilesList.length > 0 ? (
+                            <>
+                                <table className="w-full min-w-full divide-y divide-slate-100/40 text-left align-middle text-sm">
+                                    <thead className="bg-zinc-100 text-xs font-bold uppercase tracking-wider text-slate-800 select-none">
+                                        <tr>
+                                            <th 
+                                                onClick={() => handleSort('file_name')}
+                                                className="py-3.5 pl-6 pr-3 font-semibold w-[25%] cursor-pointer hover:bg-zinc-100/70 group transition-colors"
+                                            >
+                                                <div className="flex items-center">
+                                                    File Name {renderSortIcon('file_name')}
                                                 </div>
-                                            </td>
-                                            
-                                            {/* Purpose Layer */}
-                                            <td className="px-4 py-4 text-gray-600 wrap-break-word line-clamp-2 max-w-sm">
-                                                {file.purpose || <span className="text-gray-400 italic">No explicit purpose assigned</span>}
-                                            </td>
-                                            
-                                            {/* User who uploads */}
-                                            <td className="px-4 py-4 text-gray-600 max-w-sm">
-                                                {file?.user?.name || <span className="text-gray-400 italic">No user info</span>}
-                                            </td>
-                                            
-                                            {/* Minimalist Icon-Only Action Column */}
-                                            <td className="py-4 pr-6 text-center whitespace-nowrap">
-                                                <div className="inline-flex items-center justify-center space-x-1.5">
-                                                    <button 
-                                                        type="button"
-                                                        title="Print Document"
-                                                        onClick={() => handlePrint(file.file_path)}
-                                                        className="p-1.5 rounded-lg text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
-                                                    >
-                                                        <Printer className="w-4 h-4" />
-                                                    </button>
-                                                    <a 
-                                                        href={file.file_path} 
-                                                        target="_blank" 
-                                                        rel="noreferrer"
-                                                        title="View / Download"
-                                                        className="p-1.5 rounded-lg text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </a>
-                                                    <button 
-                                                        type="button"
-                                                        title="Edit Details"
-                                                        onClick={() => handleOpenEditModal(file)}
-                                                        className="p-1.5 rounded-lg text-gray-500 hover:text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button 
-                                                        type="button"
-                                                        title="Delete File"
-                                                        onClick={() => handleDelete(file.id)}
-                                                        className="p-1.5 rounded-lg text-gray-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                            </th>
+                                            <th 
+                                                onClick={() => handleSort('purpose')}
+                                                className="px-4 py-3.5 font-semibold w-[40%] cursor-pointer hover:bg-zinc-100/70 group transition-colors"
+                                            >
+                                                <div className="flex items-center">
+                                                    Purpose / Description {renderSortIcon('purpose')}
                                                 </div>
-                                            </td>
+                                            </th>
+                                            <th 
+                                                onClick={() => handleSort('uploader')}
+                                                className="px-4 py-3.5 font-semibold w-[20%] cursor-pointer hover:bg-zinc-100/70 group transition-colors"
+                                            >
+                                                <div className="flex items-center">
+                                                    Uploader {renderSortIcon('uploader')}
+                                                </div>
+                                            </th>
+                                            <th className="py-3.5 pr-6 font-semibold text-center w-[20%]">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                        {paginatedFilesList.map((file) => (
+                                            <tr key={file.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 truncate max-w-xs">
+                                                    <div className="flex items-center space-x-2.5">
+                                                        <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                                                        <span className="truncate">{file.file_name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4 text-gray-700 wrap-break-word line-clamp-2 max-w-sm">
+                                                    {file.purpose || <span className="text-gray-400 italic">No explicit purpose assigned</span>}
+                                                </td>
+                                                <td className="px-4 py-4 text-gray-700 max-w-sm capitalize">
+                                                    {file?.user?.name || <span className="text-gray-400 italic">No user info</span>}
+                                                </td>
+                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
+                                                    <div className="inline-flex items-center justify-center space-x-1.5">
+                                                        <button 
+                                                            type="button"
+                                                            title="Print Document"
+                                                            onClick={() => handlePrint(file.file_path)}
+                                                            className="p-1.5 rounded-lg text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
+                                                        >
+                                                            <Printer className="w-4 h-4" />
+                                                        </button>
+                                                        <a 
+                                                            href={file.file_path} 
+                                                            target="_blank" 
+                                                            rel="noreferrer"
+                                                            title="View / Download"
+                                                            className="p-1.5 rounded-lg text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </a>
+                                                        <button 
+                                                            type="button"
+                                                            title="Edit Details"
+                                                            onClick={() => handleOpenEditModal(file)}
+                                                            className="p-1.5 rounded-lg text-gray-500 hover:text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
+                                                        >
+                                                            <Edit2 className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            type="button"
+                                                            title="Delete File"
+                                                            onClick={() => handleDelete(file.id)}
+                                                            className="p-1.5 rounded-lg text-gray-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+
+                                {/* Pagination Footer Toolbar */}
+                                <div className="border-t border-zinc-100 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 bg-zinc-50/50">
+                                    <div className="text-xs text-gray-500">
+                                        Showing <span className="font-semibold">{Math.min((currentPage - 1) * itemsPerPage + 1, processedFilesList.length)}</span> to <span className="font-semibold">{Math.min(currentPage * itemsPerPage, processedFilesList.length)}</span> of <span className="font-semibold">{processedFilesList.length}</span> documents
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {/* Items Per Page Selector */}
+                                        <div className="flex items-center space-x-2 border-r border-gray-200 pr-3 mr-1">
+                                            <span className="text-xs text-gray-500 whitespace-nowrap">Rows:</span>
+                                            <select
+                                                value={itemsPerPage}
+                                                onChange={handleLimitChange}
+                                                className="text-xs py-1 px-2 border border-gray-200 bg-white rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-hidden text-slate-700 font-medium cursor-pointer"
+                                            >
+                                                <option value={10}>10</option>
+                                                <option value={25}>25</option>
+                                                <option value={50}>50</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Pagination Button Control Group */}
+                                        <div className="inline-flex space-x-1 items-center">
+                                            {/* First Page */}
+                                            <button
+                                                type="button"
+                                                disabled={currentPage === 1}
+                                                onClick={() => setCurrentPage(1)}
+                                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                                title="First Page"
+                                            >
+                                                <ChevronsLeft className="w-4 h-4" />
+                                            </button>
+
+                                            {/* Previous Page */}
+                                            <button
+                                                type="button"
+                                                disabled={currentPage === 1}
+                                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                                title="Previous Page"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </button>
+                                            
+                                            {/* Dynamic Numeric Page Jumps */}
+                                            {pageNumbers.map((page) => (
+                                                <button
+                                                    key={page}
+                                                    type="button"
+                                                    onClick={() => setCurrentPage(page)}
+                                                    className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
+                                                        currentPage === page
+                                                            ? 'bg-zinc-600 text-white border-zinc-600 shadow-xs'
+                                                            : 'bg-white text-slate-700 border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            ))}
+
+                                            {/* Next Page */}
+                                            <button
+                                                type="button"
+                                                disabled={currentPage === totalPages}
+                                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                                title="Next Page"
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+
+                                            {/* Last Page */}
+                                            <button
+                                                type="button"
+                                                disabled={currentPage === totalPages}
+                                                onClick={() => setCurrentPage(totalPages)}
+                                                className="p-1.5 border border-gray-200 bg-white rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors cursor-pointer"
+                                                title="Last Page"
+                                            >
+                                                <ChevronsRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
                         ) : (
                             <div className="flex flex-col items-center justify-center p-16 text-center bg-white">
                                 <FolderOpen className="h-12 w-12 text-emerald-200 mb-3" />
-                                <h4 className="text-sm font-bold text-gray-800">No Documentation Uploaded Yet</h4>
-                                <p className="text-xs text-gray-400 mt-1">Begin by clicking the upload button above.</p>
+                                <h4 className="text-sm font-bold text-gray-800">
+                                    {searchTerm ? 'No Matching Results Found' : 'No Documentation Uploaded Yet'}
+                                </h4>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    {searchTerm ? 'Try updating your keywords or clear your search filtering input.' : 'Begin by clicking the upload button above.'}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -238,7 +465,7 @@ export default function Forms() {
                                     <Upload className="h-4 w-4" />
                                 </div>
                                 <h3 className="text-base font-bold text-gray-900">
-                                    {editingFile ? 'Modify Document Properties' : 'Upload Core Document'}
+                                    {editingFile ? 'Modify Document Properties' : 'Upload Document'}
                                 </h3>
                             </div>
                             <button type="button" onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
