@@ -323,7 +323,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
 AssetTimeline.layout = {
     breadcrumbs: [
-        { title: 'Dashboard', href: '/my-assets' },
+        { title: 'Dashboard', href: '#' },
         { title: 'Asset Status Timeline' },
     ],
 };

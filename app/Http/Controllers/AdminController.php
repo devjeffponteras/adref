@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
+use Illuminate\Support\Facades\Http;
+
 class AdminController extends Controller
 {
     /**
@@ -161,14 +163,15 @@ class AdminController extends Controller
         return redirect()->back()->with('/admin/bidding/index')->with('success', 'Asset successfully published for bidding entry!');
     }
 
+    // updated controller para ma set up and workflow og tarong
     public function assetPass()
     {
         $assetStatuses = AssetStatus::with(['asset', 'asset.approvals'])
             ->where('seq_no', '>=', 6)
             ->where('seq_no', '!=', 8)
             ->get();
-    
-        return Inertia::render('admin/secret-options/asset-pass', [
+
+            return Inertia::render('admin/workflow/asset-pass', [
             'assetStatuses' => $assetStatuses,
         ]);
     }
@@ -215,4 +218,30 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Failed to approve asset. Please try again.');
         }
     }
+
+    // WORKFLOW CONTROLLER
+    public function workflowTransactions() {
+
+        // kuha tag sample data from WFS using 20.28 network
+        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/transactions';
+        $transactions = [];
+
+        try {
+            $response = Http::timeout(10)->get($apiUrl);
+            if ($response->successful()) {
+                $data = $response->json();
+                $transactions = $data['transactions'] ?? [];
+            }
+        } catch (\Exception $e) {
+            // Log error
+        }
+
+        // pasa sa front end
+        return Inertia::render('admin/workflow/index', [
+            'transactions' => $transactions
+        ]);
+    }
+
+
+    // End WORKFLOW CONTROLLER
 }

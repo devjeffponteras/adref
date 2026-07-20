@@ -22,6 +22,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
     Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
+
+    Route::get('admin/workflow/index', [AdminController::class, 'workflowTransactions'])->name('workflow.index');
+
+    // Secret Options
+    Route::get('admin/workflow/assets', [AdminController::class, 'assetPass'])->name('admin.asset-pass');
+    Route::post('/admin/secret/assets/{id}/approve', [AdminController::class, 'approveAssetPass'])
+    ->name('assets.approve-pass');
+
 });
 
 // Add routes here for admin account
@@ -41,11 +49,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     // Route::get('admin/bidding/index', [AdminController::class, 'biddingIndex'])->name('bidding.index');
     // Route::post('admin/bidding/store/{id}', [AdminController::class, 'biddingStore'])->name('bidding.store');
-
-    // Secret Options
-    Route::get('admin/secret/assets', [AdminController::class, 'assetPass'])->name('admin.asset-pass');
-    Route::post('/admin/secret/assets/{id}/approve', [AdminController::class, 'approveAssetPass'])
-    ->name('assets.approve-pass');
 });
 
 // Add routes here for ASID account
@@ -74,7 +77,8 @@ Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:accounting'])->group(function () {
     Route::get('accounting-dashboard', [DashboardController::class, 'accountingDashboard'])->name('accounting-dashboard');
     Route::get('accounting-evaluate/{id}', [AssetController::class, 'accountingEvaluate'])->name('accounting-evaluate');
-    Route::post('accounting-evaluate/{id}/action', [AssetController::class, 'accountingEvaluateAction'])->name('accounting-evaluate-action');
+    // Route::post('accounting-evaluate/{id}/action', [AssetController::class, 'accountingEvaluateAction'])->name('accounting-evaluate-action');
+    Route::post('accounting-evaluate/{id}/action', [AssetController::class, 'transmitToWorkflow'])->name('accounting-evaluate-action');
 
     Route::post('accounting-evaluate/{id}/save-only', [AssetController::class, 'accountingEvaluateSaveOnly'])->name('accounting-evaluate-save-only');
     Route::post('accounting-evaluate/{id}/workflow-action', [AssetController::class, 'accountingEvaluateWorkflowAction'])->name('accounting-evaluate-workflow-action');

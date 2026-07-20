@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Http;
 
 class AssetController extends Controller
 {
@@ -360,8 +361,10 @@ class AssetController extends Controller
     {
         $asset = Asset::findOrFail($id);
         $asidInformation = AsidInformation::where('asset_id', $id)->first();
+        $managerInformation = ManagerInformation::where('asset_id', $id)->first();
 
         $asset->asid_information = $asidInformation;
+        $asset->manager_information = $managerInformation;
 
         return Inertia::render('asid/evaluate', [
             'asset' => $asset,
@@ -505,8 +508,21 @@ class AssetController extends Controller
 
         $asset = Asset::with(['user', 'classification', 'accounting_information', 'workflow'])->findOrFail($id);
 
+        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_status/' . $asset->accounting_information->asset_number;
+        
+        try {
+            $response = Http::timeout(10)->get($apiUrl);
+            if ($response->successful()) {
+                $data = $response->json();
+                $asset_status = $data['asset_status'] ?? [];
+            }
+        } catch (\Exception $e) {
+            // Log error
+        }
+        // dd($asset_status);
         return Inertia::render('accounting/evaluate', [
             'asset' => $asset,
+            'asset_status' => $asset_status,
         ]);
     }
 
@@ -557,6 +573,7 @@ class AssetController extends Controller
 
     }
 
+    // diari dayun mag manipulate for WORKFLOW -- na update upon meeting with ASID users last time. hahayzzz
     public function accountingEvaluateAction(Request $request, $id)
     {
         $validatedData = $request->validate([
@@ -567,7 +584,7 @@ class AssetController extends Controller
             'remarks'          => 'nullable|string|max:1000',
             'checked_by'       => 'required|string|max:255',
         ]);
-
+        dd($validatedData);
         $asset = Asset::findOrFail($id);
 
         DB::beginTransaction();
@@ -1016,4 +1033,74 @@ class AssetController extends Controller
 
         return redirect()->back()->with('success', 'Document and its physical file were completely removed!');
     }
+
+    // WorkFlow Controllers
+    // IMPORTANT NOTES Ni SIYA PARA MUANDAR TARONG!
+    // The Security Token (token): The value you pass in transaction.token must exist in the old database's allowed_transactions table.
+    // The Transaction Type (type): The value you pass in transaction.type must match the name column in the allowed_transactions table for that token.
+    // Routing Logic (department): Your old code loops over template_approvers and executes a wildcard search: ->where('department', 'LIKE', "%{$approver_department->department}%")
+    public function transmitToWorkflow(Request $request, $id) 
+    {
+        $validatedData = $request->validate([
+            'asset_number'     => 'nullable|string|max:100',
+            'acquisition_date' => 'nullable|date',
+            'acquisition_cost' => 'nullable|numeric|min:0',
+            'book_value'       => 'nullable|numeric|min:0',
+            'remarks'          => 'nullable|string|max:1000',
+            'checked_by'       => 'required|string|max:255',
+        ]);
+
+        // $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/wfs-sync';
+        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/store_transaction';
+
+        $payload = [
+            'transaction' => [
+                // CRITICAL AUTH & LOOKUP FIELDS
+                'token'            => 'base64:b9+N8PTeBSicgIMx4MbuYCuZBaQ9sL3ecibeX06FYgg=',
+                'type'             => 'ADREF',
+                
+                // TRANSACTION IDENTIFIERS & META
+                'refno'            => $validatedData['asset_number'] ?? 'REF-' . time(),
+                'transid'          => 'ADREF-' . uniqid(),
+                'sourceapp'        => 'ADREF System', //ADREF_APP
+                'sourceurl'        => url('/'),
+                'status'           => 'PENDING',
+                'created_at'       => now()->toDateTimeString(),
+                
+                // USER & ROUTING INFO
+                'requestor'        => auth()->user()->name ?? 'System',
+                'email'            => auth()->user()->email ?? 'adrefadmin@philsaga.com',
+                'department'       => strtoupper(auth()->user()->department->name) ?? 'ADMIN',
+                'name'             => $validatedData['checked_by'],
+                'locsite'          => 'Main Site',
+                'purpose'          => $validatedData['remarks'] ?? 'Asset Management Request',
+                'approval_url'     => url('/assets/' . ($id ?? '' . '/asset-status')), // Temporary for now kay wala pako kabalo if mudagan lage
+
+                // FINANCIALS
+                'totalamount'      => $validatedData['acquisition_cost'] ?? 0,
+                'converted_amount' => $validatedData['book_value'] ?? 0,
+                'currency'         => 'PHP',
+            ]
+        ];
+
+        try {
+            $response = Http::timeout(15)->post($apiUrl, $payload);
+
+            if ($response->successful()) {
+                $responseData = $response->json();
+                
+                return redirect()->back()->with('success', 'Data successfully transmitted to Workflow system!');
+            }
+
+            Log::error('WFS Sync Failed: ' . $response->body());
+            return redirect()->back()->withErrors([
+                'error' => 'Workflow transmission failed: ' . ($response->json()['message'] ?? 'Unknown error')
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('WFS Connection Error: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Could not connect to the workflow server.']);
+        }
+    }
+    // End WorkFlow Controllers
 }

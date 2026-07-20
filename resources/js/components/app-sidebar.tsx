@@ -12,7 +12,8 @@ import {
     LucideUserCog2,
     UsersRound,
     Gavel,
-    FastForward
+    FastForward,
+    ListChecks
 } from 'lucide-react';
 
 import AppLogo from '@/components/app-logo';
@@ -108,8 +109,14 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Temp Workflow',
-        href: '/admin/secret/assets',
+        href: '/admin/workflow/assets',
         icon: FastForward,
+        roles: ['admin'],
+    },
+    {
+        title: 'Workflow Transactions',
+        href: '/admin/workflow/index',
+        icon: ListChecks,
         roles: ['admin'],
     },
 

@@ -21,6 +21,16 @@ interface AsidInformation {
     reviewed_by: string;
 }
 
+interface ManagerInformation {
+    id: number;
+    asset_id: number;
+    user_id: number;
+    asset_direction: string;
+    manager_disposition: string;
+    bidding_price: number;
+    reviewed_by: string;
+}
+
 interface AssetData {
     id: number;
     user_id: number;
@@ -41,6 +51,7 @@ interface AssetData {
     user?: User;
     classification?: AssetClassification;
     asid_information?: AsidInformation | null;
+    manager_information?: ManagerInformation | null;
 }
 
 interface AssetProps {
@@ -51,6 +62,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
     const { auth } = usePage().props as any;
 
     const isLockedAsid = !!asset?.asid_information;
+    const isOnASidManager = !!asset?.manager_information;
 
     const { data, setData, post, processing, errors } = useForm({
         remarks: asset.asid_information?.remarks || (asset as any).asidInformation?.remarks || '',
@@ -89,7 +101,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                         <h3 className="text-gray-900 font-bold text-lg tracking-tight">
                             Evaluation Information
 
-                            {isLockedAsid && 
+                            {isLockedAsid && !isOnASidManager &&
                             <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                                 <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
                                 APPROVED SUBMITTED TO ASID MANAGER
