@@ -128,7 +128,6 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
             'MCD',
             'MEPEO',
             'ASID (Review)',
-            'Top Management',
             'Administration Division',
             'Executive Division'
         ];

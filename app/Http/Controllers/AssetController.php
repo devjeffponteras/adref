@@ -155,7 +155,7 @@ class AssetController extends Controller
             $asset = Asset::create($assetData);
 
             // Generate approval sequence steps
-            for ($i = 1; $i <= 8; $i++) {
+            for ($i = 1; $i <= 7; $i++) {
                 $asset->approvals()->create([
                     'seq_no'        => $i,
                     'is_current'    => ($i === 1),
@@ -424,20 +424,17 @@ class AssetController extends Controller
         ]);
 
         $validated['status'] = 'Approved';
-
         $asset = Asset::findOrFail($id);
-        // dd($validated);
+        $accounting_info = AccountingInformation::where('asset_id', $asset->id)->first();
 
         try {
-
             DB::transaction(function () use ($asset, $validated) {
-
                 $currentApproval = $asset->approvals()->where('is_current', true)->first();
                 $currentSeq = $currentApproval ? $currentApproval->seq_no : 1;
 
                 $asset->update(['status' => 'On-going']);
-                // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'On-going']);
 
+                // Update current step
                 $asset->approvals()->where('seq_no', $currentSeq)->update([
                     'is_current' => false,
                     'status' => $validated['status'],
@@ -447,12 +444,10 @@ class AssetController extends Controller
                 ]);
 
                 $targetActiveSeq = $currentSeq;
-
                 $nextApprovalExists = $asset->approvals()->where('seq_no', $currentSeq + 1)->exists();
 
                 if ($nextApprovalExists) {
                     $targetActiveSeq = $currentSeq + 1;
-
                     $asset->approvals()->where('seq_no', $targetActiveSeq)->update([
                         'is_current' => true,
                         'status' => 'On-going',
@@ -462,7 +457,6 @@ class AssetController extends Controller
                     ]);
                 } else {
                     $asset->update(['status' => 'Completed']);
-                    // $asset->newQuery()->where('id', $asset->id)->update(['status' => 'Completed']);
                 }
 
                 ManagerInformation::updateOrCreate(
@@ -472,12 +466,13 @@ class AssetController extends Controller
                         'asset_direction' => $validated['asset_direction'],
                         'manager_disposition' => $validated['manager_disposition'],
                         'bidding_price' => $validated['bidding_price'],
-                        'reviewed_by' => Auth::user()->name,
+                        'reviewed_by' => Auth::user()->name ?? 'System',
                     ]
                 );
 
-                // Log details explicitly onto the row the user just interacted with
+                // Log details explicitly on active asset status record
                 AssetStatus::where('asset_id', $asset->id)
+                    ->where('seq_no', $currentSeq) // Ensure target specific sequence
                     ->update([
                         'seq_no' => $targetActiveSeq,
                         'status' => $validated['status'],
@@ -486,42 +481,177 @@ class AssetController extends Controller
                         'remarks' => $validated['manager_disposition'],
                     ]);
             });
-
-            return redirect()->route('manager-dashboard')->with('success', "Asset Request Approval forwarded to WORKFLOW.");
-
         } catch (\Exception $e) {
-            // Log the exact issue behind the scenes if something goes wrong
-            Log::error("ASID MANAGER Evaluation pipeline failure for Asset ID {$id}: ".$e->getMessage());
+            Log::error("ASID MANAGER Evaluation DB failure for Asset ID {$id}: " . $e->getMessage());
 
             return back()->withErrors([
                 'error' => 'An internal database issue prevented completing the approval. Please re-submit.',
             ]);
         }
 
+        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_transmit';
+        $user = auth()->user();
 
-      
+        $payload = [
+            'transaction' => [
+                'token'            => 'base64:b9+N8PTeBSicgIMx4MbuYCuZBaQ9sL3ecibeX06FYgg=',
+                'type'             => 'ADREF',
+                'refno'            => $asset->id ?? 'REF-' . time(),
+                'transid'          => 'ADREF-' . uniqid(),
+                'sourceapp'        => 'ADREF System',
+                'sourceurl'        => url('/'),
+                'status'           => 'PENDING',
+                'created_at'       => now()->toDateTimeString(),
+                'requestor'        => $user->name ?? 'System',
+                'email'            => $user->email ?? 'adrefadmin@philsaga.com',
+                'department'       => strtoupper($user?->department?->name ?? 'ADMIN'),
+                'name'             => $user->name ?? null,
+                'locsite'          => 'Main Site',
+                'purpose'          => $asset->reasons_for_disposal ?? 'Asset Management Request',
+                'approval_url'     => url('/assets/' . $id . '/asset-status'),
+                'totalamount'      => $accounting_info->acquisition_cost ?? 0,
+                'converted_amount' => $accounting_info->book_value ?? 0,
+                'currency'         => 'PHP',
+                'is_multiple'      => $request->boolean('is_multiple'),
+            ]
+        ];
+
+        try {
+            $response = Http::timeout(15)->post($apiUrl, $payload);
+
+            if (!$response->successful()) {
+                Log::error("WFS Sync Failed for Asset {$id}: " . $response->body());
+                
+                // Local DB was saved, but notify the user API failed
+                return redirect()->route('manager-dashboard')->with('warning', 'Evaluation saved locally, but Workflow sync failed.');
+            }
+
+        } catch (\Exception $e) {
+            Log::error("WFS Connection Error for Asset {$id}: " . $e->getMessage());
+            
+            return redirect()->route('manager-dashboard')->with('warning', 'Evaluation saved locally, but could not connect to Workflow server.');
+        }
+
+        return redirect()->route('manager-dashboard')->with('success', 'Asset Request Approval forwarded to WORKFLOW.');
     }
     // End managers functions
 
+    // Accounting functions
     public function accountingEvaluate($id)
     {
-
         $asset = Asset::with(['user', 'classification', 'accounting_information', 'workflow'])->findOrFail($id);
 
-        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_status/' . $asset->accounting_information->asset_number;
-        
-        try {
-            $response = Http::timeout(10)->get($apiUrl);
-            if ($response->successful()) {
-                $data = $response->json();
-                $asset_status = $data['asset_status'] ?? [];
+        $asset_status = null;
+
+        if ($asset->accounting_information && !empty($asset->accounting_information->asset_number)) {
+            
+            $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
+
+                // Mao ni ang lisod na part kay pwede 1 or multiple ang data from api -- iwit nlng ni
+                // $newApiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getStatus/' . $asset_status['id'];
+
+                // try {
+                //     $newResponse = Http::timeout(10)->get($newApiUrl);
+                //     if ($newResponse->successful()) {
+                //         $newData = $newResponse->json();
+                //         $asset_apprval_step = $data['asset_approval_step'] ?? [];
+                //     }
+                // } catch (\Exception $e) {
+                //     // Log error or leave $asset_status as an empty array
+                //     \Log::error('Asset Approval Step API Error: ' . $e->getMessage());
+                // }
+
+            try {
+                $response = Http::timeout(10)->get($apiUrl);
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $asset_status = $data['asset_status'] ?? [];
+                }
+            } catch (\Exception $e) {
+                Log::error('Asset Status API Error: ' . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            // Log error
+
         }
-        // dd($asset_status);
+
+        $remoteStatus = data_get($asset_status, 'status') ?? data_get($asset_status, '0.status');
+
+        $isAlreadyApprovedLocally = strtoupper($asset->accounting_information?->status ?? '') === 'APPROVED';
+
+        if (!$isAlreadyApprovedLocally && strtoupper((string) $remoteStatus) === 'FULLY APPROVED') {
+            DB::beginTransaction();
+
+            try {
+                AccountingInformation::where('asset_id', $asset->id)->update([
+                    'conformed_by' => 'Ivan Moreno',
+                    'status'       => 'Approved',
+                ]);
+
+                $currentApproval = AssetApproval::where('asset_id', $id)
+                    ->where('is_current', true)
+                    ->firstOrFail();
+
+                $currentApproval->update([
+                    'is_current'    => false,
+                    'status'        => 'Approved',
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $asset->accounting_information->remarks ?? null,
+                ]);
+
+                $nextApproval = AssetApproval::where('asset_id', $id)
+                    ->where('seq_no', $currentApproval->seq_no + 1)
+                    ->first();
+
+                if ($nextApproval) {
+                    $nextApproval->update([
+                        'is_current' => true,
+                        'status'     => 'On-going',
+                    ]);
+
+                    $asset->update([
+                        'status' => 'On-going',
+                    ]);
+
+                    $message = 'Accounting details updated from Workflow System updates.';
+                } else {
+                    $asset->update([
+                        'status' => 'Completed',
+                    ]);
+
+                    $message = 'Accounting details recorded. All tracking sequence steps complete; asset pipeline marked as Completed.';
+                }
+
+                AssetStatus::where('asset_id', $asset->id)
+                    ->update([
+                        'seq_no'        => $currentApproval->seq_no + 1,
+                        'status'        => 'On-going',
+                        'approver_id'   => Auth::id(),
+                        'approval_date' => now(),
+                        'remarks'       => $asset->accounting_information->remarks ?? null,
+                    ]);
+
+                DB::commit();
+
+                $asset->load(['user', 'classification', 'accounting_information', 'workflow']);
+
+                return Inertia::render('accounting/evaluate', [
+                    'asset'        => $asset,
+                    'asset_status' => $asset_status,
+                ])->with('success', $message);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+
+                Log::error("Failed transaction sequence processing accounting evaluation for Asset ID {$id}: " . $e->getMessage());
+
+                return back()->withErrors([
+                    'error' => 'An operational database issue halted processing your asset updates. Please try again.',
+                ]);
+            }
+        }
+
         return Inertia::render('accounting/evaluate', [
-            'asset' => $asset,
+            'asset'        => $asset,
             'asset_status' => $asset_status,
         ]);
     }
@@ -558,18 +688,11 @@ class AssetController extends Controller
                 ]
             );
 
-            Workflow::updateOrCreate(
-                ['asset_id' => $id],
-                [
-                    'workflow_step' => 1,
-                    'status' => 'On-going',
-                ]
-            );
         });
 
         // return redirect()->route('accounting-dashboard')
         //         ->with('success', 'Document Saved, ');
-        return back()->with('success', 'Accounting records saved successfully.');
+        return back()->with('success', 'Accounting records saved successfully. Ready for Workflow Submission.');
 
     }
 
@@ -1049,9 +1172,8 @@ class AssetController extends Controller
             'remarks'          => 'nullable|string|max:1000',
             'checked_by'       => 'required|string|max:255',
         ]);
-
-        // $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/wfs-sync';
-        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/store_transaction';
+        // dd($request);
+        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_transmit';
 
         $payload = [
             'transaction' => [
@@ -1071,15 +1193,18 @@ class AssetController extends Controller
                 'requestor'        => auth()->user()->name ?? 'System',
                 'email'            => auth()->user()->email ?? 'adrefadmin@philsaga.com',
                 'department'       => strtoupper(auth()->user()->department->name) ?? 'ADMIN',
-                'name'             => $validatedData['checked_by'],
+                'name'             => $validatedData['checked_by'] ?? null,
                 'locsite'          => 'Main Site',
                 'purpose'          => $validatedData['remarks'] ?? 'Asset Management Request',
-                'approval_url'     => url('/assets/' . ($id ?? '' . '/asset-status')), // Temporary for now kay wala pako kabalo if mudagan lage
+                'approval_url'     => url('/assets/' . ($id ?? '') . '/asset-status'), // Temporary for now kay wala pako kabalo if mudagan lage
 
                 // FINANCIALS
                 'totalamount'      => $validatedData['acquisition_cost'] ?? 0,
                 'converted_amount' => $validatedData['book_value'] ?? 0,
                 'currency'         => 'PHP',
+
+                // API HELPER
+                'is_multiple'      => $request->boolean('is_multiple'),
             ]
         ];
 

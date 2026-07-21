@@ -70,6 +70,9 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
         bidding_price: asset.manager_information?.bidding_price || '',
         manager_disposition: asset.manager_information?.manager_disposition || '',
         manager_reviewed_by: '',
+
+        // special na declaration for api helper ni..
+        is_multiple: true,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -161,6 +164,15 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                 placeholder="Recommended disposal action..."
                             />
                         </div>
+
+                        {/* Secret Input para sa API helper */}
+                        <input 
+                            className='hidden'
+                            type="checkbox" 
+                            name="is_multiple" 
+                            checked={data.is_multiple} 
+                            onChange={e => setData('is_multiple', e.target.checked)} 
+                        />
 
                         <div className="xl:col-span-6 flex flex-col gap-1.5">
                             <label className="text-xs font-bold uppercase tracking-wide text-gray-600">

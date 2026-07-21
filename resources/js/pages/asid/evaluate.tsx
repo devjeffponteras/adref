@@ -86,7 +86,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
             {/* main content */}
             <div className="container-fluid p-4">
 
-                <form onSubmit={handleSubmit} className="w-full max-w-7xl mx-auto p-4 space-y-4">
+                <form onSubmit={handleSubmit} className="w-full p-4 space-y-4">
             
                     {/* Header Banner - Now completely dynamic! */}
                     {/* <div className="bg-emerald-950 text-white px-6 py-4 rounded-xl shadow-xs font-semibold text-lg flex items-center">
