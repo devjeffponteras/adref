@@ -78,7 +78,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
     };
 
     const getStatusStyles = (status: string, isCurrent: boolean) => {
-        if (status === 'Approved') {
+        if (status === 'Approved' || status === 'Completed') {
             return {
                 bg: 'bg-gradient-to-r from-emerald-50 to-white shadow border-b-4 border-emerald-300 hover:border-emerald-200',
                 badge: 'bg-emerald-500/10 text-emerald-700 border border-emerald-200',
@@ -89,7 +89,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
             };
         }
         
-        if (isCurrent) {
+        if (isCurrent && status !== 'Completed') {
             return {
                 bg: 'bg-gradient-to-r from-amber-50/50 to-white border-amber-200/80 shadow border-b-4 border-amber-300 shadow-amber-900/[0.02] ring-1 ring-amber-400/20 scale-[1.01]',
                 badge: 'bg-amber-500/10 text-amber-700 border border-amber-200',

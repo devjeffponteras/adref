@@ -188,6 +188,7 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Applicant</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Department</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Action</th>
                                 </tr>
                             </thead>
@@ -217,6 +218,9 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
                                                     <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'The Users Department'}</div>
+                                                </td>
+                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
+                                                    <div className="font-medium text-gray-800">{item.asset?.brand_make || 'Asset Brand / Make'} {item.asset?.model || 'Asset Model'}</div>
                                                 </td>
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 

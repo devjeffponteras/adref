@@ -57,7 +57,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
             return 'bg-orange-50 text-orange-700 border-orange-200';
         }
 
-        if (status.includes('Approved')) {
+        if (status.includes('Approved') || status.includes('Completed')) {
             return 'bg-emerald-50 text-emerald-700 border-emerald-200';
         }
 

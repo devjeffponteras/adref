@@ -227,7 +227,8 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                 </label>
                                 <select 
                                     name="asset_direction" 
-                                    id="asset_direction" 
+                                    id="asset_direction"
+                                    disabled={isLockedManager}
                                     value={data.asset_direction || ""} // Tracks selected choice
                                     onChange={(e) => {
                                         const val = e.target.value;
@@ -238,7 +239,11 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                             ...(val !== 'For Bidding' && { bidding_price: 0 })
                                         }));
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${isLockedManager
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                        }`}
                                 >
                                     <option value="" disabled>Select Asset Direction</option>
                                     <option value="For Bidding">For Bidding</option>
@@ -257,10 +262,15 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                 <input 
                                     type="text" 
                                     name="manager_disposition"
+                                    disabled={isLockedManager}
                                     value={data.manager_disposition || ""}
                                     onChange={(e) => setData('manager_disposition', e.target.value)}
-                                    className="w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500"
                                     placeholder="Type disposition.."
+                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${isLockedManager
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                        }`}
                                 />
                             </div>
 
@@ -291,10 +301,15 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                     <input 
                                         type="number" 
                                         name='bidding_price'
+                                        disabled={isLockedManager}
                                         value={data.bidding_price}
                                         onChange={(e) => setData('bidding_price', Number(e.target.value))}
-                                        className="w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500"
                                         placeholder="Type bidding base price.."
+                                        className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                            ${isLockedManager
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                            }`}
                                     />
                                 </div>
                             )}

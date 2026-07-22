@@ -27,6 +27,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Http;
 
+// Mao ni kay para sa CRON JOB!
+use App\Services\AssetSyncService;
+
 class AssetController extends Controller
 {
     /**
@@ -183,26 +186,144 @@ class AssetController extends Controller
     /**
      * Render the vertical timeline view page with tracking status elements.
      */
-    public function assetStatus($id): Response
+    public function assetStatus($id, AssetSyncService $syncService): Response //TEST for now if goods siya..
+    {
+        $asset = Asset::with([
+            'approvals' => fn ($q) => $q->orderBy('seq_no', 'asc'),
+            'user.department',
+            'approvals.approver',
+            'asid_information',
+            'manager_information',
+            'accounting_information'
+        ])->findOrFail($id);
+
+        // Call service to perform sync logic
+        $assetStatusData = $syncService->syncAssetStatus($asset);
+
+        $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information']);
+
+        return Inertia::render('asset-status', [
+            'asset' => $asset,
+            'asset_status' => $assetStatusData,
+        ]);
+    }
+
+    public function assetStatusOLD($id): Response
     {
         $asset = Asset::with([
             'approvals' => function ($query) {
                 $query->orderBy('seq_no', 'asc');
             },
             // 'assetStatuses' => function ($query) {
-            //     $query->orderBy('seq_no', 'desc'); // if gusto paianaka una makita jud
+            //     $query->orderBy('seq_no', 'desc'); // if gusto pinaka una makita jud
             // },
             'user',
             'user.department',
             'approvals.approver',
             'asid_information',
-            'manager_information'
+            'manager_information',
+            'accounting_information'
         ])->findOrFail($id);
 
+        $assetStatusData = [];
+
         // dd($asset->toArray());
+        // dd("x");
+        // diria ta mag try og kuha sa workflow status via API
+        if ($asset->manager_information && $asset->accounting_information?->asset_number) {
+            // dd($asset->accounting_information?->asset_number);
+            $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
+
+            try {
+                $response = Http::timeout(10)->get($apiUrl);
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $assetStatusData = $data['asset_status'] ?? [];
+                }
+            } catch (\Exception $e) {
+                Log::error("Asset Status API Error for Asset ID {$id}: " . $e->getMessage());
+            }
+        }
+
+        $remoteStatus = data_get($assetStatusData, 'status') ?? data_get($assetStatusData, '0.status');
+        $isAlreadyApprovedLocally = strtoupper($asset->asid_information?->status ?? '') === 'APPROVED';
+        $isAlreadyApprovedAsset = strtoupper($asset->status ?? '') === 'COMPLETED';
+
+        if ($asset->manager_information && $isAlreadyApprovedLocally && !$isAlreadyApprovedAsset && strtoupper((string) $remoteStatus) === 'FULLY APPROVED') {
+            // dd("aw!");
+            DB::beginTransaction();
+
+            try {
+                // Kwaon tanan approval steps for this asset ordered by sequence
+                $approvals = AssetApproval::where('asset_id', $id)
+                    ->orderBy('seq_no', 'asc')
+                    ->get();
+
+                if ($approvals->isEmpty()) {
+                    throw new \Exception("No approval workflow found for Asset ID {$id}.");
+                }
+
+                $lastApproval = $approvals->last();
+
+                // i-update tanan steps prior to the final step as Approved & not current
+                AssetApproval::where('asset_id', $id)
+                    ->where('id', '!=', $lastApproval->id)
+                    ->update([
+                        'is_current'    => false,
+                        'status'        => 'Approved',
+                        'approver_id'   => Auth::id(),
+                        'approval_date' => now(),
+                        'remarks'       => $asset->manager_information->remarks ?? null,
+                    ]);
+
+                // apil pod ang final step as Completed & current
+                $lastApproval->update([
+                    'is_current'    => true,
+                    'status'        => 'Completed',
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $asset->manager_information->remarks ?? null,
+                ]);
+
+                $asset->update([
+                    'status' => 'Completed',
+                ]);
+
+                // Update tanan AssetStatus tracking record to match final completion
+                AssetStatus::where('asset_id', $asset->id)
+                    ->update([
+                        'seq_no'        => $lastApproval->seq_no,
+                        'status'        => 'Approved',
+                        'approver_id'   => Auth::id(),
+                        'approval_date' => now(),
+                        'remarks'       => $asset->manager_information->remarks ?? null,
+                    ]);
+
+                $message = 'Asset details recorded. All remaining tracking sequence steps bypassed and asset marked as Completed.';
+
+                DB::commit();
+
+                $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information']);
+
+                return Inertia::render('asset-status', [
+                    'asset' => $asset,
+                    'asset_status' => $assetStatusData,
+                ])->with('success', $message);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+
+                Log::error("Failed transaction sequence processing accounting evaluation for Asset ID {$id}: " . $e->getMessage());
+
+                return back()->withErrors([
+                    'error' => 'An operational database issue halted processing your asset updates. Please try again.',
+                ]);
+            }
+        }
 
         return Inertia::render('asset-status', [
             'asset' => $asset,
+            'asset_status' => $assetStatusData,
         ]);
     }
 
