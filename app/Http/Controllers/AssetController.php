@@ -197,7 +197,7 @@ class AssetController extends Controller
             'accounting_information'
         ])->findOrFail($id);
 
-        // Call service to perform sync logic
+        // Mao ni ang call service to perform sync logic men!
         $assetStatusData = $syncService->syncAssetStatus($asset);
 
         $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information']);
@@ -620,7 +620,7 @@ class AssetController extends Controller
                 'refno'            => $asset->id ?? 'REF-' . time(),
                 'transid'          => 'ADREF-' . uniqid(),
                 'sourceapp'        => 'ADREF System',
-                'sourceurl'        => url('/'),
+                'sourceurl'        => url('/assets/' . ($id ?? '') . '/asset-status'),
                 'status'           => 'PENDING',
                 'created_at'       => now()->toDateTimeString(),
                 'requestor'        => $user->name ?? 'System',
@@ -629,7 +629,7 @@ class AssetController extends Controller
                 'name'             => $user->name ?? null,
                 'locsite'          => 'Main Site',
                 'purpose'          => $asset->reasons_for_disposal ?? 'Asset Management Request',
-                'approval_url'     => url('/assets/' . $id . '/asset-status'),
+                'approval_url'     => url('/assets/' . ($id ?? ''). '/asset-status'),
                 'totalamount'      => $accounting_info->acquisition_cost ?? 0,
                 'converted_amount' => $accounting_info->book_value ?? 0,
                 'currency'         => 'PHP',
@@ -828,7 +828,7 @@ class AssetController extends Controller
             'remarks'          => 'nullable|string|max:1000',
             'checked_by'       => 'required|string|max:255',
         ]);
-        dd($validatedData);
+        // dd($validatedData);
         $asset = Asset::findOrFail($id);
 
         DB::beginTransaction();
@@ -1306,7 +1306,7 @@ class AssetController extends Controller
                 'refno'            => $validatedData['asset_number'] ?? 'REF-' . time(),
                 'transid'          => 'ADREF-' . uniqid(),
                 'sourceapp'        => 'ADREF System', //ADREF_APP
-                'sourceurl'        => url('/'),
+                'sourceurl'        => url('/assets/' . ($id ?? '') . '/asset-status'),
                 'status'           => 'PENDING',
                 'created_at'       => now()->toDateTimeString(),
                 

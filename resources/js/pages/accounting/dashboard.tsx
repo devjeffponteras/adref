@@ -71,7 +71,7 @@ interface DashboardProps {
     assetStatuses: AssetStatusData[];
 }
 
-type SortableFields = 'created_at' | 'control_number' | 'department' | 'submitted_by';
+type SortableFields = 'created_at' | 'control_number' | 'department' | 'submitted_by' | 'brand_make';
 
 export default function AccountingDashboard({ assetStatuses = [] }: DashboardProps) {
     const { flash } = usePage().props as any;
@@ -118,6 +118,10 @@ export default function AccountingDashboard({ assetStatuses = [] }: DashboardPro
                 case 'department':
                     valA = a.asset?.end_user_department || '';
                     valB = b.asset?.end_user_department || '';
+                    break;
+                case 'brand_make':
+                    valA = a.asset?.brand_make || '';
+                    valB = b.asset?.brand_make || '';
                     break;
                 case 'submitted_by':
                     valA = a.approver?.name || 'System Auto';
@@ -218,6 +222,9 @@ export default function AccountingDashboard({ assetStatuses = [] }: DashboardPro
                                     <th scope="col" onClick={() => handleSort('department')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
                                         <div className="flex items-center gap-1.5">Department <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
                                     </th>
+                                    <th scope="col" onClick={() => handleSort('brand_make')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
+                                        <div className="flex items-center gap-1.5">Brand & Model <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
+                                    </th>
                                     <th scope="col" onClick={() => handleSort('submitted_by')} className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-gray-200 select-none transition-colors">
                                         <div className="flex items-center gap-1.5">Submitted By <ArrowUpDown className="h-3 w-3 text-gray-500" /></div>
                                     </th>
@@ -250,12 +257,15 @@ export default function AccountingDashboard({ assetStatuses = [] }: DashboardPro
                                                 <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
                                                     {formattedDate}
                                                 </td>
-                                                <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
                                                     {item.asset?.control_number || 'N/A'}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
                                                     <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
                                                     <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
+                                                </td>
+                                                <td className="px-4 py-4 font-medium text-gray-700">
+                                                    {item?.asset?.brand_make || 'Brand'} {item?.asset?.model || 'Model'}
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
                                                     {item.approver?.name || 'System Auto'}

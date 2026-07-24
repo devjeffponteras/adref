@@ -111,7 +111,7 @@ const mainNavItems: NavItem[] = [
         title: 'Temp Workflow',
         href: '/admin/workflow/assets',
         icon: FastForward,
-        roles: ['admin'],
+        roles: [],
     },
     {
         title: 'Workflow Transactions',

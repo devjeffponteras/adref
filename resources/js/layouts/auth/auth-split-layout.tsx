@@ -12,19 +12,32 @@ export default function AuthSplitLayout({
 
     return (
         <div className="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-            <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-                <div className="absolute inset-0 bg-linear-to-br from-slate-700 to-slate-950" />
+            <div className="relative hidden h-full flex-col overflow-hidden bg-muted p-10 text-white lg:flex dark:border-r">
+                {/* Background Video */}
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 h-full w-full object-cover"
+                >
+                    <source src="/images/videos/lg.mp4" type="video/mp4" />
+                </video>
+
+                {/* Dark Overlay (Adjust opacity/color as needed) */}
+                <div className="absolute inset-0 bg-slate-950/70" />
+
+                {/* Content */}
                 <Link
                     href={home()}
-                    className="relative z-20 flex items-center text-lg font-medium flex-col justify-center min-h-9/12"
+                    className="relative z-20 flex flex-col items-center justify-center min-h-9/12 text-lg font-medium"
                 >
                     <AppLogoIcon className="mr-2 size-8 fill-current text-white" />
                     
-                    <div className='text-xl opacity-85 pt-6'>
-                        {/* {name} */}
+                    <div className='pt-6 text-xl opacity-85'>
                         Philsaga Mining Corporation - Asset Disposal System
                     </div>
-                    <small className='opacity-70 pt-6 text-center'>
+                    <small className='pt-6 text-center opacity-70'>
                         The Asset Disposal System provides a structured mechanism 
                         <br /> 
                         for disposing of fixed assets and inventory items of Philsaga Mining Corporation 

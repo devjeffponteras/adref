@@ -63,7 +63,7 @@ interface DashboardProps {
     assetStatuses: AssetStatusData[];
 }
 
-type SortField = 'date' | 'control_number' | 'department' | 'submitted_by';
+type SortField = 'date' | 'control_number' | 'department' | 'submitted_by' | 'brand_make';
 type SortDirection = 'asc' | 'desc' | null;
 
 export default function McdDashboard({ assetStatuses }: DashboardProps) {
@@ -138,6 +138,10 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
                     case 'department':
                         valA = a.asset?.end_user_department || '';
                         valB = b.asset?.end_user_department || '';
+                        break;
+                    case 'brand_make':
+                        valA = a.asset?.brand_make || '';
+                        valB = b.asset?.brand_make || '';
                         break;
                     case 'submitted_by':
                         valA = a.approver?.name || '';
@@ -236,6 +240,9 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
                                     <th scope="col" onClick={() => handleSort('department')} className="px-4 py-3.5 font-semibold cursor-pointer group hover:bg-zinc-200/60 transition-colors">
                                         <div className="flex items-center">Department {renderSortIcon('department')}</div>
                                     </th>
+                                    <th scope="col" onClick={() => handleSort('brand_make')} className="px-4 py-3.5 font-semibold cursor-pointer group hover:bg-zinc-200/60 transition-colors">
+                                        <div className="flex items-center">Brand & Model {renderSortIcon('department')}</div>
+                                    </th>
                                     <th scope="col" onClick={() => handleSort('date')} className="py-3.5 pl-6 pr-3 font-semibold cursor-pointer group hover:bg-zinc-200/60 transition-colors">
                                         <div className="flex items-center">Application Date &amp; Time {renderSortIcon('date')}</div>
                                     </th>
@@ -274,6 +281,10 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
                                                     <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
                                                     <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
+                                                </td>
+                                                 <td className="px-4 py-4 font-medium text-gray-700 capitalize">
+                                                    {item.asset?.brand_make || 'Brand'} 
+                                                    {item.asset?.model || 'Model'}
                                                 </td>
                                                 <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
                                                     {formattedDate}

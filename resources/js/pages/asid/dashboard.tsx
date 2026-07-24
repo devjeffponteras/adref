@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { Folder, FolderCheck, SearchCheckIcon, FileSearch2, FolderOpen, LucideMap } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
-import type { AssetStatusData } from '@/types/models';
+import type { AssetStatusData, Asset } from '@/types/models';
 
 interface DashboardProps {
     assetStatuses: AssetStatusData[];
+    assets: Asset[];
 }
 
 // Reusable Table Footer Component with Per-Page Limit Dropdown and Zinc Number Pagination
@@ -85,8 +86,9 @@ function TableFooter({
     );
 }
 
-export default function AsidDashboard({ assetStatuses }: DashboardProps) {
+export default function AsidDashboard({ assetStatuses, assets }: DashboardProps) {
     const safeStatuses = assetStatuses || [];
+    const assetsInfo = assets || [];
 
     // --- Dynamic Items Per Page Limits ---
     const [pendingLimit, setPendingLimit] = useState(5);
@@ -109,9 +111,8 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
         Number(item.seq_no) > 3
     );
 
-    const scrapTransactions = safeStatuses.filter(item => 
-        item.asset?.mepeo_information?.waste_characteristic_id == 13  &&
-        Number(item.seq_no) > 3
+    const scrapTransactions = assetsInfo.filter(item => 
+        item?.mepeo_information?.waste_characteristic_id == 13
     );
 
     // --- Pagination Logic Helpers ---
@@ -343,8 +344,9 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created by</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status / Action</th>
                                 </tr>
@@ -370,8 +372,12 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
                                                     {formattedDate}
                                                 </td>
-                                                <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
                                                     {item.asset?.control_number}
+                                                </td>
+                                                <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    {item.asset?.brand_make} 
+                                                    {item.asset?.model}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
                                                     <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
@@ -386,9 +392,13 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
                                                         href={`/asid-evaluate/${item.asset_id}`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-amber-500 hover:text-amber-700 font-medium transition-colors outline-1 outline-amber-300 px-3 py-2 rounded hover:bg-amber-50"
+                                                        className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors outline-1 px-3 py-2 rounded ${
+                                                        item.asset.status === 'Completed'
+                                                            ? 'text-zinc-600 hover:text-zinc-700 outline-zinc-300 hover:bg-zinc-50'
+                                                            : 'text-amber-500 hover:text-amber-700 outline-amber-300 hover:bg-amber-50'
+                                                        }`}
                                                     >
-                                                        {item.status === 'On-going' ? 'Evaluate' : 'View Logs'}
+                                                        {item.asset.status === 'Completed' ? 'View Logs' : 'Evaluate'}
                                                     </Link>
                                                 </td>
                                             </tr>
@@ -423,8 +433,8 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Accountable Personnel</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
                                 </tr>
                             </thead>
                             
@@ -448,15 +458,15 @@ export default function AsidDashboard({ assetStatuses }: DashboardProps) {
                                                 <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
                                                     {formattedDate}
                                                 </td>
-                                                <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.control_number}
+                                                <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    {item.control_number}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
-                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
+                                                    <div className="font-medium text-gray-800">{item.accountable_personnel || 'Asset Department'}</div>
+                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.reasons_for_disposal || '—'}</div>
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
-                                                    {item.approver?.name || 'System Auto'}
+                                                    {item.brand_make || 'Item Brand'} {item.model || 'Item Model'}
                                                 </td>
                                             </tr>
                                         );
