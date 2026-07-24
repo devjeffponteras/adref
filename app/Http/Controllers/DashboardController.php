@@ -29,8 +29,16 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $assets = Asset::with(['mepeo_information'])
+            ->whereHas('mepeo_information', function ($query) {
+                $query->where('waste_characteristic_id', 13); // 13 is SCRAP
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+// dd($assets);
         return Inertia::render('asid/dashboard', [
             'assetStatuses' => $assetStatuses,
+            'assets' => $assets
         ]);
     }
 
@@ -40,10 +48,14 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         
-        $assets = Asset::where('status', 'Approved')
+        $assets = Asset::with(['mepeo_information'])
+            ->where('status', 'Completed')
+            ->whereHas('mepeo_information', function ($query) {
+                $query->where('waste_characteristic_id', '!=', 13); // 13 is SCRAP
+            })
             ->whereDoesntHave('biddingListing')
             ->get();
-
+// dd($assets);
         $assetOnBidding = AssetBidding::with('asset.accounting_information')->get();
 // dd($assetOnBidding);
         return Inertia::render('manager/dashboard', [

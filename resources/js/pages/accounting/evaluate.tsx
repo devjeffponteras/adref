@@ -1,18 +1,15 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowLeftCircle, FolderCheckIcon } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
-import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
     name: string;
 }
 
-interface Workflow {
-    id: number;
-    asset_id: number;
-    workflow_step: number;
-    status: string;
+interface AssetStatusItem {
+    status?: string;
+    [key: string]: any;
 }
 
 interface AssetClassification {
@@ -55,11 +52,11 @@ interface AssetData {
     user?: User;
     classification?: AssetClassification;
     accounting_information?: AccountingInformation | null;
-    workflow?: Workflow[] | null;
 }
 
 interface EvaluateProps {
     asset: AssetData;
+    asset_status?: AssetStatusItem;
 }
 
 const formatDateForInput = (dateString: string | undefined | null): string => {
@@ -70,13 +67,11 @@ return '';
     return dateString.split(' ')[0].split('T')[0];
 };
 
-export default function AccountingEvaluate({ asset }: EvaluateProps) {
+export default function AccountingEvaluate({ asset, asset_status }: EvaluateProps) {
+    const { flash } = usePage().props as any;
 
-    const latestWorkflow = asset?.workflow && asset.workflow.length > 0 ? asset.workflow[0] : null;
-    
     const hasAccountingRecord = !!asset.accounting_information;
     const accountingRecordApproved = asset.accounting_information?.status === 'Approved';
-    const isWorkflowApproved  = latestWorkflow?.status === 'Approved';
 
     const isLocked = !!asset.accounting_information;
 
@@ -89,6 +84,9 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
         remarks: asset.accounting_information?.remarks || '',
         checked_by: 'Lou Agusin',
         conformed_by: '',
+
+        // special na declaration for api helper ni..
+        is_multiple: false,
     });
 
     const handleActionSubmit = (actionType: 'submit-workflow' | 'approve-workflow' | 'save-only') => {
@@ -100,6 +98,11 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
         }
     };
 
+    const hasPendingApiStatus  = asset_status?.status?.toUpperCase() === 'PENDING';
+    const hasApprovedApiStatus = asset_status?.status?.toUpperCase() === 'FULLY APPROVED';
+
+    const hideSubmitWorkflowBtn = hasApprovedApiStatus || hasPendingApiStatus;
+
     return (
         <>
             <Head title="Asset Evaluation - Accounting" />
@@ -107,6 +110,20 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
             {/* <WelcomeNote /> */}
             
             <div className="container-fluid p-4">
+
+                {flash?.success && (
+                    <div className="mb-4 p-4 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center shadow-xs animate-fade-in">
+                        <CircleCheck className="h-5 w-5 mr-2 text-emerald-600" />
+                        <span className="font-semibold">{flash.success}</span>
+                    </div>
+                )}
+
+                {flash?.error && (
+                    <div className="mb-4 p-4 text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl flex items-center shadow-xs">
+                        <XIcon className="h-5 w-5 mr-2 text-red-600" />
+                        <span className="font-semibold">{flash.error}</span>
+                    </div>
+                )}
 
                 <AssetProfileCard asset={asset} />
 
@@ -119,8 +136,14 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 Submitted to MCD for PAR Information Evaluation
                             </span>
                         )}
-                        {isLocked && isWorkflowApproved && !accountingRecordApproved &&(
-                            <span className="inline-flex items-center bg-amber-100/80 text-amber-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
+                        {isLocked && hasPendingApiStatus && (
+                        <span className="inline-flex items-center animate-pulse bg-blue-100/80 text-blue-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
+                            <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
+                            Submitted to Workflow -- Waiting for Aprroval . .
+                        </span>
+                         )}
+                        {isLocked && hasApprovedApiStatus && (
+                            <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                                 <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
                                 Workflow Approved
                             </span>
@@ -145,6 +168,15 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                             />
                             {errors.asset_number && <p className="text-xs text-red-500 mt-1">{errors.asset_number}</p>}
                         </div>
+
+                        {/* Secret Input para sa API helper */}
+                        <input 
+                            className='hidden'
+                            type="checkbox" 
+                            name="is_multiple" 
+                            checked={data.is_multiple} 
+                            onChange={e => setData('is_multiple', e.target.checked)} 
+                        />
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1">Acquisition Date</label>
@@ -253,12 +285,12 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                                 href="/accounting-dashboard" 
                                 className="inline-flex items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-hidden"
                             >
-                                {isLocked && isWorkflowApproved ? <ArrowLeftCircle className='h-4 w-4 mr-1' /> : <XIcon className='h-4 w-4 mr-1' /> }
-                                {isLocked && isWorkflowApproved ? 'Back to Dashboard' : 'Cancel' }
+                                {isLocked && hasApprovedApiStatus ? <ArrowLeftCircle className='h-4 w-4 mr-1' /> : <XIcon className='h-4 w-4 mr-1' /> }
+                                {isLocked && hasApprovedApiStatus ? 'Back to Dashboard' : 'Cancel' }
                             </Link>
 
                             {/* STEP 1 BUTTON: Only shows if there's no workflow row created or active yet */}
-                            {!latestWorkflow && (
+                            {!hasAccountingRecord && (
                                 <button 
                                     type="button"
                                     disabled={processing}
@@ -271,7 +303,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                             )}
 
                             {/* STEP 2 BUTTON: Appears right after Step 1 saves and flags status to 'On-going' */}
-                            {hasAccountingRecord && !isWorkflowApproved && (
+                            {hasAccountingRecord && !hideSubmitWorkflowBtn && (
                                 <button 
                                     type="button" 
                                     disabled={processing}
@@ -284,7 +316,7 @@ export default function AccountingEvaluate({ asset }: EvaluateProps) {
                             )}
 
                             {/* STEP 3 BUTTON: Appears when Ivan signs off ('Approved') but before final pipeline execution */}
-                            {hasAccountingRecord && isWorkflowApproved && !accountingRecordApproved &&(
+                            {hasAccountingRecord && hasApprovedApiStatus && !accountingRecordApproved &&(
                                 <button 
                                     type="button"
                                     disabled={processing}

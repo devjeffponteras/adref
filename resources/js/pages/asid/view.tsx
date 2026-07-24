@@ -100,7 +100,7 @@ return;
 
             {/* <WelcomeNote /> */}
 
-            <div className="container-fluid p-4 max-w-7xl mx-auto">
+            <div className="container-fluid p-4">
 
                 {/* Back Link Row */}
                 <div className="mb-5">
