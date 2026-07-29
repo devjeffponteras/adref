@@ -216,7 +216,7 @@ export default function Forms() {
                 )}
 
                 {/* Header Sub-banner */}
-                <div className="mb-6 overflow-hidden rounded-lg bg-linear-to-br from-zinc-300 to-zinc-200 p-4">
+                <div className="mb-6 overflow-hidden bg-gray-100 border border-zinc-200 shadow rounded-xl p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <h5 className="text-lg font-bold tracking-wide text-dark">
                             Forms Management Module

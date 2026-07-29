@@ -21,7 +21,7 @@ export default function WorkflowIndex({ transactions = [] }: WorkflowIndexProps)
         <>
             <Head title="Workflow Dashboard" />
 
-            <div className="p-6 max-w-7xl mx-auto">
+            <div className="p-6">
                 {/* Header Area */}
                 <div className="sm:flex sm:items-center sm:justify-between mb-6">
                     <div>

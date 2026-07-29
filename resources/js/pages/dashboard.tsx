@@ -94,7 +94,6 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
         ];
     }, [assetStatuses]);
 
-    // Sorting Handler
     const handleSort = (field: SortableFields) => {
         if (sortField === field) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -105,15 +104,13 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
         setCurrentPage(1); // Reset page on sort
     };
 
-    // Filtered and Sorted Computations Combine Block
     const filteredAndSortedRecords = useMemo(() => {
-        // 1. Filter raw array items first
+
         let filtered = assetStatuses;
         if (filterStatus !== 'all') {
             filtered = assetStatuses.filter(record => record.status.toLowerCase() === filterStatus);
         }
 
-        // 2. Sort the array mutation copies cleanly 
         return [...filtered].sort((a, b) => {
             let valA: any = '';
             let valB: any = '';
@@ -154,7 +151,6 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
         });
     }, [assetStatuses, filterStatus, sortField, sortDirection]);
 
-    // Slice array targets dynamically based on page boundaries
     const totalItems = filteredAndSortedRecords.length;
     const totalPages = Math.ceil(totalItems / rowsPerPage);
     
@@ -330,7 +326,7 @@ export default function Dashboard({ assetStatuses }: DashboardProps) {
                     displayedRecentRecords.map((record) => (
                       <tr key={record.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
                         <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                          {record.asset?.control_number || 'N/A'}
+                          <a href={`/assets/${record.asset?.id}/asset-status`}>{record.asset?.control_number || 'N/A'}</a>
                         </td>
                         <td className="px-4 py-4 max-w-xs truncate font-medium text-gray-900 group-hover:text-gray-700">
                           {record.asset?.end_user_department || 'N/A'}

@@ -95,7 +95,7 @@ export default function CreateAsset({ classifications }: Props) {
 
             <div className="w-full p-4 space-y-6">
             
-                <div className="bg-zinc-200 p-5 rounded-lg shadow border border-zinc-300">
+                <div className="bg-gray-100 p-6 rounded-xl shadow border border-zinc-200">
                     <div className="flex justify-between items-center text-dark">
                         <div className="flex items-center gap-2.5">
                             <FileText className="h-5 w-5 opacity-90" />

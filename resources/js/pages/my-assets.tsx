@@ -1,8 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag, PackagePlus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { FileDown, RefreshCw, Search, ArrowUpDown, Eye, Tag, PackagePlus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { WelcomeNote } from '@/components/welcome-note';
 
 interface Classification {
     id: number;
@@ -54,7 +53,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
         }
 
         if (status.includes('Returned')) {
-            return 'bg-orange-50 text-orange-700 border-orange-200';
+            return 'bg-blue-50 text-blue-700 border-blue-200';
         }
 
         if (status.includes('Approved') || status.includes('Completed')) {
@@ -262,7 +261,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                             <tbody className="divide-y divide-gray-100 text-gray-700">
                                 {paginatedAssets.length > 0 ? (
                                     paginatedAssets.map((asset) => (
-                                        <tr key={asset.id} className="hover:bg-gray-50/70 transition-colors">
+                                        <tr key={asset.id} className="hover:bg-gray-50/70 transition-colors group relative">
                                             <td className="px-6 py-3.5">
                                                 <Link 
                                                     href={`/assets/${asset.id}/asset-status`} 
@@ -278,9 +277,27 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                             </td>
 
                                             <td className="px-6 py-3.5">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(asset.status)}`}>
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(
+                                                    asset.status
+                                                    )} ${
+                                                    (asset.status?.toLowerCase() === 'pending' || !asset.status)
+                                                        ? 'group-hover:hidden'
+                                                        : ''
+                                                    }`}
+                                                >
                                                     {asset.status || 'Pending'}
                                                 </span>
+
+                                                {(asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status) && (
+                                                    <Link
+                                                    href={`/asset/edit-asset/${asset.id}`}
+                                                    className="hidden group-hover:inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 shadow text-zinc-700 hover:text-emerald-600 hover:border-emerald-300 transition-colors text-xs"
+                                                    >
+                                                    <Edit className="h-3 w-3" />
+                                                    Edit
+                                                    </Link>
+                                                )}
                                             </td>
 
                                             <td className="px-6 py-3.5">

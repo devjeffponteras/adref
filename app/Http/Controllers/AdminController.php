@@ -8,6 +8,7 @@ use Inertia\Response;
 use App\Models\Asset;
 use App\Models\AssetBidding;
 use App\Models\Role;
+use App\Models\Department;
 use App\Models\User;
 use App\Models\AssetStatus;
 use App\Models\AssetApproval;
@@ -41,6 +42,7 @@ class AdminController extends Controller
     {
         return Inertia::render('admin/user-management/create', [
             'roles' => Role::all(),
+            'departments' => Department::all(),
         ]);
     }
 
@@ -54,6 +56,7 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role_id' => 'required|exists:roles,id',
+            'department_id' => 'required',
         ]);
 
         User::create([
@@ -61,6 +64,7 @@ class AdminController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role_id' => $validated['role_id'],
+            'department_id' => $validated['department_id'],
         ]);
 
         return redirect('/admin/user-management/index')->with('success', 'User registered successfully!');

@@ -1,5 +1,5 @@
 import { Head, useForm, Link, usePage} from '@inertiajs/react';
-import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User, Building2, CalendarDays, ShieldAlert, BadgeHelp, BadgeCheckIcon } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User, Edit, CalendarDays, ShieldAlert, BadgeHelp, BadgeCheckIcon } from 'lucide-react';
 
 interface Approver {
     id: number;
@@ -166,6 +166,11 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                     <h1 className="font-extrabold text-2xl tracking-tight mb-5 drop-shadow-xs">
                         {asset.brand_make || 'Generic'} <span className="font-light text-emerald-100/80">{asset.model || 'Asset Profile'}</span>
                     </h1>
+
+                    <a href={`/asset/edit-asset/${asset.id}`} className='absolute top-4 right-4 px-4 py-2 rounded-lg shadow hover:bg-zinc-100 hover:text-zinc-900 bg-white text-zinc-700 text-sm font-bold inline-flex gap-2'>
+                        <Edit className='h-4 w-4'></Edit>
+                        Update Details
+                    </a>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-t border-white/10 pt-4">
                         <div className="flex flex-col gap-0.5">

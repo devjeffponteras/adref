@@ -1,7 +1,6 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { CircleCheck, ArrowLeftCircle, XIcon } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
-import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -79,9 +78,6 @@ export default function AsidEvaluate({ asset }: AssetProps) {
     return (
         <>
             <Head title={`Evaluate - ${asset?.control_number || 'Asset'}`} />
-
-            {/* sub header */}
-            {/* <WelcomeNote /> */}
 
             {/* main content */}
             <div className="container-fluid p-4">

@@ -6,21 +6,28 @@ import {
     ArrowLeftCircleIcon, 
     SaveIcon 
 } from 'lucide-react';
-import { WelcomeNote } from '@/components/welcome-note';
 import type { Role } from '@/types/models';
+
+
+interface Department {
+    id: number | string;
+    name: string;
+}
 
 interface CreateProps {
     roles: Role[];
+    departments: Department[];
 }
 
-export default function UserManagementCreate({ roles = [] }: CreateProps) {
+export default function UserManagementCreate({ roles = [], departments = [] }: CreateProps) {
     const { flash } = usePage().props as any;
 
     const { data, setData, post, processing, errors, reset, setError } = useForm({
         name: '',
         email: '',
+        department_id: '',
         password: '',
-        password_confirmation: '', // 🟢 Track confirm password state
+        password_confirmation: '',
         role_id: '',
     });
 
@@ -29,7 +36,6 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
 
         if (data.password !== data.password_confirmation) {
             setError('password', 'Your passwords do not match. Please verify.');
-
             return;
         }
 
@@ -42,9 +48,6 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
         <>
             <Head title="Create User - Management" />
 
-            {/* Sub Header */}
-            {/* <WelcomeNote /> */}
-            
             {/* Main Content Container */}
             <div className="container-fluid p-6 max-w-3xl mx-auto">
 
@@ -108,6 +111,49 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
                             {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                         </div>
 
+                        {/* Role & Department Grid Layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            
+                            {/* Role Selector Dropdown */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">System Authorization Level</label>
+                                <select
+                                    value={data.role_id}
+                                    onChange={e => setData('role_id', e.target.value)}
+                                    className={`w-full p-2.5 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 focus:outline-emerald-500 focus:border-emerald-500 cursor-pointer
+                                        ${errors.role_id ? 'border-red-300' : 'border-gray-300'}`}
+                                >
+                                    <option value="">Select a system access assignment...</option>
+                                    {roles.map((role) => (
+                                        <option key={role.id} value={role.id}>
+                                            {role.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.role_id && <p className="text-xs text-red-500 mt-1">{errors.role_id}</p>}
+                            </div>
+
+                            {/* 🟢 Department Selector Dropdown */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Assigned Department</label>
+                                <select
+                                    value={data.department_id}
+                                    onChange={e => setData('department_id', e.target.value)}
+                                    className={`w-full p-2.5 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 focus:outline-emerald-500 focus:border-emerald-500 cursor-pointer
+                                        ${errors.department_id ? 'border-red-300' : 'border-gray-300'}`}
+                                >
+                                    <option value="">Select organizational department...</option>
+                                    {departments.map((department) => (
+                                        <option key={department.id} value={department.id}>
+                                            {department.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.department_id && <p className="text-xs text-red-500 mt-1">{errors.department_id}</p>}
+                            </div>
+
+                        </div>
+
                         {/* Password Grid Layout */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Original Password Input */}
@@ -124,7 +170,7 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
                                 {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
                             </div>
 
-                            {/* 🟢 NEW: Confirm Password Input */}
+                            {/* Confirm Password Input */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Confirm Password</label>
                                 <input 
@@ -136,25 +182,6 @@ export default function UserManagementCreate({ roles = [] }: CreateProps) {
                                         ${errors.password ? 'border-red-300' : 'border-gray-300'}`}
                                 />
                             </div>
-                        </div>
-
-                        {/* Role Selector Dropdown */}
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">System Authorization Level</label>
-                            <select
-                                value={data.role_id}
-                                onChange={e => setData('role_id', e.target.value)}
-                                className={`w-full p-2.5 text-sm border rounded-lg shadow-2xs transition-colors duration-150 bg-white text-gray-700 focus:outline-emerald-500 focus:border-emerald-500 cursor-pointer
-                                    ${errors.role_id ? 'border-red-300' : 'border-gray-300'}`}
-                            >
-                                <option value="">Select a system access assignment...</option>
-                                {roles.map((role) => (
-                                    <option key={role.id} value={role.id}>
-                                        {role.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.role_id && <p className="text-xs text-red-500 mt-1">{errors.role_id}</p>}
                         </div>
 
                         {/* Action Buttons Footer Block */}
