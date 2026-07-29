@@ -106,9 +106,12 @@ Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
 
     Route::get('my-assets', [AssetController::class, 'myAssets'])->name('my-assets');
     Route::get('create-asset', [AssetController::class, 'create'])->name('create-asset');
+    Route::get('asset/edit-asset/{id}', [AssetController::class, 'edit'])->name('edit-asset');
     Route::post('store-asset', [AssetController::class, 'store'])->name('store-asset');
 
     Route::post('assets/{id}/asset-approve', [AssetController::class, 'assetApprove'])->name('asset-approve');
+
+    Route::match(['post', 'put'], 'asset/update-asset/{id}', [AssetController::class, 'update'])->name('update-asset');
 });
 
 require __DIR__.'/settings.php';

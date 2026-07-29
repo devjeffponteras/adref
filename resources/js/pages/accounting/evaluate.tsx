@@ -241,8 +241,8 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
-                            <input 
-                                type="text"
+                            <textarea
+                                rows={3}
                                 value={data.remarks}
                                 disabled={isLocked}
                                 onChange={e => setData('remarks', e.target.value)}
@@ -251,7 +251,8 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
                                         ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
                                         : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' 
                                     }`}
-                            />
+                            >
+                            </textarea>
                             {errors.remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
                         </div>
 

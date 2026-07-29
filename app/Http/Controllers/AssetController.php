@@ -75,6 +75,116 @@ class AssetController extends Controller
     }
 
     /**
+     * Show the form for edit the asset item.
+     */
+    public function edit($id)
+    {
+        $classifications = AssetClassification::where('is_active', true)
+            ->select('id', 'name')
+            ->get();
+
+        $asset = Asset::findOrFail($id);
+
+        return Inertia::render('user/edit-asset', [
+            'asset' => $asset,
+            'classifications' => $classifications,
+            'accountable_personnels' => config('dropdown_data.ACCOUNTABLE_PERSONNEL'),
+            'end_user_departments' => config('dropdown_data.END_USER_DEPARTMENT'),
+        ]);
+    }
+
+    /**
+     * Update the asset item.
+     */
+    public function update(Request $request, $id)
+    {
+        // dd($id);
+        $asset = Asset::findOrFail($id);
+
+        $validated = $request->validate([
+            'accountable_personnel'   => 'required|string|max:255',
+            'model'                   => 'nullable|string|max:255',
+            'brand_make'              => 'nullable|string|max:255',
+            'serial_plate_id_number'  => 'nullable|string|max:255',
+            'end_user_department'     => 'required|string|max:255',
+            'asset_classification_id' => 'required|string|max:255',
+            'others_description'      => 'nullable|string|max:255',
+            'asset_location'          => 'nullable|string|max:255',
+            'description'             => 'nullable|string',
+            'reasons_for_disposal'    => 'nullable|string',
+
+            'assessment_reports'                => 'required|array|min:1',
+            'assessment_reports.*.file'         => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+            'assessment_reports.*.file_path'    => 'nullable|string',
+            'assessment_reports.*.description'  => 'nullable|string|max:255',
+
+            'asset_photos'                      => 'required|array|min:1',
+            'asset_photos.*.file'               => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'asset_photos.*.file_path'          => 'nullable|string',
+            'asset_photos.*.description'        => 'nullable|string|max:255',
+        ]);
+
+        // Build/Update Assessment Reports Array
+        $reportsJsonArray = [];
+        if (!empty($validated['assessment_reports'])) {
+            foreach ($validated['assessment_reports'] as $index => $item) {
+                $filePath = $item['file_path'] ?? null;
+
+                if ($request->hasFile("assessment_reports.{$index}.file")) {
+                    $file = $request->file("assessment_reports.{$index}.file");
+                    $filePath = $file->store('reports', 'public');
+                }
+
+                if ($filePath) {
+                    $reportsJsonArray[] = [
+                        'file_path'   => $filePath,
+                        'description' => $item['description'] ?? null,
+                    ];
+                }
+            }
+        }
+
+        // Build/Update Asset Photos Array
+        $photosJsonArray = [];
+        if (!empty($validated['asset_photos'])) {
+            foreach ($validated['asset_photos'] as $index => $item) {
+                $filePath = $item['file_path'] ?? null;
+
+                if ($request->hasFile("asset_photos.{$index}.file")) {
+                    $file = $request->file("asset_photos.{$index}.file");
+                    $filePath = $file->store('photos', 'public');
+                }
+
+                if ($filePath) {
+                    $photosJsonArray[] = [
+                        'file_path'   => $filePath,
+                        'description' => $item['description'] ?? null,
+                    ];
+                }
+            }
+        }
+
+        $asset->update([
+            'accountable_personnel'   => $validated['accountable_personnel'],
+            'model'                   => $validated['model'],
+            'brand_make'              => $validated['brand_make'],
+            'serial_plate_id_number'  => $validated['serial_plate_id_number'],
+            'end_user_department'     => $validated['end_user_department'],
+            'asset_classification_id' => $validated['asset_classification_id'],
+            'others_description'      => $validated['others_description'],
+            'asset_location'          => $validated['asset_location'],
+            'description'             => $validated['description'],
+            'reasons_for_disposal'    => $validated['reasons_for_disposal'],
+            'assessment_reports'      => $reportsJsonArray,
+            'asset_photos'            => $photosJsonArray,
+        ]);
+
+        return redirect()
+            ->route('asset-status', ['id' => $asset->id])
+            ->with('success', 'Asset updated successfully.');
+    }
+
+    /**
      * Store a newly created asset and initialize its tracking steps.
      */
     public function store(Request $request)
@@ -200,7 +310,7 @@ class AssetController extends Controller
         // Mao ni ang call service to perform sync logic men!
         $assetStatusData = $syncService->syncAssetStatus($asset);
 
-        $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information']);
+        $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information', 'user.department']);
 
         return Inertia::render('asset-status', [
             'asset' => $asset,

@@ -136,7 +136,6 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
     const processedBiddingList = useMemo(() => {
         let result = [...activeBiddingList];
 
-        // 1. Search Query Filter
         if (searchTerm.trim() !== '') {
             const term = searchTerm.toLowerCase();
             result = result.filter(item => {
@@ -152,7 +151,6 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
             });
         }
 
-        // 2. Sort Logic
         if (sortConfig !== null) {
             result.sort((a, b) => {
                 let aValue: string | number = '';
@@ -178,7 +176,6 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
         return result;
     }, [activeBiddingList, searchTerm, sortConfig]);
 
-    // 3. Paginate calculations
     const totalPages = Math.max(1, Math.ceil(processedBiddingList.length / itemsPerPage));
     
     const paginatedBiddingList = useMemo(() => {
@@ -437,9 +434,15 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleOpenBiddersModal(item)}
-                                                            className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-xl text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 active:bg-gray-100 shadow-xs transition-all duration-150 cursor-pointer"
+                                                            className="inline-flex items-center justify-center font-semibold text-xs px-3 py-1.5 rounded-xl text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 active:bg-gray-100 shadow-xs transition-all duration-150 cursor-pointer group/btn"
                                                         >
-                                                            <FileText className="h-3.5 w-3.5 mr-1.5 text-gray-400" />
+                                                            <span className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 mr-2 text-[11px] font-bold rounded-full transition-colors ${
+                                                                (item.biddings?.length || 0) > 0 
+                                                                    ? 'bg-blue-100 text-blue-700 group-hover/btn:bg-blue-200' 
+                                                                    : 'bg-gray-100 text-gray-500'
+                                                            }`}>
+                                                                {item.biddings?.length || 0}
+                                                            </span>
                                                             View Bids
                                                         </button>
                                                     </td>

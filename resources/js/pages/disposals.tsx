@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, Loader, FileWarning, RefreshCw, ArrowUpDown, Tag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Loader, FileWarning, RefreshCw, ArrowUpDown, Tag, Eye, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { disposals } from '@/routes';
@@ -76,6 +76,11 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
         setCurrentPage(1); // Reset page on search typing
     };
 
+    const clearSearch = () => {
+        setSearch('');
+        setCurrentPage(1);
+    };
+
     const getStatusStyles = (status: string = '') => {
         if (status.includes('On-going')) return 'bg-amber-50 text-amber-700 border-amber-200';
         if (status.includes('Approved')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -88,6 +93,7 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
     const sortedAndFilteredPool = useMemo(() => {
         let result = [...assets].filter(asset => 
             (asset.serial_plate_id_number?.toLowerCase() || '').includes(search.toLowerCase()) ||
+            (asset.control_number?.toLowerCase() || '').includes(search.toLowerCase()) ||
             (asset.model?.toLowerCase() || '').includes(search.toLowerCase()) ||
             (asset.brand_make?.toLowerCase() || '').includes(search.toLowerCase()) ||
             (asset.status?.toLowerCase() || '').includes(search.toLowerCase()) || 
@@ -237,11 +243,32 @@ export default function Disposals({ assets = [] }: MyAssetsProps) {
                             </h5>
                         </div>
                         
-                        <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            {/* Search Bar Input */}
+                            <div className="relative flex-1 sm:w-64 max-w-xs">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={handleSearchChange}
+                                    placeholder="Search .."
+                                    className="w-full pl-9 pr-8 py-1.5 bg-white border border-zinc-300 rounded-xl text-xs text-zinc-700 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400/50 focus:border-zinc-400 transition-all"
+                                />
+                                {search && (
+                                    <button
+                                        onClick={clearSearch}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Refresh Button */}
                             <button 
                                 onClick={handleRefresh}
                                 id="btn-refresh-dt" 
-                                className="group inline-flex items-center justify-center px-2 py-1.5 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-600 hover:bg-zinc-50 focus:outline-none cursor-pointer" 
+                                className="group inline-flex items-center justify-center p-2 rounded-xl border border-zinc-300 text-xs font-medium text-zinc-600 hover:bg-zinc-50 focus:outline-none cursor-pointer shrink-0" 
                                 title="Refresh Table"
                             >
                                 <RefreshCw className={`h-4 w-4 text-zinc-500 transition-transform duration-500 ease-out group-hover:rotate-180 ${isRefreshing ? 'animate-spin' : ''}`} />
