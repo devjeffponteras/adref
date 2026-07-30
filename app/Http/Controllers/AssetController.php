@@ -179,9 +179,32 @@ class AssetController extends Controller
             'asset_photos'            => $photosJsonArray,
         ]);
 
+        $message = "Asset updated successfully";
+
+        $assetInfo = AssetStatus::where('asset_id', $id)->first();
+        // dd($assetInfo->status);
+        
+        if ($assetInfo && $assetInfo->status === 'Returned') {
+
+            # algo dria...
+            $asset->update([
+                'status' => 'Pending',
+            ]);
+
+            $assetInfo->update([
+                'seq_no'        => 1,
+                'status'        => 'Pending',
+                'approver_id'   => null,
+                'approval_date' => null,
+                'remarks'       => 'Asset details updated in the asset disposal request system. Control Number Pending for Assignment.',
+            ]);
+
+            $message = "Asset request submitted to ASID for re-evaluation. Details updated successfully.";
+        }
+
         return redirect()
             ->route('asset-status', ['id' => $asset->id])
-            ->with('success', 'Asset updated successfully.');
+            ->with('success', $message);
     }
 
     /**

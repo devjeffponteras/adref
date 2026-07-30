@@ -13,7 +13,7 @@ interface assetStatus {
     seq_no: number;
     is_current: boolean;
     approver_id: number | null;
-    status: 'Approved' | 'On-going' | 'Pending' | 'Rejected';
+    status: 'Approved' | 'On-going' | 'Pending' | 'Rejected' | 'Returned';
     approval_date: string | null;
     remarks: string | null;
     department_name?: string; 
@@ -52,6 +52,7 @@ interface Props {
         serial_plate_id_number: string;
         model: string;
         brand_make: string;
+        status: string;
         approvals: assetStatus[];
         user?: UserProfile | null;
         asid_information?: AsidInfo | null;
@@ -61,13 +62,19 @@ interface Props {
 }
 
 export default function AssetTimeline({ asset, currentUserId }: Props) {
-    const { auth, flash } = usePage().props as any;
+    const { auth } = usePage().props as any;
 
     const isLockedAsid = !!asset?.asid_information && !asset?.manager_information;
 
     const { data, setData, post, processing, errors } = useForm({
         remarks: '',
     });
+
+    // Asset raw status
+    const isReturned = asset?.status === 'Returned';
+    const isRejected = asset?.status === 'Rejected';
+    const isOnGoing = asset?.status === 'On-going';
+    const isCompleted = asset?.status === 'Completed';
 
     const handleApprove = () => {
         if (confirm('Are you sure you want to sign off on this sequence stage?')) {
@@ -167,11 +174,12 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                         {asset.brand_make || 'Generic'} <span className="font-light text-emerald-100/80">{asset.model || 'Asset Profile'}</span>
                     </h1>
 
-                    <a href={`/asset/edit-asset/${asset.id}`} className='absolute top-4 right-4 px-4 py-2 rounded-lg shadow hover:bg-zinc-100 hover:text-zinc-900 bg-white text-zinc-700 text-sm font-bold inline-flex gap-2'>
-                        <Edit className='h-4 w-4'></Edit>
-                        Update Details
-                    </a>
-
+                    { ((isReturned || !isRejected) && !isOnGoing && !isCompleted ) && 
+                        <a href={`/asset/edit-asset/${asset.id}`} className='absolute top-4 right-4 px-4 py-2 rounded-lg shadow hover:bg-zinc-100 hover:text-zinc-900 bg-white text-zinc-700 text-sm font-bold inline-flex gap-2'>
+                            <Edit className='h-4 w-4'></Edit>
+                            Update Details
+                        </a>
+                    }
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-t border-white/10 pt-4">
                         <div className="flex flex-col gap-0.5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Control Number</span>
@@ -239,7 +247,9 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                         )}
                                         {isStrictlyCurrent && !isLast && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs shadow-amber-500/20">
-                                                <span className="h-1 w-1 rounded-full bg-white animate-ping" /> Current Stage
+                                                <span className="h-1 w-1 rounded-full bg-white animate-ping" /> 
+                                                {isReturned && idx == 0 ? 'Waiting for user updates' : 'Current Stage'}
+                                                
                                             </span>
                                         )}
                                         
@@ -269,7 +279,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                         <div className="sm:col-span-2 flex items-center gap-2 mt-1">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status State:</span> 
                                             <span className={`text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-md ${styles.pillText}`}>
-                                                {step.status}
+                                                {isReturned && idx == 0 ? 'Returned to user' : step.status}
                                             </span>
                                         </div>
 

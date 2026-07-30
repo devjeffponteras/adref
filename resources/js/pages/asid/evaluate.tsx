@@ -107,7 +107,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                         </h3>
 
                         {/* Section 1: Remarks & Checked By */}
-                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
+                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
                             <div className="xl:col-span-6 flex flex-col gap-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Remarks
@@ -127,7 +127,7 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                 {errors.remarks && <span className="text-red-500 text-xs">{errors.remarks}</span>}
                             </div>
 
-                            <div className="xl:col-span-6 flex flex-col gap-1.5">
+                            <div className="xl:col-span-6 flex flex-col gap-1.5 hidden">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Checked by
                                 </label>
@@ -142,30 +142,6 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                                 : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                             }`}
                                     placeholder="Name of inspector"
-                                />
-                            </div>
-
-                        </div>
-
-                        <hr className="border-gray-100" />
-
-                        {/* Section 2: Disposition */}
-                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-                            <div className="xl:col-span-6 flex flex-col gap-1.5">
-                                <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
-                                    Disposition
-                                </label>
-                                <textarea 
-                                    rows={2} 
-                                    disabled={isLockedAsid}
-                                    value={data.disposition}
-                                    onChange={(e) => setData('disposition', e.target.value)}
-                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
-                                            ${isLockedAsid
-                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
-                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
-                                            }`}
-                                    placeholder="Recommended disposal action..."
                                 />
                             </div>
 
@@ -186,6 +162,32 @@ export default function AsidEvaluate({ asset }: AssetProps) {
                                     placeholder="Auto Assigned by System"
                                 />
                             </div>
+
+                        </div>
+
+                        <hr className="border-gray-100 hidden" />
+
+                        {/* Section 2: Disposition */}
+                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+                            <div className="xl:col-span-6 flex flex-col gap-1.5 hidden">
+                                <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
+                                    Disposition
+                                </label>
+                                <textarea 
+                                    rows={2} 
+                                    disabled={isLockedAsid}
+                                    value={data.disposition}
+                                    onChange={(e) => setData('disposition', e.target.value)}
+                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                            ${isLockedAsid
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                            }`}
+                                    placeholder="Recommended disposal action..."
+                                />
+                            </div>
+
+                            
                         </div>
 
                         {/* Bottom Footer Actions */}

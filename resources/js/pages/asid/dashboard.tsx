@@ -338,7 +338,7 @@ export default function AsidDashboard({ assetStatuses, assets }: DashboardProps)
                    ======================================================== */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
                     <div className="overflow-x-auto">
-                        <h3 className='gap-2 font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex items-center'><FolderCheck className='w-5 h-5 text-cyan-600' /> Final Stages</h3>
+                        <h3 className='gap-2 font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex items-center'><FolderCheck className='w-5 h-5 text-cyan-600' /> Evaluation of DISPOSITION</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
                             <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
                                 <tr>

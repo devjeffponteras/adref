@@ -223,7 +223,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
                             <div className="xl:col-span-6 flex flex-col gap-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
-                                    Asset Direction
+                                    Asset Disposition
                                 </label>
                                 <select 
                                     name="asset_direction" 
@@ -245,18 +245,18 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                             : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                         }`}
                                 >
-                                    <option value="" disabled>Select Asset Direction</option>
+                                    <option value="" disabled>Select Asset Disposition</option>
                                     <option value="For Bidding">For Bidding</option>
                                     <option value="For Donation">For Donation</option>
                                     <option value="Special Arrangement">Special Arrangement</option>
-                                    <option value="For Disposal">For Disposal</option>
+                                    <option value="Deemed as SCRAP">Deemed as SCRAP</option>
                                 </select>
                                 
                                 {errors.remarks && <span className="text-red-500 text-xs">{errors.remarks}</span>}
                             </div>
 
                             <div className="xl:col-span-6 flex flex-col gap-1.5">
-                                <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
+                                {/* <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Disposition
                                 </label>
                                 <input 
@@ -271,7 +271,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                             ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
                                             : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                         }`}
-                                />
+                                /> */}
                             </div>
 
                         </div>

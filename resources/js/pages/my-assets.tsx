@@ -281,7 +281,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(
                                                     asset.status
                                                     )} ${
-                                                    (asset.status?.toLowerCase() === 'pending' || !asset.status)
+                                                    (asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status)
                                                         ? 'group-hover:hidden'
                                                         : ''
                                                     }`}

@@ -18,7 +18,6 @@ import {
     X
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -46,6 +45,8 @@ interface BidderRecord {
     id: number;
     asset_id: number;
     bidder_name: string;
+    bidder_classification: string;
+    department: string;
     bidding_price: string | number;
     submitted_at: string;
     user_id: number;
@@ -612,7 +613,7 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
 
             {selectedBiddingItem && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-gray-100 flex flex-col max-h-[85vh] animate-scale-up">
+                    <div className="bg-white rounded-2xl max-w-7xl w-full p-6 shadow-xl border border-gray-100 flex flex-col max-h-[85vh] animate-scale-up">
                         
                         {/* Header */}
                         <div className="flex items-start justify-between pb-4 border-b border-gray-100">
@@ -622,14 +623,14 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900">Active Bids Registry</h3>
-                                    <p className="text-xs text-gray-500 mt-0.5">
+                                    <p className="text-sm font-semibold text-gray-500 mt-0.5">
                                         Asset: <span className="font-mono font-bold text-blue-900 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">{selectedBiddingItem.asset?.control_number || 'N/A'}</span> — {selectedBiddingItem.asset?.brand_make} {selectedBiddingItem.asset?.model}
                                     </p>
                                 </div>
                             </div>
                             <button 
                                 onClick={handleCloseBiddersModal}
-                                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
                             >
                                 <XIcon className="h-5 w-5" />
                             </button>
@@ -641,8 +642,11 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-slate-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wider text-gray-600 sticky top-0 backdrop-blur-md">
-                                            <th className="py-3 px-4">Bidder Info</th>
-                                            <th className="py-3 px-4">Date/Time Submitted</th>
+                                            <th className="py-3 px-4">Bidder Name</th>
+                                            <th className="py-3 px-4">Contact Number</th>
+                                            <th className="py-3 px-4">Classification</th>
+                                            <th className="py-3 px-4">Department</th>
+                                            <th className="py-3 px-4">Date & Time of Bid</th>
                                             <th className="py-3 px-4 text-right">Offer Amount</th>
                                         </tr>
                                     </thead>
@@ -654,11 +658,26 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                                     <td className="py-3 px-4">
                                                         <div className="flex items-center space-x-2">
                                                             {index === 0 && (
-                                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 border border-amber-200 text-amber-800 rounded">
+                                                                <span className="hidden px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 border border-amber-200 text-amber-800 rounded">
                                                                     Highest
                                                                 </span>
                                                             )}
                                                             <span className="font-semibold text-gray-900">{bidder.bidder_name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-gray-900">{bidder.bidder_contact_number}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-gray-900">{bidder.bidder_classification}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-gray-900">{bidder.department}</span>
                                                         </div>
                                                     </td>
                                                     <td className="py-3 px-4 text-xs text-gray-500 align-middle">
@@ -698,7 +717,7 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                             <button
                                 type="button"
                                 onClick={handleCloseBiddersModal}
-                                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+                                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
                             >
                                 Close
                             </button>

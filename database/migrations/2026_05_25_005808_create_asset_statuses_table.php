@@ -26,7 +26,7 @@ return new class extends Migration
                 ->constrained('users')
                 ->noActionOnDelete();
 
-            $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected'])
+            $table->enum('status', ['Approved', 'On-going', 'Pending', 'Rejected', 'Returned'])
                 ->default('Pending');
 
             $table->dateTime('approval_date')->nullable();

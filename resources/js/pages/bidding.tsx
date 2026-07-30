@@ -451,15 +451,14 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Bidding Cycle</label>
-                                        <input type="number" min="1" value={data.bidding_cycle} onChange={e => setData('bidding_cycle', e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-hidden" />
+                                        <input type="number" min="1" readOnly value={data.bidding_cycle} onChange={e => setData('bidding_cycle', e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-200 focus:outline-hidden bg-gray-50" />
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <h4 className="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Bidder Classification</h4>
                                 <div className="w-full sm:w-1/2">
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Asset Classification</label>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Bidder Classification</label>
                                     <select value={data.bidder_classification} onChange={e => setData('bidder_classification', e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-hidden">
                                         <option value="">Select Classification..</option>
                                         <option value="PMC Employee">PMC Employee</option>
@@ -520,10 +519,10 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                             </div>
 
                             <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100">
-                                <button type="button" onClick={handleCloseBidModal} disabled={processing} className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer">
+                                <button type="button" onClick={handleCloseBidModal} disabled={processing} className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer">
                                     Cancel
                                 </button>
-                                <button type="submit" disabled={processing || !data.bidding_price} className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer">
+                                <button type="submit" disabled={processing || !data.bidding_price} className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-xs transition-all disabled:opacity-50 cursor-pointer">
                                     {processing ? (
                                         <>
                                             <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1.5"></span>
