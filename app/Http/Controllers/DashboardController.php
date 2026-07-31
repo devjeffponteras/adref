@@ -36,6 +36,7 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 // dd($assets);
+
         return Inertia::render('asid/dashboard', [
             'assetStatuses' => $assetStatuses,
             'assets' => $assets

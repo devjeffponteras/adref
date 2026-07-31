@@ -1,12 +1,21 @@
-import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { Folder, FolderCheck, SearchCheckIcon, FileSearch2, FolderOpen, LucideMap } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Folder, FolderCheck, SearchCheckIcon, FileSearch2, FolderOpen, LucideMap, ChevronsUpDown, ChevronUp, ChevronDown, Gavel, XIcon, FolderSync } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import type { AssetStatusData, Asset } from '@/types/models';
 
 interface DashboardProps {
     assetStatuses: AssetStatusData[];
     assets: Asset[];
+    assetOnBidding: AssetBiddingData[];
+}
+
+interface AssetBiddingData {
+    id: number;
+    asset_id: number;
+    status: string;
+    listed_at: string;
+    assets?: Asset; 
 }
 
 // Reusable Table Footer Component with Per-Page Limit Dropdown and Zinc Number Pagination
@@ -86,9 +95,69 @@ function TableFooter({
     );
 }
 
-export default function AsidDashboard({ assetStatuses, assets }: DashboardProps) {
+type SortDirection = 'asc' | 'desc' | null;
+
+export default function AsidDashboard({ assetStatuses, assets, assetOnBidding }: DashboardProps) {
     const safeStatuses = assetStatuses || [];
     const assetsInfo = assets || [];
+
+    const approvedAssets = assets || [];
+    const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+    const { post, processing } = useForm({});
+
+    // --- Core Action Handlers ---
+    const handleOpenConfirmModal = (asset: Asset) => {
+        setSelectedAsset(asset);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedAsset(null);
+    };
+
+    const handleConfirmPublish = () => {
+        if (!selectedAsset) return;
+        post(`/admin/bidding/store/${selectedAsset.id}`, {
+            onSuccess: () => handleCloseModal(),
+        });
+    };
+
+    // --- Bidding Approved Assets Pagination & Sorting ---
+    const [t1PageSize, setT1PageSize] = useState<number>(5);
+    const [t1Page, setT1Page] = useState<number>(1);
+    const [t1SortField, setT1SortField] = useState<string | null>(null);
+    const [t1SortDir, setT1SortDir] = useState<SortDirection>(null);
+
+    const handleT1Sort = (field: string) => {
+        if (t1SortField !== field) {
+            setT1SortField(field);
+            setT1SortDir('asc');
+        } else if (t1SortDir === 'asc') {
+            setT1SortDir('desc');
+        } else if (t1SortDir === 'desc') {
+            setT1SortField(null);
+            setT1SortDir(null);
+        }
+        setT1Page(1);
+    };
+
+    const sortedT1Data = useMemo(() => {
+        let data = [...approvedAssets];
+        if (!t1SortField || !t1SortDir) return data;
+        return data.sort((a, b) => {
+            let valA = a[t1SortField as keyof Asset] ?? '';
+            let valB = b[t1SortField as keyof Asset] ?? '';
+            return t1SortDir === 'asc' 
+                ? String(valA).localeCompare(String(valB)) 
+                : String(valB).localeCompare(String(valA));
+        });
+    }, [approvedAssets, t1SortField, t1SortDir]);
+
+    const paginatedT1Data = useMemo(() => {
+        const start = (t1Page - 1) * t1PageSize;
+        return sortedT1Data.slice(start, start + t1PageSize);
+    }, [sortedT1Data, t1Page, t1PageSize]);
+
+    const t1TotalPages = Math.ceil(sortedT1Data.length / t1PageSize) || 1;
 
     // --- Dynamic Items Per Page Limits ---
     const [pendingLimit, setPendingLimit] = useState(5);
@@ -115,6 +184,12 @@ export default function AsidDashboard({ assetStatuses, assets }: DashboardProps)
         item?.mepeo_information?.waste_characteristic_id == 13
     );
 
+    const ssetsForBiddingEntry = approvedAssets.filter(item => 
+        item?.status === 'Completed' &&
+        item?.manager_information?.asset_direction === 'For Bidding' &&
+        item?.mepeo_information?.waste_characteristic_id != 13
+    );
+
     // --- Pagination Logic Helpers ---
     const getPaginatedData = (items: any[], currentPage: number, limit: number) => {
         const startIndex = (currentPage - 1) * limit;
@@ -127,6 +202,14 @@ export default function AsidDashboard({ assetStatuses, assets }: DashboardProps)
     const handleLimitChange = (setLimit: (l: number) => void, setPage: (p: number) => void) => (newLimit: number) => {
         setLimit(newLimit);
         setPage(1); 
+    };
+
+    // Helper dynamically injecting sorted arrow states
+    const renderSortIcon = (field: string, currentField: string | null, currentDir: SortDirection) => {
+        if (currentField !== field || !currentDir) return <ChevronsUpDown className="h-3 w-3 text-gray-400 ml-1.5 inline-block shrink-0" />;
+        return currentDir === 'asc' 
+            ? <ChevronUp className="h-3 w-3 text-gray-800 ml-1.5 inline-block shrink-0" /> 
+            : <ChevronDown className="h-3 w-3 text-gray-800 ml-1.5 inline-block shrink-0" />;
     };
 
     return (
@@ -176,6 +259,115 @@ export default function AsidDashboard({ assetStatuses, assets }: DashboardProps)
                         </div>
                     </div>
                 </div>
+
+                {/* APPROVED STAGING REGISTRY */}
+                <div className="mt-8">
+                    <div className="my-4">
+                        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Approved Assets Registry for Bidding</h1>
+                        <p className="text-sm text-gray-500 mt-1">Review approved items and deploy them directly into active bidding cycles.</p>
+                    </div>
+
+                    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-6">
+                        {ssetsForBiddingEntry.length > 0 ? (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-emerald-950/5 border-b border-gray-100 text-xs font-semibold uppercase tracking-wider text-slate-900">
+                                                <th onClick={() => handleT1Sort('control_number')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
+                                                    <span className="flex items-center">Control No. / Model {renderSortIcon('control_number', t1SortField, t1SortDir)}</span>
+                                                </th>
+                                                <th onClick={() => handleT1Sort('accountable_personnel')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
+                                                    <span className="flex items-center">Accountable Personnel {renderSortIcon('accountable_personnel', t1SortField, t1SortDir)}</span>
+                                                </th>
+                                                <th onClick={() => handleT1Sort('end_user_department')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
+                                                    <span className="flex items-center">Department {renderSortIcon('end_user_department', t1SortField, t1SortDir)}</span>
+                                                </th>
+                                                <th className="py-4 px-5">Description</th>
+                                                <th className="py-4 px-5 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                                            {paginatedT1Data.map((item) => (
+                                                <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors duration-150 group">
+                                                    <td className="py-4 px-5">
+                                                        <div className="font-mono font-bold text-emerald-800 text-xs bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block mb-1">
+                                                            {item.control_number || 'N/A'}
+                                                        </div>
+                                                        <div className="font-medium text-gray-900">
+                                                            {item.brand_make || ''} {item.model || ''}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle">
+                                                        <div className="font-medium text-gray-900">{item.accountable_personnel}</div>
+                                                        <div className="text-xs text-gray-400">Created by: {item.user?.name || 'System'}</div>
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle">
+                                                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                                            {item.end_user_department}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle max-w-xs">
+                                                        <p className="truncate text-gray-500 text-xs" title={item.description || ''}>
+                                                            {item.description || <span className="italic text-gray-300">No descriptive brief available</span>}
+                                                        </p>
+                                                    </td>
+                                                    <td className="py-4 px-5 text-right align-middle">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenConfirmModal(item)}
+                                                            className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-xl text-white bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 shadow-xs transition-all duration-150 cursor-pointer focus:outline-hidden"
+                                                        >
+                                                            <Gavel className="h-3.5 w-3.5 mr-1.5" />
+                                                            Publish
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* Footer row pagination control unit */}
+                                <div className="bg-zinc-50 border-t border-gray-100 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                                        <span>Showing {Math.min(sortedT1Data.length, (t1Page - 1) * t1PageSize + 1)}–{Math.min(sortedT1Data.length, t1Page * t1PageSize)} of {sortedT1Data.length} records</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1.5 pe-5">
+                                            <span className='text-xs'>Rows:</span>
+                                            <select 
+                                                value={t1PageSize} 
+                                                onChange={(e) => { setT1PageSize(Number(e.target.value)); setT1Page(1); }}
+                                                className="bg-white border border-gray-200 text-gray-700 text-xs rounded-lg p-1 pr-5 focus:outline-hidden focus:border-zinc-500 cursor-pointer"
+                                            >
+                                                {[5, 10, 25, 50].map(sz => <option key={sz} value={sz}>{sz}</option>)}
+                                            </select>
+                                        </div>
+                                        {Array.from({ length: t1TotalPages }).map((_, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setT1Page(idx + 1)}
+                                                className={`h-7 w-7 rounded-lg flex items-center justify-center text-xs font-medium border transition-colors cursor-pointer ${t1Page === idx + 1 ? 'bg-zinc-700 border-zinc-800 text-white shadow-xs' : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'}`}
+                                            >
+                                                {idx + 1}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center text-center p-12 bg-gray-50/50">
+                                <div className="h-12 w-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 mb-4 border border-purple-100">
+                                    <FolderSync className="h-6 w-6" />
+                                </div>
+                                <h3 className="text-sm font-bold text-gray-900">No Approved Assets Available for Bidding</h3>
+                                <p className="text-xs text-gray-500 max-w-sm mt-1 mx-auto">There are currently no asset items holding for bidding cycle.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <hr className="border-gray-100 my-4" />
 
                 {/* ========================================================
                  Pending Transactions Table 
@@ -488,6 +680,62 @@ export default function AsidDashboard({ assetStatuses, assets }: DashboardProps)
                 </div>
                 
             </div>
+
+            {/* Confirmation Modal */}
+            {selectedAsset && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-100 animate-scale-up">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+                                <Gavel className="h-5 w-5" />
+                            </div>
+                            <button 
+                                onClick={handleCloseModal}
+                                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                            >
+                                <XIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="mb-6">
+                            <h3 className="text-lg font-bold text-gray-900">Confirm Bidding Deployment</h3>
+                            <p className="text-sm text-gray-500 mt-2">
+                                Are you sure you want to open bidding for asset <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 text-xs">{selectedAsset.control_number}</span>?
+                            </p>
+                            <div className="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs text-gray-600">
+                                <span className="font-semibold text-gray-800">Item:</span> {selectedAsset.brand_make} {selectedAsset.model} <br/>
+                                <span className="font-semibold text-gray-800">Accountable Personnel:</span> {selectedAsset.accountable_personnel}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end space-x-3">
+                            <button
+                                type="button"
+                                onClick={handleCloseModal}
+                                disabled={processing}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmPublish}
+                                disabled={processing}
+                                className="px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center"
+                            >
+                                {processing ? (
+                                    <>
+                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                                        Publishing...
+                                    </>
+                                ) : (
+                                    'Confirm & Publish'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

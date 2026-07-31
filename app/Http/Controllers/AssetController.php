@@ -67,10 +67,33 @@ class AssetController extends Controller
             ->select('id', 'name')
             ->get();
 
+        // Kuha og data from PAR SYSTEM para sa mga users dropdown based on department
+        $user_dept = auth()->user()->department?->name ?? '';
+
+        $parUsers = [];
+
+        try {
+            // timeout(3) sets a maximum wait time of 3 seconds before timing out
+            $response = Http::timeout(10)->get('http://mlhrisvm:5200/api/users', [
+                'token' => 'E4e5I8oFr9mbMJVXT1KShFQaJHpYN5UIsHnzeBC3zv2h4R3Uha',
+                'department_name' => strtoupper($user_dept),
+            ]);
+
+            if ($response->successful()) {
+                $parUsers = $response->json();
+            }
+        } catch (\Throwable $e) {
+            // Log the error for debugging so you know when the PAR server is down
+            Log::warning('PAR API connection failed: ' . $e->getMessage());
+
+            // $parUsers remains an empty array [], preventing your app from crashing
+        }
+
         return Inertia::render('user/create-asset', [
             'classifications' => $classifications,
             'accountable_personnels' => config('dropdown_data.ACCOUNTABLE_PERSONNEL'),
             'end_user_departments' => config('dropdown_data.END_USER_DEPARTMENT'),
+            'par_users' => $parUsers,
         ]);
     }
 

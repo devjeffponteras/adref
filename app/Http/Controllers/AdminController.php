@@ -157,14 +157,14 @@ class AdminController extends Controller
     }
 
     public function biddingStore(Request $request, $id)
-    {
+    {dd($id);
         $asset = Asset::where('status', 'Completed')->findOrFail($id);
 
         AssetBidding::create([
             'asset_id' => $asset->id,
         ]);
 
-        return redirect()->back()->with('/admin/bidding/index')->with('success', 'Asset successfully published for bidding entry!');
+        return redirect()->back()->with('success', 'Asset successfully published for bidding entry!');
     }
 
     // updated controller para ma set up and workflow og tarong

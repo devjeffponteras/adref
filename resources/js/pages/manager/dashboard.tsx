@@ -227,7 +227,7 @@ export default function managerDashboard({ assetStatuses, assets, assetOnBidding
                 </div>
 
                 {/* APPROVED STAGING REGISTRY */}
-                <div className="mt-8">
+                <div className="mt-8 hidden">
                     <div className="my-4">
                         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Approved Assets Registry</h1>
                         <p className="text-sm text-gray-500 mt-1">Review approved items and deploy them directly into active bidding cycles.</p>
@@ -333,11 +333,11 @@ export default function managerDashboard({ assetStatuses, assets, assetOnBidding
                     </div>
                 </div>
 
-                <hr className="border-gray-100 my-4" />
+                <hr className="border-gray-100 my-4 hidden" />
 
                 {/* Final Stages Table Section */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-zinc-100 shadow-sm bg-white">
-                    <h3 className='gap-2 font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-zinc-50 border-b border-zinc-200 flex items-center'><FolderCheck className='w-5 h-5' /> Final Stages</h3>
+                    <h3 className='gap-2 font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-zinc-50 border-b border-zinc-200 flex items-center'><FolderCheck className='w-5 h-5' /> Evaluation of DISPOSITION</h3>
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
                             <thead className="bg-zinc-100 text-xs font-bold uppercase tracking-wider text-slate-800">
