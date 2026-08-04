@@ -112,6 +112,40 @@ return [
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
+            'pooling' => false,
+        ],
+
+        // HRIS Database Connection
+        'hris' => [
+            'driver' => env('DB_SECOND_CONNECTION', 'sqlsrv'),
+            'host' => env('DB_SECOND_HOST', 'localhost'),
+            'port' => env('DB_SECOND_PORT', '1433'),
+            'database' => env('DB_SECOND_DATABASE', 'hris_sofpro'),
+            'username' => env('DB_SECOND_USERNAME', 'sa'),
+            'password' => env('DB_SECOND_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+
+            // Fix: Explicitly set string 'no' or boolean false
+            'encrypt' => env('DB_SECOND_ENCRYPT', 'no'), 
+            'trust_server_certificate' => env('DB_SECOND_TRUST_CERT', true),
+        ],
+
+        // PAR Database Connection
+        'par' => [
+            'driver' => env('DB_THIRD_CONNECTION', 'sqlsrv'),
+            'host' => env('DB_THIRD_HOST', 'localhost'),
+            'port' => env('DB_THIRD_PORT', '1433'),
+            'database' => env('DB_THIRD_DATABASE', 'parv2_db'),
+            'username' => env('DB_THIRD_USERNAME', 'sa'),
+            'password' => env('DB_THIRD_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'encrypt' => env('DB_THIRD_ENCRYPT', 'no'),
+            'trust_server_certificate' => env('DB_THIRD_TRUST_CERT', true),
+            'pooling' => false,
         ],
 
     ],

@@ -1,7 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowLeftCircle } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
-import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -91,9 +90,6 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
         <>
             <Head title="Asset Evaluation - Accounting" />
 
-            {/* sub header */}
-            {/* <WelcomeNote /> */}
-            
             {/* main content */}
             <div className="container-fluid p-4">
 
@@ -229,17 +225,17 @@ export default function McdEvaluate({ asset }: EvaluateProps) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
-                     {isLocked ? 
+
                     <h2 className="text-lg font-bold text-gray-800 mb-6">
-                       
+                        PAR Information
+                        {isLocked ? 
                         <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                             <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
                             Approved
                         </span>
-                        PAR Information
+                        : '' }
                     </h2>
-                    : '' }
-
+                       
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1">PAR Number</label>

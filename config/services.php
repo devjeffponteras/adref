@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'wfs' => [
+        'url'   => env('WFS_API_URL', 'http://172.16.20.28/PMC-WFS/public/api/asset_transmit'),
+        'token' => env('WFS_SECURITY_TOKEN'),
+    ],
+
 ];

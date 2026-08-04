@@ -13,7 +13,7 @@ interface Classification {
 
 interface Props {
     classifications: Classification[];
-    par_users?: Array<any>;
+    hris_users?: Array<any>;
 }
 
 // Updated interfaces to include descriptions per file item
@@ -40,7 +40,7 @@ const generateUUID = () => {
     });
 };
 
-export default function CreateAsset({ classifications, par_users = [] }: Props) {
+export default function CreateAsset({ classifications, hris_users = [] }: Props) {
 
     const { auth } = usePage().props as any;
     console.log(auth?.user);
@@ -115,33 +115,43 @@ export default function CreateAsset({ classifications, par_users = [] }: Props) 
                                 <label htmlFor="accountable_personnel" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                                     Accountable Personnel
                                 </label>
-                                {par_users.length > 0 ?
+                                {hris_users.length > 0 ?
                                     <select 
                                         value={data.accountable_personnel} 
                                         onChange={e => setData('accountable_personnel', e.target.value)}
                                         className='px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors'
                                         >
                                         <option value="">Select personnel . .</option>
-                                        {par_users.map((user) => (
+                                        {hris_users.map((user) => (
                                             <option key={user.id || user.emp_code} value={user.id || user.emp_code}>
                                             {user.name || `${user.first_name} ${user.last_name}`}
                                             </option>
                                         ))}
                                     </select>
                                     :
-                                    <select
-                                        id="accountable_personnel"
-                                        value={data.accountable_personnel || ''}
-                                        onChange={e => setData('accountable_personnel', e.target.value)}
-                                        className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
-                                    >
-                                        <option value="" disabled>Select personnel . .</option>
-                                        {ACCOUNTABLE_PERSONNEL.map((person) => (
-                                            <option key={person.value} value={person.value}>
-                                                {person.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    // <select
+                                    //     id="accountable_personnel"
+                                    //     value={data.accountable_personnel || ''}
+                                    //     onChange={e => setData('accountable_personnel', e.target.value)}
+                                    //     className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+                                    // >
+                                    //     <option value="" disabled>Select personnel . .</option>
+                                    //     {ACCOUNTABLE_PERSONNEL.map((person) => (
+                                    //         <option key={person.value} value={person.value}>
+                                    //             {person.label}
+                                    //         </option>
+                                    //     ))}
+                                    // </select>
+                                    <>
+                                        <input
+                                            type="text"
+                                            id="accountable_personnel"
+                                            value={data.accountable_personnel}
+                                            onChange={e => setData('accountable_personnel', e.target.value)}
+                                            className="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+                                        />
+                                        {errors.accountable_personnel && <span className="text-xs text-rose-500 font-medium">{errors.accountable_personnel}</span>}
+                                    </>
                                 }
 
                                 {errors.accountable_personnel && <span className="text-xs text-rose-500 font-medium">{errors.accountable_personnel}</span>}

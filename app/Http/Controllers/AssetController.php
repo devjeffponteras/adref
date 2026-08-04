@@ -16,6 +16,7 @@ use App\Models\MepeoInformation;
 use App\Models\ManagerInformation;
 use App\Models\WasteCharacteristic;
 use App\Models\WasteClassification;
+use App\Models\TemporaryAssetRequest;
 use App\Models\Workflow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -63,6 +64,32 @@ class AssetController extends Controller
      */
     public function create(): Response
     {
+        $user_department = auth()->user()->department->name;
+
+        if($user_department === 'ICT') {
+            $user_department = 'INFORMATION AND COMMUNICATIONS TECHNOLOGY';
+        }
+
+        $searchTerm = '%' . strtolower($user_department) . '%';
+
+        $usersInDepartment = DB::connection('hris')
+            ->table('users')
+            ->join('departments', 'users.department_id', '=', 'departments.id')
+            ->whereRaw('LOWER(departments.department_name) LIKE ?', [$searchTerm])
+            ->select('users.*', 'departments.department_name as department_name')
+            ->limit(100)
+            ->get();
+        
+        // testing ni sa users data only
+        // $usersInDepartment = DB::connection('hris')
+        //     ->table('users')
+        //     ->select('users.*')
+        //     ->whereNotNull('users.department_id')
+        //     ->limit(100)
+        //     ->get();
+            
+        // dd($usersInDepartment);
+        
         $classifications = AssetClassification::where('is_active', true)
             ->select('id', 'name')
             ->get();
@@ -73,7 +100,7 @@ class AssetController extends Controller
         $parUsers = [];
 
         try {
-            // timeout(3) sets a maximum wait time of 3 seconds before timing out
+            // timeout(10) sets a maximum wait time of 10 seconds before timing out
             $response = Http::timeout(10)->get('http://mlhrisvm:5200/api/users', [
                 'token' => 'E4e5I8oFr9mbMJVXT1KShFQaJHpYN5UIsHnzeBC3zv2h4R3Uha',
                 'department_name' => strtoupper($user_dept),
@@ -93,7 +120,7 @@ class AssetController extends Controller
             'classifications' => $classifications,
             'accountable_personnels' => config('dropdown_data.ACCOUNTABLE_PERSONNEL'),
             'end_user_departments' => config('dropdown_data.END_USER_DEPARTMENT'),
-            'par_users' => $parUsers,
+            'hris_users' => $usersInDepartment,
         ]);
     }
 
@@ -257,86 +284,191 @@ class AssetController extends Controller
             'asset_photos.*.description'       => 'nullable|string|max:255',
         ]);
 
-        $reportsJsonArray = [];
-        if (!empty($validated['assessment_reports'])) {
-            foreach ($validated['assessment_reports'] as $index => $item) {
-                if ($request->hasFile("assessment_reports.{$index}.file")) {
-                    $file = $request->file("assessment_reports.{$index}.file");
-                    $path = $file->store('reports', 'public');
+        // $reportsJsonArray = [];
+        // if (!empty($validated['assessment_reports'])) {
+        //     foreach ($validated['assessment_reports'] as $index => $item) {
+        //         if ($request->hasFile("assessment_reports.{$index}.file")) {
+        //             $file = $request->file("assessment_reports.{$index}.file");
+        //             $path = $file->store('reports', 'public');
                     
-                    $reportsJsonArray[] = [
-                        'file_path'   => $path,
-                        'description' => $item['description'] ?? null
-                    ];
-                }
-            }
-        }
+        //             $reportsJsonArray[] = [
+        //                 'file_path'   => $path,
+        //                 'description' => $item['description'] ?? null
+        //             ];
+        //         }
+        //     }
+        // }
 
-        $photosJsonArray = [];
-        if (!empty($validated['asset_photos'])) {
-            foreach ($validated['asset_photos'] as $index => $item) {
-                if ($request->hasFile("asset_photos.{$index}.file")) {
-                    $file = $request->file("asset_photos.{$index}.file");
-                    $path = $file->store('photos', 'public');
+        // $photosJsonArray = [];
+        // if (!empty($validated['asset_photos'])) {
+        //     foreach ($validated['asset_photos'] as $index => $item) {
+        //         if ($request->hasFile("asset_photos.{$index}.file")) {
+        //             $file = $request->file("asset_photos.{$index}.file");
+        //             $path = $file->store('photos', 'public');
                     
-                    $photosJsonArray[] = [
-                        'file_path'   => $path,
-                        'description' => $item['description'] ?? null
-                    ];
-                }
-            }
-        }
+        //             $photosJsonArray[] = [
+        //                 'file_path'   => $path,
+        //                 'description' => $item['description'] ?? null
+        //             ];
+        //         }
+        //     }
+        // }
 
-        $assetData = [
-            'accountable_personnel'   => $validated['accountable_personnel'],
-            'model'                   => $validated['model'],
-            'brand_make'              => $validated['brand_make'],
-            'serial_plate_id_number'  => $validated['serial_plate_id_number'],
-            'end_user_department'     => $validated['end_user_department'],
+        // Tago for now
+        // $assetData = [
+        //     'accountable_personnel'   => $validated['accountable_personnel'],
+        //     'model'                   => $validated['model'],
+        //     'brand_make'              => $validated['brand_make'],
+        //     'serial_plate_id_number'  => $validated['serial_plate_id_number'],
+        //     'end_user_department'     => $validated['end_user_department'],
             
-            'asset_classification_id' => $validated['asset_classification_id'],
-            'others_description'      => $validated['others_description'],
+        //     'asset_classification_id' => $validated['asset_classification_id'],
+        //     'others_description'      => $validated['others_description'],
 
-            'asset_location'          => $validated['asset_location'],
-            'description'             => $validated['description'],
-            'reasons_for_disposal'    => $validated['reasons_for_disposal'],
+        //     'asset_location'          => $validated['asset_location'],
+        //     'description'             => $validated['description'],
+        //     'reasons_for_disposal'    => $validated['reasons_for_disposal'],
 
-            'user_id'                 => auth()->id(),
-            'status'                  => 'Pending',
-            'control_number'          => null,
+        //     'user_id'                 => auth()->id(),
+        //     'status'                  => 'Pending',
+        //     'control_number'          => null,
 
-            // Bundled into the same table payload:
-            'assessment_reports'      => $reportsJsonArray,
-            'asset_photos'            => $photosJsonArray,
+        //     // Bundled into the same table payload:
+        //     'assessment_reports'      => $reportsJsonArray,
+        //     'asset_photos'            => $photosJsonArray,
+        // ];
+
+        // kuha ta sa config/services, bago lang ko kabalo heheh
+        $apiUrl = config('services.wfs.url');
+        // dd($apiUrl);
+
+        $tempRefNo = 'REF-' . time();
+        $tempTransId = 'ADREF-' . uniqid();
+
+        $user = auth()->user();
+        $departmentName = $user?->department?->name ? strtoupper($user->department->name) : 'ADMIN';
+        $assetTitle = trim(($validated['brand_make'] ?? '') . ' ' . ($validated['model'] ?? ''));
+
+        $payload = [
+            'transaction' => [
+                'token'            => config('services.wfs.token'),
+                'type'             => 'ADREF',
+                'refno'            => $tempRefNo,
+                'transid'          => $tempTransId,
+                'sourceapp'        => 'ADREF System',
+                'sourceurl'        => url('/'),
+                'status'           => 'PENDING',
+                'created_at'       => now()->toDateTimeString(),
+                
+                'requestor'        => $user->name ?? 'System',
+                'email'            => $user->email ?? 'adrefadmin@philsaga.com',
+                'department'       => $departmentName,
+                'name'             => $assetTitle ?: 'ADREF',
+                'locsite'          => $validated['asset_location'] ?? 'Main Site',
+                'purpose'          => $validated['reasons_for_disposal'] ?? 'Asset Management Request for Approval',
+                'approval_url'     => url('/'),
+
+                'totalamount'      => 0,
+                'converted_amount' => 0,
+                'currency'         => 'PHP',
+
+                'is_multiple'      => false,
+                'is_initial'       => true,
+                'is_resubmitted'   => false,
+            ]
         ];
 
-        DB::transaction(function () use ($assetData) {
-            $asset = Asset::create($assetData);
+        try {
+            $response = Http::timeout(15)->post($apiUrl, $payload);
 
-            // Generate approval sequence steps
-            for ($i = 1; $i <= 7; $i++) {
-                $asset->approvals()->create([
-                    'seq_no'        => $i,
-                    'is_current'    => ($i === 1),
-                    'status'        => ($i === 1) ? 'On-going' : 'Pending',
-                    'approver_id'   => null,
-                    'approval_date' => null,
-                    'remarks'       => null,
+            if ($response->successful()) {
+
+                // Process file uploads ONLY after confirming WFS successfully accepted the request
+                $reportsJsonArray = $this->handleFileUploads($request, 'assessment_reports', 'reports');
+                $photosJsonArray  = $this->handleFileUploads($request, 'asset_photos', 'photos');
+
+                TemporaryAssetRequest::create([
+                    'refno'                   => $tempRefNo,
+                    'transid'                 => $tempTransId,
+                    'status'                  => 'pending',
+                    'control_number'          => null,
+                    'user_id'                 => auth()->id(),
+                    'accountable_personnel'   => $validated['accountable_personnel'],
+                    'model'                   => $validated['model'] ?? null,
+                    'brand_make'              => $validated['brand_make'] ?? null,
+                    'serial_plate_id_number'  => $validated['serial_plate_id_number'] ?? null,
+                    'end_user_department'     => $validated['end_user_department'],
+                    'asset_classification_id' => $validated['asset_classification_id'],
+                    'others_description'      => $validated['others_description'] ?? null,
+                    'asset_location'          => $validated['asset_location'] ?? null,
+                    'description'             => $validated['description'] ?? null,
+                    'reasons_for_disposal'    => $validated['reasons_for_disposal'] ?? null,
+                    'assessment_reports'      => $reportsJsonArray,
+                    'asset_photos'            => $photosJsonArray,
                 ]);
+
+                return redirect()->route('my-assets')->with('success', 'Asset request successfully submitted to WORKFLOW for approval!');
             }
 
-            // Initialize status history
-            AssetStatus::create([
-                'asset_id'      => $asset->id,
-                'seq_no'        => 1,
-                'status'        => 'Pending',
-                'approver_id'   => null,
-                'approval_date' => null,
-                'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
+            Log::error('WFS Sync Failed: ' . $response->body());
+            return redirect()->back()->withErrors([
+                'error' => 'Workflow transmission failed: ' . ($response->json()['message'] ?? 'Unknown error')
             ]);
-        });
 
-        return redirect()->route('my-assets')->with('success', 'Asset logged and tracking sequence initialized successfully!');
+        } catch (\Exception $e) {
+            Log::error('WFS Connection Error: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Could not connect to the workflow server.']);
+        }
+
+        // DB::transaction(function () use ($assetData) {
+        //     $asset = Asset::create($assetData);
+
+        //     // Generate approval sequence steps
+        //     for ($i = 1; $i <= 7; $i++) {
+        //         $asset->approvals()->create([
+        //             'seq_no'        => $i,
+        //             'is_current'    => ($i === 1),
+        //             'status'        => ($i === 1) ? 'On-going' : 'Pending',
+        //             'approver_id'   => null,
+        //             'approval_date' => null,
+        //             'remarks'       => null,
+        //         ]);
+        //     }
+
+        //     // Initialize status history
+        //     AssetStatus::create([
+        //         'asset_id'      => $asset->id,
+        //         'seq_no'        => 1,
+        //         'status'        => 'Pending',
+        //         'approver_id'   => null,
+        //         'approval_date' => null,
+        //         'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
+        //     ]);
+        // });
+
+        // return redirect()->route('my-assets')->with('success', 'Asset logged and tracking sequence initialized successfully!');
+        // return redirect()->route('my-assets')->with('success', 'Asset request successfully submitted to WORKFLOW for approval!');
+    }
+
+    /**
+     * Reusable helper for handling multiple array file uploads
+     */
+    private function handleFileUploads(Request $request, string $inputKey, string $folder): array
+    {
+        $results = [];
+        $rawItems = $request->input($inputKey, []);
+
+        foreach ($rawItems as $index => $item) {
+            if ($request->hasFile("{$inputKey}.{$index}.file")) {
+                $file = $request->file("{$inputKey}.{$index}.file");
+                $results[] = [
+                    'file_path'   => $file->store($folder, 'public'),
+                    'description' => $item['description'] ?? null,
+                ];
+            }
+        }
+
+        return $results;
     }
 
     /**
@@ -639,12 +771,23 @@ class AssetController extends Controller
         $asset = Asset::findOrFail($id);
         $asidInformation = AsidInformation::where('asset_id', $id)->first();
         $managerInformation = ManagerInformation::where('asset_id', $id)->first();
+        $mepeoInformation = MepeoInformation::where('asset_id', $id)->first();
+        $mcdInformation = McdInformation::where('asset_id', $id)->first();
+        $accountingInformation = AccountingInformation::where('asset_id', $id)->first();
 
         $asset->asid_information = $asidInformation;
         $asset->manager_information = $managerInformation;
+        $asset->mepeo_information = $mepeoInformation;
+        $asset->mcd_information = $mcdInformation;
+        $asset->accounting_information = $accountingInformation;
+
+        $wasteClassifications = WasteClassification::all(['id', 'name']);
+        $wasteCharacteristics = WasteCharacteristic::all(['id', 'name']);
 
         return Inertia::render('asid/evaluate', [
             'asset' => $asset,
+            'wasteClassifications' => $wasteClassifications,
+            'wasteCharacteristics' => $wasteCharacteristics
         ]);
     }
 
@@ -1080,8 +1223,19 @@ class AssetController extends Controller
     {
         $asset = Asset::with(['user', 'classification', 'accounting_information', 'mcd_information'])->findOrFail($id);
 
+        $par_number = 10;
+
+        $searchTerm = '%' . (string)$par_number . '%';
+
+        $details = DB::connection('par')
+            ->table('accountabilityDetails')
+            ->where('header_id', 'LIKE', $searchTerm)
+            ->limit(100)
+            ->get();
+dd($details);
         return Inertia::render('mcd/evaluate', [
             'asset' => $asset,
+            'par_numbers' => $details
         ]);
 
     }
