@@ -174,12 +174,12 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                         {asset.brand_make || 'Generic'} <span className="font-light text-emerald-100/80">{asset.model || 'Asset Profile'}</span>
                     </h1>
 
-                    { ((isReturned || !isRejected) && !isOnGoing && !isCompleted ) && 
+                    {/* { ((isReturned || !isRejected) && !isOnGoing && !isCompleted ) && 
                         <a href={`/asset/edit-asset/${asset.id}`} className='absolute top-4 right-4 px-4 py-2 rounded-lg shadow hover:bg-zinc-100 hover:text-zinc-900 bg-white text-zinc-700 text-sm font-bold inline-flex gap-2'>
                             <Edit className='h-4 w-4'></Edit>
                             Update Details
                         </a>
-                    }
+                    } */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-t border-white/10 pt-4">
                         <div className="flex flex-col gap-0.5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Control Number</span>

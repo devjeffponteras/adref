@@ -27,6 +27,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 // Mao ni kay para sa CRON JOB!
 use App\Services\AssetSyncService;
@@ -36,11 +37,14 @@ class AssetController extends Controller
     /**
      * Display a listing of the end user's personal assets.
      */
-    public function myAssets(): Response
+    public function myAssets(AssetSyncService $syncService): Response
     {
         $myAssets = Asset::where('user_id', auth()->id())
             ->with('classification')
             ->get();
+
+        // Another call of API for initial asset disposal request
+        $assetStatusData = $syncService->syncPendingTemporaryAssetRequests();
 
         return Inertia::render('my-assets', [
             'assets' => $myAssets,
@@ -276,7 +280,7 @@ class AssetController extends Controller
 
             // Multi-upload validation hooks
             'assessment_reports'              => 'required|array|min:1',
-            'assessment_reports.*.file'        => 'nullable|file|extensions:pdf,doc,docx|max:5120',
+            'assessment_reports.*.file'        => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'assessment_reports.*.description' => 'nullable|string|max:255',
             
             'asset_photos'                    => 'required|array|min:1',
@@ -379,14 +383,22 @@ class AssetController extends Controller
         ];
 
         try {
+            Log::debug('WFS Payload: ' . json_encode($payload));
             $response = Http::timeout(15)->post($apiUrl, $payload);
+
+            Log::debug('WFS Response Status: ' . $response->status());
+            try {
+                Log::debug('WFS Response Headers: ' . json_encode($response->headers()));
+            } catch (\Throwable $e) {
+                Log::debug('WFS Response Headers: (could not JSON encode)');
+            }
 
             if ($response->successful()) {
 
                 // Process file uploads ONLY after confirming WFS successfully accepted the request
                 $reportsJsonArray = $this->handleFileUploads($request, 'assessment_reports', 'reports');
                 $photosJsonArray  = $this->handleFileUploads($request, 'asset_photos', 'photos');
-
+                // dd("aw!");
                 TemporaryAssetRequest::create([
                     'refno'                   => $tempRefNo,
                     'transid'                 => $tempTransId,
@@ -411,8 +423,18 @@ class AssetController extends Controller
             }
 
             Log::error('WFS Sync Failed: ' . $response->body());
+
+            $remoteMsg = null;
+            try {
+                $remoteMsg = is_array($response->json()) ? ($response->json()['message'] ?? null) : null;
+            } catch (\Throwable $e) {
+                $remoteMsg = null;
+            }
+
+            $errBody = $remoteMsg ?? $response->body() ?? 'Unknown error';
+
             return redirect()->back()->withErrors([
-                'error' => 'Workflow transmission failed: ' . ($response->json()['message'] ?? 'Unknown error')
+                'error' => 'Workflow transmission failed: ' . Str::limit(strip_tags((string) $errBody), 400)
             ]);
 
         } catch (\Exception $e) {
@@ -461,9 +483,13 @@ class AssetController extends Controller
         foreach ($rawItems as $index => $item) {
             if ($request->hasFile("{$inputKey}.{$index}.file")) {
                 $file = $request->file("{$inputKey}.{$index}.file");
+
                 $results[] = [
-                    'file_path'   => $file->store($folder, 'public'),
-                    'description' => $item['description'] ?? null,
+                    'file_path'     => $file->store($folder, 'public'),
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_size'     => $file->getSize(), // in bytes
+                    'mime_type'     => $file->getClientMimeType(),
+                    'description'   => $item['description'] ?? null,
                 ];
             }
         }
@@ -1219,25 +1245,30 @@ class AssetController extends Controller
         }
     }
 
-    public function mcdEvaluate($id)
+    public function mcdEvaluate(Request $request, $id)
     {
         $asset = Asset::with(['user', 'classification', 'accounting_information', 'mcd_information'])->findOrFail($id);
 
-        $par_number = 10;
+        $searchTerm = trim($request->input('inputted', ''));
+        $parNumbers = [];
 
-        $searchTerm = '%' . (string)$par_number . '%';
+        if (strlen($searchTerm) >= 2) {
+            $parNumbers = DB::connection('par')
+                ->table('accountabilityDetails')
+                ->select('header_id') // Kept as header_id to match React key mapping
+                ->where('header_id', 'LIKE', '%' . $searchTerm . '%')
+                ->distinct()
+                ->limit(5)
+                ->get();
+        }
 
-        $details = DB::connection('par')
-            ->table('accountabilityDetails')
-            ->where('header_id', 'LIKE', $searchTerm)
-            ->limit(100)
-            ->get();
-dd($details);
         return Inertia::render('mcd/evaluate', [
             'asset' => $asset,
-            'par_numbers' => $details
+            'par_numbers' => $parNumbers,
+            'filters' => [
+                'inputted' => $searchTerm,
+            ],
         ]);
-
     }
 
     public function mcdEvaluateAction(Request $request, $id)

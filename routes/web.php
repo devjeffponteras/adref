@@ -29,7 +29,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin/workflow/assets', [AdminController::class, 'assetPass'])->name('admin.asset-pass');
     Route::post('/admin/secret/assets/{id}/approve', [AdminController::class, 'approveAssetPass'])
     ->name('assets.approve-pass');
-
 });
 
 // Add routes here for admin account

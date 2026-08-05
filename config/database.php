@@ -143,11 +143,11 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-            'encrypt' => env('DB_THIRD_ENCRYPT', 'no'),
-            'trust_server_certificate' => env('DB_THIRD_TRUST_CERT', true),
+            
+            'encrypt' => 'no',
+            'trust_server_certificate' => 'yes',
             'pooling' => false,
         ],
-
     ],
 
     /*

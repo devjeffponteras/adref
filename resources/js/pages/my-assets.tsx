@@ -277,7 +277,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                             </td>
 
                                             <td className="px-6 py-3.5">
-                                                <span
+                                                {/* <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(
                                                     asset.status
                                                     )} ${
@@ -287,9 +287,9 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                     }`}
                                                 >
                                                     {asset.status || 'Pending'}
-                                                </span>
+                                                </span> */}
 
-                                                {(asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status) && (
+                                                {/* {(asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status) && (
                                                     <Link
                                                     href={`/asset/edit-asset/${asset.id}`}
                                                     className="hidden group-hover:inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 shadow text-zinc-700 hover:text-emerald-600 hover:border-emerald-300 transition-colors text-xs"
@@ -297,7 +297,13 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                     <Edit className="h-3 w-3" />
                                                     Edit
                                                     </Link>
-                                                )}
+                                                )} */}
+
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(asset.status)}`}
+                                                >
+                                                    {asset.status || 'Pending'}
+                                                </span>
                                             </td>
 
                                             <td className="px-6 py-3.5">
