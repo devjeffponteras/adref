@@ -62,7 +62,7 @@ Route::middleware(['auth', 'verified', 'role:asid'])->group(function () {
 
 });
 
-// Add routes here for MANAGER account
+// Add routes here for ASID MANAGER account
 Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
     Route::get('manager-dashboard', [DashboardController::class, 'managerDashboard'])->name('manager-dashboard');
     Route::get('manager-evaluate/{id}', [AssetController::class, 'managerEvaluate'])->name('manager-evaluate');
@@ -88,6 +88,13 @@ Route::middleware(['auth', 'verified', 'role:mcd'])->group(function () {
     Route::get('mcd-dashboard', [DashboardController::class, 'mcdDashboard'])->name('mcd-dashboard');
     Route::get('mcd-evaluate/{id}', [AssetController::class, 'mcdEvaluate'])->name('mcd-evaluate');
     Route::post('mcd-evaluate/{id}/action', [AssetController::class, 'mcdEvaluateAction'])->name('mcd-evaluate-action');
+});
+
+// Add routes here for MCD MANAGER account
+Route::middleware(['auth', 'verified', 'role:mcd-manager'])->group(function () {
+    Route::get('mcd-manager-dashboard', [DashboardController::class, 'mcdManagerDashboard'])->name('mcd-manager-dashboard');
+    Route::get('mcd-manager-evaluate/{id}', [AssetController::class, 'mcdManagerEvaluate'])->name('mcd-manager-evaluate');
+    Route::post('mcd-manager-evaluate/{id}/action', [AssetController::class, 'mcdManagerEvaluateAction'])->name('mcd-manager-evaluate-action');
 });
 
 // Add routes here for MEPEO account

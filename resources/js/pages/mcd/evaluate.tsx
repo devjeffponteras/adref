@@ -1,5 +1,5 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import { XIcon, CircleCheck, ArrowLeftCircle } from 'lucide-react';
+import { XIcon, CircleCheck, ArrowLeftCircle, Send } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -370,8 +370,8 @@ export default function McdEvaluate({ asset, par_numbers = [] }: EvaluateProps) 
                                     disabled={processing}
                                     className="inline-flex items-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-hidden"
                                 >
-                                    <CircleCheck className="h-5 w-5 mr-2" />
-                                    Submit and Approve
+                                    <Send className="h-5 w-5 mr-2" />
+                                    Submit to <span className='text-amber-300 pl-2'>MCD MANAGER</span>
                                 </button>
                             )}
                         </div>

@@ -43,7 +43,7 @@ export default function WorkflowIndex({ transactions = [] }: WorkflowIndexProps)
                                     <th className="px-6 py-4">Purpose</th>
                                     <th className="px-6 py-4">Department</th>
                                     <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4 text-right">Action</th>
+                                    {/* <th className="px-6 py-4 text-right">Action</th> */}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white text-gray-700">
@@ -78,7 +78,7 @@ export default function WorkflowIndex({ transactions = [] }: WorkflowIndexProps)
                                                 </span>
                                             </td>
                                             {/* Action Button */}
-                                            <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                            {/* <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                                 <a 
                                                     href={tx.source_url} 
                                                     target="_blank" 
@@ -87,7 +87,7 @@ export default function WorkflowIndex({ transactions = [] }: WorkflowIndexProps)
                                                 >
                                                     View Original
                                                 </a>
-                                            </td>
+                                            </td> */}
                                         </tr>
                                     ))
                                 ) : (

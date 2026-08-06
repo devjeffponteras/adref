@@ -6,11 +6,8 @@ import {
     FileSpreadsheet,
     PackageOpen,
     ClipboardPen,
-    SquareUserRound,
-    ScanSearch,
     BriefcaseBusiness,
     LucideUserCog2,
-    UsersRound,
     Gavel,
     FastForward,
     ListChecks
@@ -35,6 +32,7 @@ import {
     asidDashboard,
     managerDashboard,
     mcdDashboard,
+    mcdManagerDashboard,
     userDashboard,
     mepeoDashboard,
     accountingDashboard,
@@ -53,7 +51,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         icon: LayoutGrid,
-        roles: ['admin', 'asid', 'mcd', 'user', 'mepeo', 'accounting', 'manager'],
+        roles: ['admin', 'asid', 'mcd', 'user', 'mepeo', 'accounting', 'manager', 'mcd-manager'],
         href: '/dashboard',
     },
     {
@@ -131,13 +129,14 @@ export function AppSidebar() {
 
     const resolveDashboardRoute = (role: string) => {
         const routes: Record<string, any> = {
-            admin: dashboard(),
-            manager: managerDashboard(),
-            asid:  asidDashboard(),
-            mcd:   mcdDashboard(),
-            user:  userDashboard(),
-            mepeo: mepeoDashboard(),
-            accounting: accountingDashboard(),
+            admin:         dashboard(),
+            manager:       managerDashboard(),
+            asid:          asidDashboard(),
+            mcd:           mcdDashboard(),
+            'mcd-manager': mcdManagerDashboard(),
+            user:          userDashboard(),
+            mepeo:         mepeoDashboard(),
+            accounting:    accountingDashboard(),
         };
 
         return routes[role] || userDashboard();

@@ -1273,6 +1273,45 @@ class AssetController extends Controller
 
     public function mcdEvaluateAction(Request $request, $id)
     {
+        $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'par_number' => 'nullable|string|max:1000',
+            'par_remarks' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            DB::transaction(function () use ($asset, $validatedData) {
+                McdInformation::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    [
+                        'role'        => 'mcd',
+                        'par_number'  => $validatedData['par_number'] ?? null,
+                        'remarks'     => $validatedData['par_remarks'] ?? null,
+                        'approver_id' => Auth::id(),
+                        // Set status to 'On-going' or 'Pending' to reflect handoff to the manager
+                        'status'      => 'On-going', 
+                    ]
+                );
+
+                // Optional: Update asset status if needed to track position in workflow
+                // $asset->update(['status' => 'Pending Manager Approval']);
+            });
+
+            return redirect()->route('mcd-dashboard')
+                ->with('success', 'MCD evaluation phase pushed to MCD manager. Asset on standby for manager updates.');
+
+        } catch (\Exception $e) {
+            Log::error("Failed transaction sequence processing MCD evaluation for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An operational database issue halted processing your MCD updates. Please try again.',
+            ]);
+        }
+    }
+
+    public function mcdEvaluateActionOld(Request $request, $id)
+    {
 
         $asset = Asset::findOrFail($id);
 
@@ -1356,6 +1395,89 @@ class AssetController extends Controller
             ]);
         }
 
+    }
+
+    public function mcdManagerEvaluate(Request $request, $id)
+    {
+        $asset = Asset::with(['user', 'classification', 'accounting_information', 'mcd_information'])->findOrFail($id);
+
+        return Inertia::render('mcd-manager/evaluate', [
+            'asset' => $asset
+        ]);
+    }
+
+    public function mcdManagerEvaluateAction(Request $request, $id)
+    {
+        $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'manager_remarks' => 'required|string|max:1000',
+        ]);
+
+        try {
+            $message = DB::transaction(function () use ($asset, $validatedData, $id) {
+
+            $mcdInfo = McdInformation::where('asset_id', $asset->id)->firstOrFail();
+
+                $mcdInfo->update([
+                    'manager_remarks' => $validatedData['manager_remarks'],
+                    'manager_check'   => '1',
+                    'status'          => 'Approved',
+                ]);
+
+                $currentApproval = AssetApproval::where('asset_id', $id)
+                    ->where('is_current', true)
+                    ->firstOrFail();
+
+                $currentApproval->update([
+                    'is_current'    => false,
+                    'status'        => 'Approved',
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $validatedData['manager_remarks'],
+                ]);
+
+                AssetStatus::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    [
+                        'seq_no'        => $currentApproval->seq_no,
+                        'status'        => 'Approved',
+                        'approver_id'   => Auth::id(),
+                        'approval_date' => now(),
+                        'remarks'       => $validatedData['manager_remarks'],
+                    ]
+                );
+
+                $nextApproval = AssetApproval::where('asset_id', $id)
+                    ->where('seq_no', $currentApproval->seq_no + 1)
+                    ->first();
+
+                if ($nextApproval) {
+                    $nextApproval->update([
+                        'is_current' => true,
+                        'status'     => 'On-going',
+                    ]);
+
+                    $asset->update(['status' => 'On-going']);
+
+                    return 'MCD Phase tracking details logged. Asset evaluation advanced to the next milestone sequence.';
+                }
+
+                $asset->update(['status' => 'Completed']);
+
+                return 'MCD Phase tracking details logged. All tracking sequence steps complete; asset pipeline marked as Completed.';
+            });
+
+            return redirect()->back()
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            Log::error("Failed transaction processing MCD Manager evaluation for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An operational database issue halted processing your MCD updates. Please try again.',
+            ]);
+        }
     }
 
     public function mepeoEvaluate($id)

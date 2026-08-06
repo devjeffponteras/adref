@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+
 use App\Models\Asset;
 use App\Models\AssetStatus;
 use App\Models\AssetBidding;
+use App\Models\TemporaryAssetRequest;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -93,6 +96,17 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function mcdManagerDashboard(): Response
+    {
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.accounting_information', 'asset.mcd_information'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+            return Inertia::render('mcd-manager/dashboard', [
+            'assetStatuses' => $assetStatuses,
+        ]);
+    }
+
     public function mepeoDashboard(): Response
     {
         $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.mcd_information', 'asset.mepeo_information'])
@@ -104,8 +118,52 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function userDashboard(): Response
+    public function userDashboard(Request $request): Response
     {
-        return Inertia::render('user/dashboard');
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 10);
+        $sortColumn = $request->input('sort_by', 'created_at');
+        $sortDirection = $request->input('sort_dir', 'desc');
+
+        $allowedSorts = ['refno', 'transid', 'status', 'accountable_personnel', 'brand_make', 'model', 'end_user_department', 'created_at'];
+        if (!in_array($sortColumn, $allowedSorts)) {
+            $sortColumn = 'created_at';
+        }
+
+        $temporaryAssets = TemporaryAssetRequest::query()
+            ->select([
+                'id',
+                'refno',
+                'transid',
+                'status',
+                'accountable_personnel',
+                'brand_make',
+                'model',
+                'end_user_department',
+            ])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('refno', 'like', "%{$search}%")
+                      ->orWhere('transid', 'like', "%{$search}%")
+                      ->orWhere('status', 'like', "%{$search}%")
+                      ->orWhere('accountable_personnel', 'like', "%{$search}%")
+                      ->orWhere('brand_make', 'like', "%{$search}%")
+                      ->orWhere('model', 'like', "%{$search}%")
+                      ->orWhere('end_user_department', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sortColumn, $sortDirection)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return Inertia::render('user/dashboard', [
+            'temporaryAssets' => $temporaryAssets,
+            'filters' => [
+                'search'   => $search,
+                'per_page' => (int) $perPage,
+                'sort_by'  => $sortColumn,
+                'sort_dir' => $sortDirection,
+            ],
+        ]);
     }
 }
