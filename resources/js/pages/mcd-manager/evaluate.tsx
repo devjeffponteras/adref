@@ -283,20 +283,19 @@ export default function McdManagerEvaluate({ asset, wasteClassifications = [], w
                         MCD Manager
                     </h2>
                     <form onSubmit={handleSubmit}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-end">
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4 w-2xl">
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1">
                                     Manager's Remarks
                                 </label>
-                                <input 
-                                    type="text"
+                                <textarea 
                                     placeholder="Type Manager Remarks.."
                                     value={data.manager_remarks}
                                     onChange={(e) => setData('manager_remarks', e.target.value)}
                                     className={`w-full p-2 text-sm border rounded-lg text-gray-700 shadow-xs border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 ${
                                         errors.manager_remarks ? 'border-red-500' : ''
                                     }`}
-                                />
+                                ></textarea>
                                 {errors.manager_remarks && (
                                     <p className="text-red-500 text-xs mt-1">{errors.manager_remarks}</p>
                                 )}

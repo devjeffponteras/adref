@@ -8,6 +8,11 @@ interface Classification {
     name: string;
 }
 
+interface AssetDisposal {
+    id: number;
+    [key: string]: any;
+}
+
 interface Asset {
     id: number;
     accountable_personnel: string;
@@ -20,7 +25,8 @@ interface Asset {
     assessment_report_path: string | null;
     asset_photo_path: string | null;
     created_at: string;
-    classification: Classification | null; 
+    classification: Classification | null;
+    asset_disposal?: AssetDisposal | null;
 }
 
 interface MyAssetsProps {
@@ -302,8 +308,11 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                 <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(asset.status)}`}
                                                 >
-                                                    {asset.status || 'Pending'}
+                                                    {asset.status || 'Pending'} { asset.asset_disposal && <div className='inline-flex items-center text-nowrap'>&nbsp; and <span className='inline-flex items-center text-nowrap text-red-700'>&nbsp; Disposed</span> </div>}
                                                 </span>
+
+                                                
+                                                   
                                             </td>
 
                                             <td className="px-6 py-3.5">

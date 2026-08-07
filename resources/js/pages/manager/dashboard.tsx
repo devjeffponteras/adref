@@ -350,8 +350,8 @@ export default function managerDashboard({ assetStatuses, assets, assetOnBidding
                                     <th scope="col" onClick={() => handleT2Sort('created_at')} className="py-3.5 pl-6 pr-3 font-semibold cursor-pointer select-none hover:bg-zinc-200">
                                         <span className="flex items-center">Application Date {renderSortIcon('created_at', t2SortField, t2SortDir)}</span>
                                     </th>
-                                    <th scope="col" onClick={() => handleT2Sort('seq_no')} className="px-4 py-3.5 font-semibold cursor-pointer select-none hover:bg-zinc-200">
-                                        <span className="flex items-center">Current Step {renderSortIcon('seq_no', t2SortField, t2SortDir)}</span>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold cursor-pointer select-none hover:bg-zinc-200">
+                                        <span className="flex items-center">Brand & Model</span>
                                     </th>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status / Action</th>
                                 </tr>
@@ -385,14 +385,19 @@ export default function managerDashboard({ assetStatuses, assets, assetOnBidding
                                                     {formattedDate}
                                                 </td>
                                                 <td className="px-4 py-4 text-base font-semibold text-emerald-800">
-                                                    Step {item.seq_no}
+                                                    {item.asset?.brand_make} {item.asset?.model}
                                                 </td>
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
                                                         href={`/manager-evaluate/${item.asset_id}`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-amber-500 hover:text-amber-700 font-medium transition-colors outline-1 outline-amber-300 px-3 py-2 rounded hover:bg-amber-50"
+                                                        className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors outline-1 px-3 py-2 rounded 
+                                                            ${ item.asset?.manager_information
+                                                                ? 'text-amber-500 hover:text-amber-700 outline-amber-300 hover:bg-amber-50'
+                                                                : 'text-zinc-600 hover:text-zinc-800 outline-zinc-300 hover:bg-zinc-100'
+                                                            }
+                                                        `}
                                                     >
-                                                        {item.status === 'On-going' ? 'Evaluate' : 'View Logs'}
+                                                        {item.asset?.manager_information ? 'View Logs' : 'Evaluate'}
                                                     </Link>
                                                 </td>
                                             </tr>

@@ -12,6 +12,7 @@ interface AccountingInfo {
 interface ManagerInfo {
     id: number;
     bidding_price: number | string | null;
+    bidding_cycle: number | string | null;
 }
 
 interface BidRecord {
@@ -451,7 +452,9 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Bidding Cycle</label>
-                                        <input type="number" min="1" readOnly value={data.bidding_cycle} onChange={e => setData('bidding_cycle', e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-200 focus:outline-hidden bg-gray-50" />
+                                        <div className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 truncate">
+                                            {selectedListing.asset?.manager_information?.bidding_cycle ?? '1'}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

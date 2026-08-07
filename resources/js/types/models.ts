@@ -29,6 +29,7 @@ export interface Asset {
     manager_information?: ManagerInfo | null;
     asid_information?: AsidInfo | null;
     mcd_information?: McdInfo | null;
+    asset_disposal?: AssetDisposal | null;
 }
 
 export interface Approver {
@@ -87,4 +88,11 @@ export interface AsidInfo {
     checked_by: string;
     disposition: string;
     reviewed_by: string;
+}
+
+export interface AssetDisposal {
+    id: number;
+    asset_id: number;
+    user_id: number;
+    others: string;
 }

@@ -33,6 +33,8 @@ interface McdInformation {
     asset_id: number;
     par_number: string;
     remarks: string;
+    manager_remarks: string;
+    manager_check: string;
 }
 
 interface AccountingInformation {
@@ -110,6 +112,8 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
 
         par_number: asset.mcd_information?.par_number || '',
         par_remarks: asset.mcd_information?.remarks || '',
+        manager_remarks: asset.mcd_information?.manager_remarks || '',
+        manager_check: asset.mcd_information?.manager_check || '',
 
         // These IDs are what your backend relies on for relationships
         waste_classification_id: asset.mepeo_information?.waste_classification_id || '',
@@ -280,6 +284,27 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
                             />
                         </div>
                     </div>
+
+                    <hr className='mt-8 pb-8' />
+                    <h2 className="text-lg font-bold text-gray-800 mb-4">
+                        MCD Manager
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-end">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                Manager's Remarks
+                            </label>
+                            <textarea 
+                                placeholder="Type Manager Remarks.."
+                                disabled
+                                value={data.manager_remarks}
+                                className='w-2xl p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                            ></textarea>
+                            {errors.manager_remarks && (
+                                <p className="text-red-500 text-xs mt-1">{errors.manager_remarks}</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Mepeo Section Wrapping Entire Form context */}
@@ -346,8 +371,7 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
                             {/* Mepeo Remarks Text Input */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
-                                <input 
-                                    type="text"
+                                <textarea 
                                     placeholder="Type Remarks.."
                                     value={data.mepeo_remarks}
                                     onChange={e => setData('mepeo_remarks', e.target.value)}
@@ -357,7 +381,7 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
                                             ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
                                             : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                         }`}
-                                />
+                                ></textarea>
                                 {errors.mepeo_remarks && <p className="text-xs text-red-500 mt-1">{errors.mepeo_remarks}</p>}
                             </div>
                         </div>

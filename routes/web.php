@@ -57,8 +57,10 @@ Route::middleware(['auth', 'verified', 'role:asid'])->group(function () {
     Route::post('asid-view/{id}/action', [AssetController::class, 'asidViewAssetAction'])->name('asid-view-asset-action');
     Route::get('asid-evaluate/{id}', [AssetController::class, 'asidEvaluate'])->name('asid-evaluate');
     Route::post('asid-evaluate/{id}/action', [AssetController::class, 'asidEvaluateAction'])->name('asid-evaluate-action');
-
+    
     Route::get('asid-evaluate-manager/{id}', [AssetController::class, 'asidEvaluateManager'])->name('asid-evaluate-manager');
+
+    Route::post('dispose/{id}/action', [AssetController::class, 'disposeAction'])->name('dispose-action');
 
 });
 

@@ -28,17 +28,17 @@ class DashboardController extends Controller
 
     public function asidDashboard(): Response
     {
-        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.classification'])
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.classification', 'asset.assetDisposal'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $assets = Asset::with(['mepeo_information'])
+        $assets = Asset::with(['mepeo_information', 'manager_information', 'assetDisposal'])
             ->whereHas('mepeo_information', function ($query) {
                 $query->where('waste_characteristic_id', 13); // 13 is SCRAP
             })
             ->orderBy('created_at', 'desc')
             ->get();
-// dd($assets);
+// dd($assetStatuses->toArray());
 
         return Inertia::render('asid/dashboard', [
             'assetStatuses' => $assetStatuses,

@@ -18,6 +18,7 @@ use App\Models\WasteCharacteristic;
 use App\Models\WasteClassification;
 use App\Models\TemporaryAssetRequest;
 use App\Models\Workflow;
+use App\Models\AssetDisposal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +41,7 @@ class AssetController extends Controller
     public function myAssets(AssetSyncService $syncService): Response
     {
         $myAssets = Asset::where('user_id', auth()->id())
-            ->with('classification')
+            ->with('classification', 'assetDisposal')
             ->get();
 
         // Another call of API for initial asset disposal request
@@ -508,7 +509,8 @@ class AssetController extends Controller
             'approvals.approver',
             'asid_information',
             'manager_information',
-            'accounting_information'
+            'accounting_information',
+            'assetDisposal'
         ])->findOrFail($id);
 
         // Mao ni ang call service to perform sync logic men!
@@ -821,8 +823,8 @@ class AssetController extends Controller
     {
         $validated = $request->validate([
             'remarks' => 'required|string|min:2|max:1000',
-            'disposition' => 'required|string|min:2|max:1000',
-            'checked_by' => 'required|string|min:2|max:1000',
+            'disposition' => 'nullable|string|min:2|max:1000',
+            'checked_by' => 'nullable|string|min:2|max:1000',
         ]);
         
         $validated['status'] = 'Approved';
@@ -846,6 +848,22 @@ class AssetController extends Controller
         return redirect()->route('asid-dashboard')->with('success', "Asset Request pass to ASID MANAGER. Asset application state updated to: {$validated['status']}.");
     }
 
+    public function disposeAction(Request $request)
+    {
+        $validated = $request->validate([
+            'asset_id' => 'required|exists:assets,id',
+            'others'   => 'nullable|string',
+        ]);
+
+        AssetDisposal::create([
+            'asset_id' => $validated['asset_id'],
+            'user_id'  => auth()->user()->id,
+            'others'   => $validated['others'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Asset recorded as disposed. You can now proceed your physical execution.');
+    }
+
     // Manager Functions
     public function managerEvaluate(Request $request, $id)
     {
@@ -866,6 +884,7 @@ class AssetController extends Controller
         $validated = $request->validate([
             'asset_direction' => 'required',
             'bidding_price' => 'nullable|numeric',
+            'bidding_cycle' => 'nullable|numeric',
             'manager_disposition' => 'nullable|string|max:1000',
         ]);
 
@@ -912,6 +931,7 @@ class AssetController extends Controller
                         'asset_direction' => $validated['asset_direction'],
                         'manager_disposition' => $validated['manager_disposition'],
                         'bidding_price' => $validated['bidding_price'],
+                        'bidding_cycle' => $validated['bidding_cycle'],
                         'reviewed_by' => Auth::user()->name ?? 'System',
                     ]
                 );

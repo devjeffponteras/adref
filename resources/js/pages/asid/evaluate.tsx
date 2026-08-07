@@ -239,7 +239,7 @@ export default function AsidEvaluate({ asset, wasteClassifications = [], wasteCh
                             <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
                             <input 
                                 type="text"
-                                value={data.remarks}
+                                value={data.accounting_remarks}
                                 disabled
                                 className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                         ${asset.accounting_information 
@@ -247,7 +247,7 @@ export default function AsidEvaluate({ asset, wasteClassifications = [], wasteCh
                                             : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
                                         }`}
                             />
-                            {errors.remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
+                            {errors.accounting_remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
                         </div>
 
                         {/* Checked By Input (Disabled/Read-only display placeholder) */}
@@ -396,7 +396,7 @@ export default function AsidEvaluate({ asset, wasteClassifications = [], wasteCh
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
                         
                         <h3 className="text-gray-900 font-bold text-lg tracking-tight">
-                            Evaluation Information
+                            Evaluation Information by ASID Evaluator
 
                             {isLockedAsid && !isOnASidManager &&
                             <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
