@@ -30,6 +30,8 @@ class McdInformation extends Model implements Auditable
         'remarks',
         'approver_id',
         'status',
+        'manager_remarks',
+        'manager_check',
     ];
 
     /**

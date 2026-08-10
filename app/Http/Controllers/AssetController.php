@@ -16,7 +16,9 @@ use App\Models\MepeoInformation;
 use App\Models\ManagerInformation;
 use App\Models\WasteCharacteristic;
 use App\Models\WasteClassification;
+use App\Models\TemporaryAssetRequest;
 use App\Models\Workflow;
+use App\Models\AssetDisposal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 // Mao ni kay para sa CRON JOB!
 use App\Services\AssetSyncService;
@@ -35,11 +38,14 @@ class AssetController extends Controller
     /**
      * Display a listing of the end user's personal assets.
      */
-    public function myAssets(): Response
+    public function myAssets(AssetSyncService $syncService): Response
     {
         $myAssets = Asset::where('user_id', auth()->id())
-            ->with('classification')
+            ->with('classification', 'assetDisposal')
             ->get();
+
+        // Another call of API for initial asset disposal request
+        $assetStatusData = $syncService->syncPendingTemporaryAssetRequests();
 
         return Inertia::render('my-assets', [
             'assets' => $myAssets,
@@ -63,14 +69,63 @@ class AssetController extends Controller
      */
     public function create(): Response
     {
+        $user_department = auth()->user()->department->name;
+
+        if($user_department === 'ICT') {
+            $user_department = 'INFORMATION AND COMMUNICATIONS TECHNOLOGY';
+        }
+
+        $searchTerm = '%' . strtolower($user_department) . '%';
+
+        $usersInDepartment = DB::connection('hris')
+            ->table('users')
+            ->join('departments', 'users.department_id', '=', 'departments.id')
+            ->whereRaw('LOWER(departments.department_name) LIKE ?', [$searchTerm])
+            ->select('users.*', 'departments.department_name as department_name')
+            ->limit(100)
+            ->get();
+        
+        // testing ni sa users data only
+        // $usersInDepartment = DB::connection('hris')
+        //     ->table('users')
+        //     ->select('users.*')
+        //     ->whereNotNull('users.department_id')
+        //     ->limit(100)
+        //     ->get();
+            
+        // dd($usersInDepartment);
+        
         $classifications = AssetClassification::where('is_active', true)
             ->select('id', 'name')
             ->get();
+
+        // Kuha og data from PAR SYSTEM para sa mga users dropdown based on department
+        $user_dept = auth()->user()->department?->name ?? '';
+
+        $parUsers = [];
+
+        try {
+            // timeout(10) sets a maximum wait time of 10 seconds before timing out
+            $response = Http::timeout(10)->get('http://mlhrisvm:5200/api/users', [
+                'token' => 'E4e5I8oFr9mbMJVXT1KShFQaJHpYN5UIsHnzeBC3zv2h4R3Uha',
+                'department_name' => strtoupper($user_dept),
+            ]);
+
+            if ($response->successful()) {
+                $parUsers = $response->json();
+            }
+        } catch (\Throwable $e) {
+            // Log the error for debugging so you know when the PAR server is down
+            Log::warning('PAR API connection failed: ' . $e->getMessage());
+
+            // $parUsers remains an empty array [], preventing your app from crashing
+        }
 
         return Inertia::render('user/create-asset', [
             'classifications' => $classifications,
             'accountable_personnels' => config('dropdown_data.ACCOUNTABLE_PERSONNEL'),
             'end_user_departments' => config('dropdown_data.END_USER_DEPARTMENT'),
+            'hris_users' => $usersInDepartment,
         ]);
     }
 
@@ -179,9 +234,32 @@ class AssetController extends Controller
             'asset_photos'            => $photosJsonArray,
         ]);
 
+        $message = "Asset updated successfully";
+
+        $assetInfo = AssetStatus::where('asset_id', $id)->first();
+        // dd($assetInfo->status);
+        
+        if ($assetInfo && $assetInfo->status === 'Returned') {
+
+            # algo dria...
+            $asset->update([
+                'status' => 'Pending',
+            ]);
+
+            $assetInfo->update([
+                'seq_no'        => 1,
+                'status'        => 'Pending',
+                'approver_id'   => null,
+                'approval_date' => null,
+                'remarks'       => 'Asset details updated in the asset disposal request system. Control Number Pending for Assignment.',
+            ]);
+
+            $message = "Asset request submitted to ASID for re-evaluation. Details updated successfully.";
+        }
+
         return redirect()
             ->route('asset-status', ['id' => $asset->id])
-            ->with('success', 'Asset updated successfully.');
+            ->with('success', $message);
     }
 
     /**
@@ -203,7 +281,7 @@ class AssetController extends Controller
 
             // Multi-upload validation hooks
             'assessment_reports'              => 'required|array|min:1',
-            'assessment_reports.*.file'        => 'nullable|file|extensions:pdf,doc,docx|max:5120',
+            'assessment_reports.*.file'        => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             'assessment_reports.*.description' => 'nullable|string|max:255',
             
             'asset_photos'                    => 'required|array|min:1',
@@ -211,86 +289,213 @@ class AssetController extends Controller
             'asset_photos.*.description'       => 'nullable|string|max:255',
         ]);
 
-        $reportsJsonArray = [];
-        if (!empty($validated['assessment_reports'])) {
-            foreach ($validated['assessment_reports'] as $index => $item) {
-                if ($request->hasFile("assessment_reports.{$index}.file")) {
-                    $file = $request->file("assessment_reports.{$index}.file");
-                    $path = $file->store('reports', 'public');
+        // $reportsJsonArray = [];
+        // if (!empty($validated['assessment_reports'])) {
+        //     foreach ($validated['assessment_reports'] as $index => $item) {
+        //         if ($request->hasFile("assessment_reports.{$index}.file")) {
+        //             $file = $request->file("assessment_reports.{$index}.file");
+        //             $path = $file->store('reports', 'public');
                     
-                    $reportsJsonArray[] = [
-                        'file_path'   => $path,
-                        'description' => $item['description'] ?? null
-                    ];
-                }
-            }
-        }
+        //             $reportsJsonArray[] = [
+        //                 'file_path'   => $path,
+        //                 'description' => $item['description'] ?? null
+        //             ];
+        //         }
+        //     }
+        // }
 
-        $photosJsonArray = [];
-        if (!empty($validated['asset_photos'])) {
-            foreach ($validated['asset_photos'] as $index => $item) {
-                if ($request->hasFile("asset_photos.{$index}.file")) {
-                    $file = $request->file("asset_photos.{$index}.file");
-                    $path = $file->store('photos', 'public');
+        // $photosJsonArray = [];
+        // if (!empty($validated['asset_photos'])) {
+        //     foreach ($validated['asset_photos'] as $index => $item) {
+        //         if ($request->hasFile("asset_photos.{$index}.file")) {
+        //             $file = $request->file("asset_photos.{$index}.file");
+        //             $path = $file->store('photos', 'public');
                     
-                    $photosJsonArray[] = [
-                        'file_path'   => $path,
-                        'description' => $item['description'] ?? null
-                    ];
-                }
-            }
-        }
+        //             $photosJsonArray[] = [
+        //                 'file_path'   => $path,
+        //                 'description' => $item['description'] ?? null
+        //             ];
+        //         }
+        //     }
+        // }
 
-        $assetData = [
-            'accountable_personnel'   => $validated['accountable_personnel'],
-            'model'                   => $validated['model'],
-            'brand_make'              => $validated['brand_make'],
-            'serial_plate_id_number'  => $validated['serial_plate_id_number'],
-            'end_user_department'     => $validated['end_user_department'],
+        // Tago for now
+        // $assetData = [
+        //     'accountable_personnel'   => $validated['accountable_personnel'],
+        //     'model'                   => $validated['model'],
+        //     'brand_make'              => $validated['brand_make'],
+        //     'serial_plate_id_number'  => $validated['serial_plate_id_number'],
+        //     'end_user_department'     => $validated['end_user_department'],
             
-            'asset_classification_id' => $validated['asset_classification_id'],
-            'others_description'      => $validated['others_description'],
+        //     'asset_classification_id' => $validated['asset_classification_id'],
+        //     'others_description'      => $validated['others_description'],
 
-            'asset_location'          => $validated['asset_location'],
-            'description'             => $validated['description'],
-            'reasons_for_disposal'    => $validated['reasons_for_disposal'],
+        //     'asset_location'          => $validated['asset_location'],
+        //     'description'             => $validated['description'],
+        //     'reasons_for_disposal'    => $validated['reasons_for_disposal'],
 
-            'user_id'                 => auth()->id(),
-            'status'                  => 'Pending',
-            'control_number'          => null,
+        //     'user_id'                 => auth()->id(),
+        //     'status'                  => 'Pending',
+        //     'control_number'          => null,
 
-            // Bundled into the same table payload:
-            'assessment_reports'      => $reportsJsonArray,
-            'asset_photos'            => $photosJsonArray,
+        //     // Bundled into the same table payload:
+        //     'assessment_reports'      => $reportsJsonArray,
+        //     'asset_photos'            => $photosJsonArray,
+        // ];
+
+        // kuha ta sa config/services, bago lang ko kabalo heheh
+        $apiUrl = config('services.wfs.url');
+        // dd($apiUrl);
+
+        $tempRefNo = 'REF-' . time();
+        $tempTransId = 'ADREF-' . uniqid();
+
+        $user = auth()->user();
+        $departmentName = $user?->department?->name ? strtoupper($user->department->name) : 'ADMIN';
+        $assetTitle = trim(($validated['brand_make'] ?? '') . ' ' . ($validated['model'] ?? ''));
+
+        $payload = [
+            'transaction' => [
+                'token'            => config('services.wfs.token'),
+                'type'             => 'ADREF',
+                'refno'            => $tempRefNo,
+                'transid'          => $tempTransId,
+                'sourceapp'        => 'ADREF System',
+                'sourceurl'        => url('/'),
+                'status'           => 'PENDING',
+                'created_at'       => now()->toDateTimeString(),
+                
+                'requestor'        => $user->name ?? 'System',
+                'email'            => $user->email ?? 'adrefadmin@philsaga.com',
+                'department'       => $departmentName,
+                'name'             => $assetTitle ?: 'ADREF',
+                'locsite'          => $validated['asset_location'] ?? 'Main Site',
+                'purpose'          => $validated['reasons_for_disposal'] ?? 'Asset Management Request for Approval',
+                'approval_url'     => url('/'),
+
+                'totalamount'      => 0,
+                'converted_amount' => 0,
+                'currency'         => 'PHP',
+
+                'is_multiple'      => false,
+                'is_initial'       => true,
+                'is_resubmitted'   => false,
+            ]
         ];
 
-        DB::transaction(function () use ($assetData) {
-            $asset = Asset::create($assetData);
+        try {
+            Log::debug('WFS Payload: ' . json_encode($payload));
+            $response = Http::timeout(15)->post($apiUrl, $payload);
 
-            // Generate approval sequence steps
-            for ($i = 1; $i <= 7; $i++) {
-                $asset->approvals()->create([
-                    'seq_no'        => $i,
-                    'is_current'    => ($i === 1),
-                    'status'        => ($i === 1) ? 'On-going' : 'Pending',
-                    'approver_id'   => null,
-                    'approval_date' => null,
-                    'remarks'       => null,
-                ]);
+            Log::debug('WFS Response Status: ' . $response->status());
+            try {
+                Log::debug('WFS Response Headers: ' . json_encode($response->headers()));
+            } catch (\Throwable $e) {
+                Log::debug('WFS Response Headers: (could not JSON encode)');
             }
 
-            // Initialize status history
-            AssetStatus::create([
-                'asset_id'      => $asset->id,
-                'seq_no'        => 1,
-                'status'        => 'Pending',
-                'approver_id'   => null,
-                'approval_date' => null,
-                'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
-            ]);
-        });
+            if ($response->successful()) {
 
-        return redirect()->route('my-assets')->with('success', 'Asset logged and tracking sequence initialized successfully!');
+                // Process file uploads ONLY after confirming WFS successfully accepted the request
+                $reportsJsonArray = $this->handleFileUploads($request, 'assessment_reports', 'reports');
+                $photosJsonArray  = $this->handleFileUploads($request, 'asset_photos', 'photos');
+                // dd("aw!");
+                TemporaryAssetRequest::create([
+                    'refno'                   => $tempRefNo,
+                    'transid'                 => $tempTransId,
+                    'status'                  => 'pending',
+                    'control_number'          => null,
+                    'user_id'                 => auth()->id(),
+                    'accountable_personnel'   => $validated['accountable_personnel'],
+                    'model'                   => $validated['model'] ?? null,
+                    'brand_make'              => $validated['brand_make'] ?? null,
+                    'serial_plate_id_number'  => $validated['serial_plate_id_number'] ?? null,
+                    'end_user_department'     => $validated['end_user_department'],
+                    'asset_classification_id' => $validated['asset_classification_id'],
+                    'others_description'      => $validated['others_description'] ?? null,
+                    'asset_location'          => $validated['asset_location'] ?? null,
+                    'description'             => $validated['description'] ?? null,
+                    'reasons_for_disposal'    => $validated['reasons_for_disposal'] ?? null,
+                    'assessment_reports'      => $reportsJsonArray,
+                    'asset_photos'            => $photosJsonArray,
+                ]);
+
+                return redirect()->route('my-assets')->with('success', 'Asset request successfully submitted to WORKFLOW for approval!');
+            }
+
+            Log::error('WFS Sync Failed: ' . $response->body());
+
+            $remoteMsg = null;
+            try {
+                $remoteMsg = is_array($response->json()) ? ($response->json()['message'] ?? null) : null;
+            } catch (\Throwable $e) {
+                $remoteMsg = null;
+            }
+
+            $errBody = $remoteMsg ?? $response->body() ?? 'Unknown error';
+
+            return redirect()->back()->withErrors([
+                'error' => 'Workflow transmission failed: ' . Str::limit(strip_tags((string) $errBody), 400)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('WFS Connection Error: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Could not connect to the workflow server.']);
+        }
+
+        // DB::transaction(function () use ($assetData) {
+        //     $asset = Asset::create($assetData);
+
+        //     // Generate approval sequence steps
+        //     for ($i = 1; $i <= 7; $i++) {
+        //         $asset->approvals()->create([
+        //             'seq_no'        => $i,
+        //             'is_current'    => ($i === 1),
+        //             'status'        => ($i === 1) ? 'On-going' : 'Pending',
+        //             'approver_id'   => null,
+        //             'approval_date' => null,
+        //             'remarks'       => null,
+        //         ]);
+        //     }
+
+        //     // Initialize status history
+        //     AssetStatus::create([
+        //         'asset_id'      => $asset->id,
+        //         'seq_no'        => 1,
+        //         'status'        => 'Pending',
+        //         'approver_id'   => null,
+        //         'approval_date' => null,
+        //         'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
+        //     ]);
+        // });
+
+        // return redirect()->route('my-assets')->with('success', 'Asset logged and tracking sequence initialized successfully!');
+        // return redirect()->route('my-assets')->with('success', 'Asset request successfully submitted to WORKFLOW for approval!');
+    }
+
+    /**
+     * Reusable helper for handling multiple array file uploads
+     */
+    private function handleFileUploads(Request $request, string $inputKey, string $folder): array
+    {
+        $results = [];
+        $rawItems = $request->input($inputKey, []);
+
+        foreach ($rawItems as $index => $item) {
+            if ($request->hasFile("{$inputKey}.{$index}.file")) {
+                $file = $request->file("{$inputKey}.{$index}.file");
+
+                $results[] = [
+                    'file_path'     => $file->store($folder, 'public'),
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_size'     => $file->getSize(), // in bytes
+                    'mime_type'     => $file->getClientMimeType(),
+                    'description'   => $item['description'] ?? null,
+                ];
+            }
+        }
+
+        return $results;
     }
 
     /**
@@ -304,7 +509,8 @@ class AssetController extends Controller
             'approvals.approver',
             'asid_information',
             'manager_information',
-            'accounting_information'
+            'accounting_information',
+            'assetDisposal'
         ])->findOrFail($id);
 
         // Mao ni ang call service to perform sync logic men!
@@ -593,12 +799,23 @@ class AssetController extends Controller
         $asset = Asset::findOrFail($id);
         $asidInformation = AsidInformation::where('asset_id', $id)->first();
         $managerInformation = ManagerInformation::where('asset_id', $id)->first();
+        $mepeoInformation = MepeoInformation::where('asset_id', $id)->first();
+        $mcdInformation = McdInformation::where('asset_id', $id)->first();
+        $accountingInformation = AccountingInformation::where('asset_id', $id)->first();
 
         $asset->asid_information = $asidInformation;
         $asset->manager_information = $managerInformation;
+        $asset->mepeo_information = $mepeoInformation;
+        $asset->mcd_information = $mcdInformation;
+        $asset->accounting_information = $accountingInformation;
+
+        $wasteClassifications = WasteClassification::all(['id', 'name']);
+        $wasteCharacteristics = WasteCharacteristic::all(['id', 'name']);
 
         return Inertia::render('asid/evaluate', [
             'asset' => $asset,
+            'wasteClassifications' => $wasteClassifications,
+            'wasteCharacteristics' => $wasteCharacteristics
         ]);
     }
 
@@ -606,8 +823,8 @@ class AssetController extends Controller
     {
         $validated = $request->validate([
             'remarks' => 'required|string|min:2|max:1000',
-            'disposition' => 'required|string|min:2|max:1000',
-            'checked_by' => 'required|string|min:2|max:1000',
+            'disposition' => 'nullable|string|min:2|max:1000',
+            'checked_by' => 'nullable|string|min:2|max:1000',
         ]);
         
         $validated['status'] = 'Approved';
@@ -631,6 +848,22 @@ class AssetController extends Controller
         return redirect()->route('asid-dashboard')->with('success', "Asset Request pass to ASID MANAGER. Asset application state updated to: {$validated['status']}.");
     }
 
+    public function disposeAction(Request $request)
+    {
+        $validated = $request->validate([
+            'asset_id' => 'required|exists:assets,id',
+            'others'   => 'nullable|string',
+        ]);
+
+        AssetDisposal::create([
+            'asset_id' => $validated['asset_id'],
+            'user_id'  => auth()->user()->id,
+            'others'   => $validated['others'] ?? null,
+        ]);
+
+        return redirect()->back()->with('success', 'Asset recorded as disposed. You can now proceed your physical execution.');
+    }
+
     // Manager Functions
     public function managerEvaluate(Request $request, $id)
     {
@@ -651,6 +884,7 @@ class AssetController extends Controller
         $validated = $request->validate([
             'asset_direction' => 'required',
             'bidding_price' => 'nullable|numeric',
+            'bidding_cycle' => 'nullable|numeric',
             'manager_disposition' => 'nullable|string|max:1000',
         ]);
 
@@ -697,6 +931,7 @@ class AssetController extends Controller
                         'asset_direction' => $validated['asset_direction'],
                         'manager_disposition' => $validated['manager_disposition'],
                         'bidding_price' => $validated['bidding_price'],
+                        'bidding_cycle' => $validated['bidding_cycle'],
                         'reviewed_by' => Auth::user()->name ?? 'System',
                     ]
                 );
@@ -1030,17 +1265,72 @@ class AssetController extends Controller
         }
     }
 
-    public function mcdEvaluate($id)
+    public function mcdEvaluate(Request $request, $id)
     {
         $asset = Asset::with(['user', 'classification', 'accounting_information', 'mcd_information'])->findOrFail($id);
 
+        $searchTerm = trim($request->input('inputted', ''));
+        $parNumbers = [];
+
+        if (strlen($searchTerm) >= 2) {
+            $parNumbers = DB::connection('par')
+                ->table('accountabilityDetails')
+                ->select('header_id') // Kept as header_id to match React key mapping
+                ->where('header_id', 'LIKE', '%' . $searchTerm . '%')
+                ->distinct()
+                ->limit(5)
+                ->get();
+        }
+
         return Inertia::render('mcd/evaluate', [
             'asset' => $asset,
+            'par_numbers' => $parNumbers,
+            'filters' => [
+                'inputted' => $searchTerm,
+            ],
         ]);
-
     }
 
     public function mcdEvaluateAction(Request $request, $id)
+    {
+        $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'par_number' => 'nullable|string|max:1000',
+            'par_remarks' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            DB::transaction(function () use ($asset, $validatedData) {
+                McdInformation::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    [
+                        'role'        => 'mcd',
+                        'par_number'  => $validatedData['par_number'] ?? null,
+                        'remarks'     => $validatedData['par_remarks'] ?? null,
+                        'approver_id' => Auth::id(),
+                        // Set status to 'On-going' or 'Pending' to reflect handoff to the manager
+                        'status'      => 'On-going', 
+                    ]
+                );
+
+                // Optional: Update asset status if needed to track position in workflow
+                // $asset->update(['status' => 'Pending Manager Approval']);
+            });
+
+            return redirect()->route('mcd-dashboard')
+                ->with('success', 'MCD evaluation phase pushed to MCD manager. Asset on standby for manager updates.');
+
+        } catch (\Exception $e) {
+            Log::error("Failed transaction sequence processing MCD evaluation for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An operational database issue halted processing your MCD updates. Please try again.',
+            ]);
+        }
+    }
+
+    public function mcdEvaluateActionOld(Request $request, $id)
     {
 
         $asset = Asset::findOrFail($id);
@@ -1125,6 +1415,89 @@ class AssetController extends Controller
             ]);
         }
 
+    }
+
+    public function mcdManagerEvaluate(Request $request, $id)
+    {
+        $asset = Asset::with(['user', 'classification', 'accounting_information', 'mcd_information'])->findOrFail($id);
+
+        return Inertia::render('mcd-manager/evaluate', [
+            'asset' => $asset
+        ]);
+    }
+
+    public function mcdManagerEvaluateAction(Request $request, $id)
+    {
+        $asset = Asset::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'manager_remarks' => 'required|string|max:1000',
+        ]);
+
+        try {
+            $message = DB::transaction(function () use ($asset, $validatedData, $id) {
+
+            $mcdInfo = McdInformation::where('asset_id', $asset->id)->firstOrFail();
+
+                $mcdInfo->update([
+                    'manager_remarks' => $validatedData['manager_remarks'],
+                    'manager_check'   => '1',
+                    'status'          => 'Approved',
+                ]);
+
+                $currentApproval = AssetApproval::where('asset_id', $id)
+                    ->where('is_current', true)
+                    ->firstOrFail();
+
+                $currentApproval->update([
+                    'is_current'    => false,
+                    'status'        => 'Approved',
+                    'approver_id'   => Auth::id(),
+                    'approval_date' => now(),
+                    'remarks'       => $validatedData['manager_remarks'],
+                ]);
+
+                AssetStatus::updateOrCreate(
+                    ['asset_id' => $asset->id],
+                    [
+                        'seq_no'        => $currentApproval->seq_no,
+                        'status'        => 'Approved',
+                        'approver_id'   => Auth::id(),
+                        'approval_date' => now(),
+                        'remarks'       => $validatedData['manager_remarks'],
+                    ]
+                );
+
+                $nextApproval = AssetApproval::where('asset_id', $id)
+                    ->where('seq_no', $currentApproval->seq_no + 1)
+                    ->first();
+
+                if ($nextApproval) {
+                    $nextApproval->update([
+                        'is_current' => true,
+                        'status'     => 'On-going',
+                    ]);
+
+                    $asset->update(['status' => 'On-going']);
+
+                    return 'MCD Phase tracking details logged. Asset evaluation advanced to the next milestone sequence.';
+                }
+
+                $asset->update(['status' => 'Completed']);
+
+                return 'MCD Phase tracking details logged. All tracking sequence steps complete; asset pipeline marked as Completed.';
+            });
+
+            return redirect()->back()
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            Log::error("Failed transaction processing MCD Manager evaluation for Asset ID {$id}: " . $e->getMessage());
+
+            return back()->withErrors([
+                'error' => 'An operational database issue halted processing your MCD updates. Please try again.',
+            ]);
+        }
     }
 
     public function mepeoEvaluate($id)

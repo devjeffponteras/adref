@@ -8,6 +8,11 @@ interface Classification {
     name: string;
 }
 
+interface AssetDisposal {
+    id: number;
+    [key: string]: any;
+}
+
 interface Asset {
     id: number;
     accountable_personnel: string;
@@ -20,7 +25,8 @@ interface Asset {
     assessment_report_path: string | null;
     asset_photo_path: string | null;
     created_at: string;
-    classification: Classification | null; 
+    classification: Classification | null;
+    asset_disposal?: AssetDisposal | null;
 }
 
 interface MyAssetsProps {
@@ -277,19 +283,19 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                             </td>
 
                                             <td className="px-6 py-3.5">
-                                                <span
+                                                {/* <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(
                                                     asset.status
                                                     )} ${
-                                                    (asset.status?.toLowerCase() === 'pending' || !asset.status)
+                                                    (asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status)
                                                         ? 'group-hover:hidden'
                                                         : ''
                                                     }`}
                                                 >
                                                     {asset.status || 'Pending'}
-                                                </span>
+                                                </span> */}
 
-                                                {(asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status) && (
+                                                {/* {(asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status) && (
                                                     <Link
                                                     href={`/asset/edit-asset/${asset.id}`}
                                                     className="hidden group-hover:inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 shadow text-zinc-700 hover:text-emerald-600 hover:border-emerald-300 transition-colors text-xs"
@@ -297,7 +303,16 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                     <Edit className="h-3 w-3" />
                                                     Edit
                                                     </Link>
-                                                )}
+                                                )} */}
+
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(asset.status)}`}
+                                                >
+                                                    {asset.status || 'Pending'} { asset.asset_disposal && <div className='inline-flex items-center text-nowrap'>&nbsp; and <span className='inline-flex items-center text-nowrap text-red-700'>&nbsp; Disposed</span> </div>}
+                                                </span>
+
+                                                
+                                                   
                                             </td>
 
                                             <td className="px-6 py-3.5">

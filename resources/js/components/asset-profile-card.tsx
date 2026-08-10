@@ -256,7 +256,7 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
 
           <div className="bg-amber-50/40 p-4 rounded-xl border border-amber-100/50">
             <span className="text-amber-800 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-1.5">
-              <AlertCircle className="w-4 h-4 text-amber-600" /> Reasons for Condemnation &amp; Disposal
+              <AlertCircle className="w-4 h-4 text-amber-600" /> Reason for Disposal
             </span>
             <p className="text-gray-600 leading-relaxed text-sm pl-0.5">
               {asset.reasons_for_disposal || 'No reason specified'}

@@ -28,6 +28,8 @@ export interface Asset {
     mepeo_information?: MepeoInfo | null;
     manager_information?: ManagerInfo | null;
     asid_information?: AsidInfo | null;
+    mcd_information?: McdInfo | null;
+    asset_disposal?: AssetDisposal | null;
 }
 
 export interface Approver {
@@ -60,6 +62,18 @@ export interface MepeoInfo {
     waste_characteristic_id: number;
 }
 
+export interface McdInfo {
+    id: number;
+    asset_id: number;
+    role: string;
+    par_number: string;
+    remarks: string;
+    approver_id: number;
+    status: string;
+    manager_remarks: string;
+    manager_check: string;
+}
+
 export interface ManagerInfo {
     id: number;
     asset_direction: string;
@@ -74,4 +88,11 @@ export interface AsidInfo {
     checked_by: string;
     disposition: string;
     reviewed_by: string;
+}
+
+export interface AssetDisposal {
+    id: number;
+    asset_id: number;
+    user_id: number;
+    others: string;
 }

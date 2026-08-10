@@ -1,10 +1,9 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Link, useForm } from '@inertiajs/react';
-import { FileText, Plus, X, Upload, Send } from 'lucide-react';
+import { FileText, XIcon, X, Upload, CircleCheck, Send } from 'lucide-react';
 import React from 'react';
-import { WelcomeNote } from '@/components/welcome-note';
 import { createAsset } from '@/routes';
-import { ACCOUNTABLE_PERSONNEL, END_USER_DEPARTMENT } from '@config/dropdown_data';
+// import { ACCOUNTABLE_PERSONNEL, END_USER_DEPARTMENT } from '@config/dropdown_data';
 
 interface Classification {
     id: number;
@@ -13,6 +12,7 @@ interface Classification {
 
 interface Props {
     classifications: Classification[];
+    hris_users?: Array<any>;
 }
 
 // Updated interfaces to include descriptions per file item
@@ -39,10 +39,10 @@ const generateUUID = () => {
     });
 };
 
-export default function CreateAsset({ classifications }: Props) {
+export default function CreateAsset({ classifications, hris_users = [] }: Props) {
 
-    const { auth } = usePage().props as any;
-    console.log(auth?.user);
+    const { auth, flash } = usePage().props as any;
+    // console.log(auth?.user);
 
     const user_department = auth?.user?.department?.name?.toUpperCase() || 'N/A';
 
@@ -78,6 +78,7 @@ export default function CreateAsset({ classifications }: Props) {
                 'asset_classification_id', 'reasons_for_disposal', 'asset_location', 
                 'assessment_reports', 'asset_photos'
             ),
+            onError: (err) => console.log('Validation Errors:', err),
         });
     };
 
@@ -93,6 +94,20 @@ export default function CreateAsset({ classifications }: Props) {
                 <span className="text-red-500">{errors['asset_photos.0.file']}</span>
             )}
 
+            {flash?.success && (
+                <div className="mb-4 p-4 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center shadow-xs animate-fade-in">
+                    <CircleCheck className="h-5 w-5 mr-2 text-emerald-600" />
+                    <span className="font-semibold">{flash.success}</span>
+                </div>
+            )}
+
+            {flash?.error && (
+                <div className="mb-4 p-4 text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl flex items-center shadow-xs">
+                    <XIcon className="h-5 w-5 mr-2 text-red-600" />
+                    <span className="font-semibold">{flash.error}</span>
+                </div>
+            )}
+
             <div className="w-full p-4 space-y-6">
             
                 <div className="bg-gray-100 p-6 rounded-xl shadow border border-zinc-200">
@@ -106,7 +121,17 @@ export default function CreateAsset({ classifications }: Props) {
 
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
-                        
+
+                        {Object.keys(errors).length > 0 && (
+                            <div style={{ color: 'red', border: '1px solid red', padding: '10px' }}>
+                                <ul>
+                                    {Object.entries(errors).map(([key, msg]) => (
+                                    <li key={key}>{key}: {msg}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
                         {/* Form Inputs Grid System */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Accountable Personnel */}
@@ -114,19 +139,46 @@ export default function CreateAsset({ classifications }: Props) {
                                 <label htmlFor="accountable_personnel" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                                     Accountable Personnel
                                 </label>
-                                <select
-                                    id="accountable_personnel"
-                                    value={data.accountable_personnel || ''}
-                                    onChange={e => setData('accountable_personnel', e.target.value)}
-                                    className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
-                                >
-                                    <option value="" disabled>Select personnel...</option>
-                                    {ACCOUNTABLE_PERSONNEL.map((person) => (
-                                        <option key={person.value} value={person.value}>
-                                            {person.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                {hris_users.length > 0 ?
+                                    <select 
+                                        value={data.accountable_personnel} 
+                                        onChange={e => setData('accountable_personnel', e.target.value)}
+                                        className='px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors'
+                                        >
+                                        <option value="">Select personnel . .</option>
+                                        {hris_users.map((user) => (
+                                            <option key={user.id || user.emp_code} value={user.id || user.emp_code}>
+                                            {user.name || `${user.first_name} ${user.last_name}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    :
+                                    // <select
+                                    //     id="accountable_personnel"
+                                    //     value={data.accountable_personnel || ''}
+                                    //     onChange={e => setData('accountable_personnel', e.target.value)}
+                                    //     className="px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+                                    // >
+                                    //     <option value="" disabled>Select personnel . .</option>
+                                    //     {ACCOUNTABLE_PERSONNEL.map((person) => (
+                                    //         <option key={person.value} value={person.value}>
+                                    //             {person.label}
+                                    //         </option>
+                                    //     ))}
+                                    // </select>
+                                    <>
+                                        <input
+                                            type="text"
+                                            id="accountable_personnel"
+                                            value={data.accountable_personnel}
+                                            onChange={e => setData('accountable_personnel', e.target.value)}
+                                            className="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+                                        />
+                                        <small className='text-xs italic text-orange-400'>Note: No department users found or connection to server is disconnected. Input field activated as alternative.</small>
+                                        {errors.accountable_personnel && <span className="text-xs text-rose-500 font-medium">{errors.accountable_personnel}</span>}
+                                    </>
+                                }
+
                                 {errors.accountable_personnel && <span className="text-xs text-rose-500 font-medium">{errors.accountable_personnel}</span>}
                             </div>
 
@@ -299,153 +351,195 @@ export default function CreateAsset({ classifications }: Props) {
                             
                             {/* Document Attachment Section */}
                             <div className="flex flex-col gap-3">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    Assessment Reports
-                                </label>
+                            <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Assessment Reports
+                            </label>
 
-                                <div className='flex flex-col gap-4 py-3 px-2 border-dotted border-2 shadow rounded-lg border-gray-300'>
-                                    {data.assessment_reports.map((item, index) => (
-                                        <div key={item.id} className="space-y-2 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                                            <div className="flex items-center gap-2">
-                                                <label className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group">
-                                                    <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
-                                                        {item.file ? item.file.name : `Choose assessment report #${index + 1}...`}
-                                                    </span>
-                                                    <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
-                                                    <input 
-                                                        type="file" 
-                                                        className="hidden" 
-                                                        onChange={e => {
-                                                            const files = e.target.files;
-                                                            const updatedReports = [...data.assessment_reports];
-                                                            updatedReports[index].file = files ? files[0] : null;
-                                                            setData('assessment_reports', updatedReports);
-                                                        }}
-                                                    />
-                                                </label>
+                            <div className="flex flex-col gap-4 py-3 px-2 border-dotted border-2 shadow rounded-lg border-gray-300">
+                                {data.assessment_reports.map((item, index) => (
+                                <div key={item.id} className="space-y-2 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                                    <div className="flex items-center gap-2">
+                                    <label 
+                                        htmlFor={`assessment-file-${item.id}`}
+                                        className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group"
+                                    >
+                                        <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
+                                        {item.file ? item.file.name : `Choose assessment report #${index + 1}...`}
+                                        </span>
+                                        <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+                                    </label>
 
-                                                {data.assessment_reports.length > 1 && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const updatedReports = data.assessment_reports.filter(r => r.id !== item.id);
-                                                            setData('assessment_reports', updatedReports);
-                                                        }}
-                                                        className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                )}
-                                            </div>
+                                    <input 
+                                        id={`assessment-file-${item.id}`}
+                                        type="file" 
+                                        className="hidden" 
+                                        onChange={e => {
+                                        const files = e.target.files;
+                                        const updated = data.assessment_reports.map((report, i) => 
+                                            i === index ? { ...report, file: files && files.length > 0 ? files[0] : null } : report
+                                        );
+                                        setData('assessment_reports', updated);
+                                        }}
+                                    />
 
-                                            {/* Dynamic description input tied directly to this specific report instance */}
-                                            <div className="flex flex-col gap-1 pl-1">
-                                                <input
-                                                    type="text"
-                                                    value={item.description}
-                                                    placeholder={`Report #${index + 1} Description`}
-                                                    onChange={e => {
-                                                        const updatedReports = [...data.assessment_reports];
-                                                        updatedReports[index].description = e.target.value;
-                                                        setData('assessment_reports', updatedReports);
-                                                    }}
-                                                    className="px-4 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors w-full"
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
+                                    {data.assessment_reports.length > 1 && (
+                                        <button
+                                        type="button"
+                                        onClick={() => {
+                                            setData('assessment_reports', data.assessment_reports.filter(r => r.id !== item.id));
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                        >
+                                        <X className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                    </div>
 
-                                    {errors.assessment_reports && <span className="text-xs text-rose-500 font-medium">{errors.assessment_reports}</span>}
+                                    {/* Display file item validation errors */}
+                                    {errors[`assessment_reports.${index}.file`] && (
+                                    <span className="text-xs text-rose-500 font-medium block">
+                                        {errors[`assessment_reports.${index}.file`]}
+                                    </span>
+                                    )}
+
+                                    <div className="flex flex-col gap-1 pl-1">
+                                    <input
+                                        type="text"
+                                        value={item.description}
+                                        placeholder={`Report #${index + 1} Description`}
+                                        onChange={e => {
+                                        const updated = data.assessment_reports.map((report, i) => 
+                                            i === index ? { ...report, description: e.target.value } : report
+                                        );
+                                        setData('assessment_reports', updated);
+                                        }}
+                                        className="px-4 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors w-full"
+                                    />
+
+                                    {/* Display description item validation errors */}
+                                    {errors[`assessment_reports.${index}.description`] && (
+                                        <span className="text-xs text-rose-500 font-medium block">
+                                        {errors[`assessment_reports.${index}.description`]}
+                                        </span>
+                                    )}
+                                    </div>
                                 </div>
+                                ))}
 
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setData('assessment_reports', [
-                                            ...data.assessment_reports,
-                                            { id: generateUUID(), file: null, description: '' }
-                                        ]);
-                                    }}
-                                    className="w-fit text-xs rounded-lg font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 hover:bg-emerald-600 hover:text-white"
-                                >
-                                    + Add More Reports
-                                </button>
+                                {errors.assessment_reports && (
+                                <span className="text-xs text-rose-500 font-medium">{errors.assessment_reports}</span>
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                setData('assessment_reports', [
+                                    ...data.assessment_reports,
+                                    { id: generateUUID(), file: null, description: '' }
+                                ]);
+                                }}
+                                className="w-fit text-xs rounded-lg font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 hover:bg-emerald-600 hover:text-white"
+                            >
+                                + Add More Reports
+                            </button>
                             </div>
 
                             {/* Dynamic Photo Upload Field */}
                             <div className="flex flex-col gap-3">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
-                                    Photos of the Asset
-                                </label>
+                            <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Photos of the Asset
+                            </label>
 
-                                <div className='flex flex-col gap-4 py-3 px-2 border-dotted border-2 shadow rounded-lg border-gray-300'>
-                                    {data.asset_photos.map((item, index) => (
-                                        <div key={item.id} className="space-y-2 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                                            <div className="flex items-center gap-2">
-                                                <label className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group">
-                                                    <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
-                                                        {item.file ? item.file.name : `Choose physical image file #${index + 1}...`}
-                                                    </span>
-                                                    <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
-                                                    <input 
-                                                        type="file" 
-                                                        accept="image/*"
-                                                        className="hidden" 
-                                                        onChange={e => {
-                                                            const files = e.target.files;
-                                                            const updatedPhotos = [...data.asset_photos];
-                                                            updatedPhotos[index].file = files ? files[0] : null;
-                                                            setData('asset_photos', updatedPhotos);
-                                                        }}
-                                                    />
-                                                </label>
+                            <div className="flex flex-col gap-4 py-3 px-2 border-dotted border-2 shadow rounded-lg border-gray-300">
+                                {data.asset_photos.map((item, index) => (
+                                <div key={item.id} className="space-y-2 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                                    <div className="flex items-center gap-2">
+                                    <label 
+                                        htmlFor={`photo-file-${item.id}`}
+                                        className="flex-1 flex items-center justify-between border border-gray-200 bg-gray-50/50 hover:bg-gray-50 rounded-lg px-4 py-2 cursor-pointer transition-colors group"
+                                    >
+                                        <span className="text-sm text-gray-500 truncate max-w-50 md:max-w-75">
+                                        {item.file ? item.file.name : `Choose physical image file #${index + 1}...`}
+                                        </span>
+                                        <Upload className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+                                    </label>
 
-                                                {data.asset_photos.length > 1 && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const updatedPhotos = data.asset_photos.filter(p => p.id !== item.id);
-                                                            setData('asset_photos', updatedPhotos);
-                                                        }}
-                                                        className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </button>
-                                                )}
-                                            </div>
+                                    <input 
+                                        id={`photo-file-${item.id}`}
+                                        type="file" 
+                                        accept="image/*"
+                                        className="hidden" 
+                                        onChange={e => {
+                                        const files = e.target.files;
+                                        const updated = data.asset_photos.map((photo, i) => 
+                                            i === index ? { ...photo, file: files && files.length > 0 ? files[0] : null } : photo
+                                        );
+                                        setData('asset_photos', updated);
+                                        }}
+                                    />
 
-                                            {/* Dynamic description input tied directly to this specific photo instance */}
-                                            <div className="flex flex-col gap-1 pl-1">
-                                                <input
-                                                    type="text"
-                                                    value={item.description}
-                                                    placeholder={`Photo #${index + 1} Description`}
-                                                    onChange={e => {
-                                                        const updatedPhotos = [...data.asset_photos];
-                                                        updatedPhotos[index].description = e.target.value;
-                                                        setData('asset_photos', updatedPhotos);
-                                                    }}
-                                                    className="px-4 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors w-full"
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
+                                    {data.asset_photos.length > 1 && (
+                                        <button
+                                        type="button"
+                                        onClick={() => {
+                                            setData('asset_photos', data.asset_photos.filter(p => p.id !== item.id));
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                        >
+                                        <X className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                    </div>
 
-                                    {errors.asset_photos && <span className="text-xs text-rose-500 font-medium">{errors.asset_photos}</span>}
+                                    {/* Display photo item validation errors */}
+                                    {errors[`asset_photos.${index}.file`] && (
+                                    <span className="text-xs text-rose-500 font-medium block">
+                                        {errors[`asset_photos.${index}.file`]}
+                                    </span>
+                                    )}
+
+                                    <div className="flex flex-col gap-1 pl-1">
+                                    <input
+                                        type="text"
+                                        value={item.description}
+                                        placeholder={`Photo #${index + 1} Description`}
+                                        onChange={e => {
+                                        const updated = data.asset_photos.map((photo, i) => 
+                                            i === index ? { ...photo, description: e.target.value } : photo
+                                        );
+                                        setData('asset_photos', updated);
+                                        }}
+                                        className="px-4 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors w-full"
+                                    />
+
+                                    {/* Display description item validation errors */}
+                                    {errors[`asset_photos.${index}.description`] && (
+                                        <span className="text-xs text-rose-500 font-medium block">
+                                        {errors[`asset_photos.${index}.description`]}
+                                        </span>
+                                    )}
+                                    </div>
                                 </div>
-                                
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setData('asset_photos', [
-                                            ...data.asset_photos,
-                                            { id: generateUUID(), file: null, description: '' }
-                                        ]);
-                                    }}
-                                    className="w-fit text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 rounded-lg hover:bg-emerald-600 hover:text-white"
-                                >
-                                    + Add More Photos
-                                </button>
+                                ))}
+
+                                {errors.asset_photos && (
+                                <span className="text-xs text-rose-500 font-medium">{errors.asset_photos}</span>
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                setData('asset_photos', [
+                                    ...data.asset_photos,
+                                    { id: generateUUID(), file: null, description: '' }
+                                ]);
+                                }}
+                                className="w-fit text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1 transition-colors cursor-pointer border border-emerald-500 p-2 rounded-lg hover:bg-emerald-600 hover:text-white"
+                            >
+                                + Add More Photos
+                            </button>
                             </div>
                         </div>
 

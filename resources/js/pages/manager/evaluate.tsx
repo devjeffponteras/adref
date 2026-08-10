@@ -25,6 +25,7 @@ interface ManagerInformation {
     asset_direction: string;
     manager_disposition: string;
     bidding_price: number;
+    bidding_cycle?: number | string | null;
     reviewed_by: string;
 }
 
@@ -68,6 +69,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
         reviewed_by: asset.asid_information?.reviewed_by || '',
         asset_direction: asset.manager_information?.asset_direction || '',
         bidding_price: asset.manager_information?.bidding_price || '',
+        bidding_cycle: asset.manager_information?.bidding_cycle || '',
         manager_disposition: asset.manager_information?.manager_disposition || '',
         manager_reviewed_by: '',
 
@@ -147,7 +149,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
 
                     {/* Section 2: Disposition */}
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-                        <div className="xl:col-span-6 flex flex-col gap-1.5">
+                        <div className="xl:col-span-6 flex flex-col gap-1.5 hidden">
                             <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                 Disposition
                             </label>
@@ -195,10 +197,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
 
                     {/* Section 3: Reviewed and Noted By */}
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
-                        
-
                         <div className="xl:col-span-5 hidden xl:block"></div>
-
                     </div>
 
                 </div>
@@ -208,7 +207,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                     {/* Managers Input Form Card */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
                         <h3 className="text-gray-900 font-bold text-lg tracking-tight">
-                            Evaluation Information for Managers
+                            Evaluation Information for ASID Manager
                             
                             {isLockedManager && 
                             <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
@@ -223,20 +222,20 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
                             <div className="xl:col-span-6 flex flex-col gap-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
-                                    Asset Direction
+                                    Asset Disposition
                                 </label>
                                 <select 
                                     name="asset_direction" 
                                     id="asset_direction"
                                     disabled={isLockedManager}
-                                    value={data.asset_direction || ""} // Tracks selected choice
+                                    value={data.asset_direction || ""}
                                     onChange={(e) => {
                                         const val = e.target.value;
                                         setData(prev => ({
                                             ...prev,
                                             asset_direction: val,
-                                            // If user switches away from Bidding, default the bidding price to 0
-                                            ...(val !== 'For Bidding' && { bidding_price: 0 })
+                                            // Reset bidding price and bidding cycle if switched away from 'For Bidding'
+                                            ...(val !== 'For Bidding' && { bidding_price: 0, bidding_cycle: '' })
                                         }));
                                     }}
                                     className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
@@ -245,40 +244,20 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                             : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                         }`}
                                 >
-                                    <option value="" disabled>Select Asset Direction</option>
+                                    <option value="" disabled>Select Asset Disposition</option>
                                     <option value="For Bidding">For Bidding</option>
                                     <option value="For Donation">For Donation</option>
                                     <option value="Special Arrangement">Special Arrangement</option>
-                                    <option value="For Disposal">For Disposal</option>
+                                    <option value="Deemed as SCRAP">Deemed as SCRAP</option>
                                 </select>
                                 
-                                {errors.remarks && <span className="text-red-500 text-xs">{errors.remarks}</span>}
+                                {errors.asset_direction && <span className="text-red-500 text-xs">{errors.asset_direction}</span>}
                             </div>
-
-                            <div className="xl:col-span-6 flex flex-col gap-1.5">
-                                <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
-                                    Disposition
-                                </label>
-                                <input 
-                                    type="text" 
-                                    name="manager_disposition"
-                                    disabled={isLockedManager}
-                                    value={data.manager_disposition || ""}
-                                    onChange={(e) => setData('manager_disposition', e.target.value)}
-                                    placeholder="Type disposition.."
-                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
-                                        ${isLockedManager
-                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
-                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
-                                        }`}
-                                />
-                            </div>
-
                         </div>
 
-                        {/* Section 2: Reviewed and Noted By & Conditional Bidding Price */}
+                        {/* Section 2: Reviewed and Noted By & Conditional Bidding Fields */}
                         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
-                            <div className="xl:col-span-6 flex flex-col gap-1.5">
+                            <div className={`${data.asset_direction === 'For Bidding' ? 'xl:col-span-4' : 'xl:col-span-6'} flex flex-col gap-1.5`}>
                                 <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                     Reviewed and Noted By
                                 </label>
@@ -294,24 +273,47 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
 
                             {/* ONLY VISIBLE IF "For Bidding" IS CHOSEN */}
                             {data.asset_direction === 'For Bidding' && (
-                                <div className="xl:col-span-6 flex flex-col gap-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
-                                        Bidding Base Price
-                                    </label>
-                                    <input 
-                                        type="number" 
-                                        name='bidding_price'
-                                        disabled={isLockedManager}
-                                        value={data.bidding_price}
-                                        onChange={(e) => setData('bidding_price', Number(e.target.value))}
-                                        placeholder="Type bidding base price.."
-                                        className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
-                                            ${isLockedManager
-                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
-                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
-                                            }`}
-                                    />
-                                </div>
+                                <>
+                                    <div className="xl:col-span-4 flex flex-col gap-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
+                                            Bidding Base Price
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name='bidding_price'
+                                            disabled={isLockedManager}
+                                            value={data.bidding_price}
+                                            onChange={(e) => setData('bidding_price', Number(e.target.value))}
+                                            placeholder="Type bidding base price.."
+                                            className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                                ${isLockedManager
+                                                    ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                    : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                                }`}
+                                        />
+                                        {errors.bidding_price && <span className="text-red-500 text-xs">{errors.bidding_price}</span>}
+                                    </div>
+
+                                    <div className="xl:col-span-4 flex flex-col gap-1.5">
+                                        <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
+                                            Bidding Cycle
+                                        </label>
+                                        <input 
+                                            type="number" 
+                                            name='bidding_cycle'
+                                            disabled={isLockedManager}
+                                            value={data.bidding_cycle}
+                                            onChange={(e) => setData('bidding_cycle', e.target.value === '' ? '' : Number(e.target.value))}
+                                            placeholder="Enter cycle number (e.g., 1)"
+                                            className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                                ${isLockedManager
+                                                    ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                                    : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                                }`}
+                                        />
+                                        {errors.bidding_cycle && <span className="text-red-500 text-xs">{errors.bidding_cycle}</span>}
+                                    </div>
+                                </>
                             )}
                         </div>
 

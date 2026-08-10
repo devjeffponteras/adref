@@ -1,7 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowLeftCircle } from 'lucide-react';
+import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowRightCircle } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
-import { WelcomeNote } from '@/components/welcome-note';
 
 interface User {
     id: number;
@@ -96,7 +95,7 @@ return '';
     return dateString.split(' ')[0].split('T')[0];
 };
 
-export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteCharacteristics = [] }: EvaluateProps) {
+export default function McdManagerEvaluate({ asset, wasteClassifications = [], wasteCharacteristics = [] }: EvaluateProps) {
     const isLocked = !!asset.mcd_information;
     const isLockedMepeo = !!asset.mepeo_information;
 
@@ -107,25 +106,19 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
         acquisition_cost: asset.accounting_information?.acquisition_cost ? String(asset.accounting_information.acquisition_cost) : '',
         book_value: asset.accounting_information?.book_value ? String(asset.accounting_information.book_value) : '',
         remarks: asset.accounting_information?.remarks || '',
+        manager_remarks: asset.mcd_information?.manager_remarks || '',
         checked_by: 'Lou Agusin',
         conformed_by: '',
 
         par_number: asset.mcd_information?.par_number || '',
         par_remarks: asset.mcd_information?.remarks || '',
-        manager_remarks: asset.mcd_information?.manager_remarks || '',
-        manager_check: asset.mcd_information?.manager_check || '',
-
-        // These IDs are what your backend relies on for relationships
-        waste_classification_id: asset.mepeo_information?.waste_classification_id || '',
-        waste_characteristic_id: asset.mepeo_information?.waste_characteristic_id || '',
-        mepeo_remarks: asset.mepeo_information?.remarks || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/mepeo-evaluate/${asset.id}/action`);
+        post(`/mcd-manager-evaluate/${asset.id}/action`);
     };
-
+  
     return (
         <>
             <Head title="Asset Evaluation - MEPEO" />
@@ -256,7 +249,7 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
                         {isLocked && (
                         <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
                             <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
-                            Approved
+                            Approved by MCD Evaluator
                         </span>
                         )}
                     </h2>
@@ -289,130 +282,46 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
                     <h2 className="text-lg font-bold text-gray-800 mb-4">
                         MCD Manager
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-end">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">
-                                Manager's Remarks
-                            </label>
-                            <textarea 
-                                placeholder="Type Manager Remarks.."
-                                disabled
-                                value={data.manager_remarks}
-                                className='w-2xl p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
-                            ></textarea>
-                            {errors.manager_remarks && (
-                                <p className="text-red-500 text-xs mt-1">{errors.manager_remarks}</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Mepeo Section Wrapping Entire Form context */}
-                <div className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-gray-800">Waste Information</h2>
-                        {isLockedMepeo && (
-                            <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider">
-                                <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
-                                Evaluated
-                            </span>
-                        )}
-                    </div>
-                    
                     <form onSubmit={handleSubmit}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            
-                            {/* Waste Classification Dropdown Selection */}
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4 w-2xl">
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Waste Classification</label>
-                                <select
-                                    value={data.waste_classification_id}
-                                    onChange={e => setData('waste_classification_id', e.target.value)}
-                                    disabled={isLockedMepeo}
-                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150 h-9.5
-                                        ${isLockedMepeo 
-                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
-                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
-                                        }`}
-                                >
-                                    <option value="">-- Select Classification --</option>
-                                    {wasteClassifications.map(option => (
-                                        <option key={option.id} value={option.id}>
-                                            {option.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.waste_classification_id && <p className="text-xs text-red-500 mt-1">{errors.waste_classification_id}</p>}
-                            </div>
-
-                            {/* Waste Characteristic Dropdown Selection */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Waste Characteristics and Forms</label>
-                                <select
-                                    value={data.waste_characteristic_id}
-                                    onChange={e => setData('waste_characteristic_id', e.target.value)}
-                                    disabled={isLockedMepeo}
-                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150 h-9.5
-                                        ${isLockedMepeo 
-                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
-                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
-                                        }`}
-                                >
-                                    <option value="">-- Select Characteristic --</option>
-                                    {wasteCharacteristics.map(option => (
-                                        <option key={option.id} value={option.id}>
-                                            {option.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.waste_characteristic_id && <p className="text-xs text-red-500 mt-1">{errors.waste_characteristic_id}</p>}
-                            </div>
-
-                            {/* Mepeo Remarks Text Input */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">
+                                    Manager's Remarks
+                                </label>
                                 <textarea 
-                                    placeholder="Type Remarks.."
-                                    value={data.mepeo_remarks}
-                                    onChange={e => setData('mepeo_remarks', e.target.value)}
-                                    disabled={isLockedMepeo}
-                                    className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
-                                        ${isLockedMepeo 
-                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
-                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
-                                        }`}
+                                    placeholder="Type Manager Remarks.."
+                                    value={data.manager_remarks}
+                                    onChange={(e) => setData('manager_remarks', e.target.value)}
+                                    className={`w-full p-2 text-sm border rounded-lg text-gray-700 shadow-xs border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 ${
+                                        errors.manager_remarks ? 'border-red-500' : ''
+                                    }`}
                                 ></textarea>
-                                {errors.mepeo_remarks && <p className="text-xs text-red-500 mt-1">{errors.mepeo_remarks}</p>}
-                            </div>
-                        </div>
-
-                        {/* Correctly Positioned Footer Elements Inside Form Context */}
-                        <div className="flex items-center justify-between mt-6 border-t border-gray-100 pt-4">
-                            <div className='inline-flex items-center gap-3'>
-                                <Link 
-                                    href="/mepeo-dashboard" 
-                                    className="inline-flex items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-hidden"
-                                >
-                                    {isLockedMepeo ? <ArrowLeftCircle className='h-4 w-4 mr-1'></ArrowLeftCircle> : <XIcon className='h-4 w-4 mr-1'></XIcon> }
-                                    {isLockedMepeo ? 'Back to Dashboard' : 'Cancel' }
-                                </Link>
-                                {!isLockedMepeo && (
-                                    <button 
-                                        type="submit"
-                                        disabled={processing}
-                                        className="inline-flex items-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-hidden"
-                                    >
-                                        <CircleCheck className='h-5 w-5 mr-2'></CircleCheck>
-                                        {processing ? 'Submitting...' : 'Submit and Approve'}
-                                    </button>
+                                {errors.manager_remarks && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.manager_remarks}</p>
                                 )}
+                            </div>
+
+                            <div>
+                                <button 
+                                    type="submit"
+                                    disabled={processing}
+                                    className="inline-flex items-center justify-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-none disabled:opacity-50"
+                                >
+                                    <ArrowRightCircle className="w-5 h-5 mr-2" />
+                                    {processing ? 'Processing...' : (
+                                        <>
+                                            Approve & &nbsp;<span className="text-amber-300">Push</span>&nbsp; to Next Stage
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </form>
                 </div>
+                
             </div>
         </>
     );
 }
 
-MepeoEvaluate.layout = (page: React.ReactNode) => page;
+McdManagerEvaluate.layout = (page: React.ReactNode) => page;

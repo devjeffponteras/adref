@@ -1,5 +1,5 @@
 import { Head, useForm, Link, usePage} from '@inertiajs/react';
-import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User, Edit, CalendarDays, ShieldAlert, BadgeHelp, BadgeCheckIcon } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ArrowLeft, MessageSquare, User, Edit, CalendarDays, ShieldAlert, BadgeHelp, BadgeCheckIcon, Trash2 } from 'lucide-react';
 
 interface Approver {
     id: number;
@@ -13,7 +13,7 @@ interface assetStatus {
     seq_no: number;
     is_current: boolean;
     approver_id: number | null;
-    status: 'Approved' | 'On-going' | 'Pending' | 'Rejected';
+    status: 'Approved' | 'On-going' | 'Pending' | 'Rejected' | 'Returned';
     approval_date: string | null;
     remarks: string | null;
     department_name?: string; 
@@ -45,6 +45,11 @@ interface UserProfile {
     department?: Department | null;
 }
 
+interface AssetDisposal {
+    id: number;
+    [key: string]: any;
+}
+
 interface Props {
     asset: {
         id: number;
@@ -52,22 +57,31 @@ interface Props {
         serial_plate_id_number: string;
         model: string;
         brand_make: string;
+        status: string;
         approvals: assetStatus[];
         user?: UserProfile | null;
         asid_information?: AsidInfo | null;
         manager_information?: ManagerInfo | null;
+        asset_disposal?: AssetDisposal | null;
     };
     currentUserId: number;
 }
 
 export default function AssetTimeline({ asset, currentUserId }: Props) {
-    const { auth, flash } = usePage().props as any;
+    const { auth } = usePage().props as any;
 
     const isLockedAsid = !!asset?.asid_information && !asset?.manager_information;
 
     const { data, setData, post, processing, errors } = useForm({
         remarks: '',
     });
+
+    // Asset raw status
+    const isReturned = asset?.status === 'Returned';
+    const isRejected = asset?.status === 'Rejected';
+    const isOnGoing = asset?.status === 'On-going';
+    const isCompleted = asset?.status === 'Completed';
+    const isDisposed = isCompleted && asset?.asset_disposal;
 
     const handleApprove = () => {
         if (confirm('Are you sure you want to sign off on this sequence stage?')) {
@@ -167,11 +181,12 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                         {asset.brand_make || 'Generic'} <span className="font-light text-emerald-100/80">{asset.model || 'Asset Profile'}</span>
                     </h1>
 
-                    <a href={`/asset/edit-asset/${asset.id}`} className='absolute top-4 right-4 px-4 py-2 rounded-lg shadow hover:bg-zinc-100 hover:text-zinc-900 bg-white text-zinc-700 text-sm font-bold inline-flex gap-2'>
-                        <Edit className='h-4 w-4'></Edit>
-                        Update Details
-                    </a>
-
+                    {/* { ((isReturned || !isRejected) && !isOnGoing && !isCompleted ) && 
+                        <a href={`/asset/edit-asset/${asset.id}`} className='absolute top-4 right-4 px-4 py-2 rounded-lg shadow hover:bg-zinc-100 hover:text-zinc-900 bg-white text-zinc-700 text-sm font-bold inline-flex gap-2'>
+                            <Edit className='h-4 w-4'></Edit>
+                            Update Details
+                        </a>
+                    } */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-t border-white/10 pt-4">
                         <div className="flex flex-col gap-0.5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Control Number</span>
@@ -239,7 +254,9 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                         )}
                                         {isStrictlyCurrent && !isLast && (
                                             <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse shadow-xs shadow-amber-500/20">
-                                                <span className="h-1 w-1 rounded-full bg-white animate-ping" /> Current Stage
+                                                <span className="h-1 w-1 rounded-full bg-white animate-ping" /> 
+                                                {isReturned && idx == 0 ? 'Waiting for user updates' : 'Current Stage'}
+                                                
                                             </span>
                                         )}
                                         
@@ -269,7 +286,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                         <div className="sm:col-span-2 flex items-center gap-2 mt-1">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status State:</span> 
                                             <span className={`text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-md ${styles.pillText}`}>
-                                                {step.status}
+                                                {isReturned && idx == 0 ? 'Returned to user' : step.status}
                                             </span>
                                         </div>
 
@@ -320,6 +337,76 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                         );
                     })}
                 </div>
+
+                {/* Final Status Notification Card */}
+                {(isDisposed || isCompleted || isRejected) && (
+                    <div className={`relative overflow-hidden p-6 rounded-2xl shadow-lg border mt-8 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 ${
+                        isDisposed
+                            ? 'bg-linear-to-br from-slate-900 via-zinc-900 to-black border-zinc-800 shadow-black/40 text-white'
+                            : isCompleted 
+                            ? 'bg-linear-to-br from-emerald-600 via-emerald-700 to-emerald-900 border-emerald-500/50 shadow-emerald-900/20 text-white' 
+                            : 'bg-linear-to-br from-rose-600 via-rose-700 to-rose-900 border-rose-500/50 shadow-rose-900/20 text-white'
+                    }`}>
+                        {/* Background Glow Effect */}
+                        <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
+                            isDisposed
+                                ? 'bg-zinc-500/10'
+                                : isCompleted 
+                                ? 'bg-emerald-400/20' 
+                                : 'bg-rose-400/20'
+                        }`} />
+                        
+                        <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                            <div className={`p-4 rounded-2xl shrink-0 shadow-inner ${
+                                isDisposed
+                                    ? 'bg-zinc-800/80 text-zinc-300 border border-zinc-700/50'
+                                    : isCompleted 
+                                    ? 'bg-emerald-800/50 text-emerald-300' 
+                                    : 'bg-rose-800/50 text-rose-300'
+                            }`}>
+                                {isDisposed ? (
+                                    <Trash2 className="h-8 w-8 text-zinc-300" strokeWidth={2}/>
+                                ) : isCompleted ? (
+                                    <BadgeCheckIcon className="h-8 w-8" strokeWidth={2}/>
+                                ) : (
+                                    <ShieldAlert className="h-8 w-8" strokeWidth={2}/>
+                                )}
+                            </div>
+                            
+                            <div className="flex-1">
+                                <span className={`text-[10px] uppercase font-black tracking-widest block mb-1.5 ${
+                                    isDisposed
+                                        ? 'text-zinc-400'
+                                        : isCompleted 
+                                        ? 'text-emerald-300' 
+                                        : 'text-rose-300'
+                                }`}>
+                                    Final Resolution
+                                </span>
+                                <h2 className="font-extrabold text-xl tracking-tight mb-2 drop-shadow-xs">
+                                    {isDisposed
+                                        ? 'Asset Officially Disposed'
+                                        : isCompleted 
+                                        ? 'Ready for Disposal, Asset Disposal Request Officially Approved.' 
+                                        : 'Asset Disposal Request Rejected'}
+                                </h2>
+                                <p className={`text-sm leading-relaxed font-medium ${
+                                    isDisposed
+                                        ? 'text-zinc-300/90'
+                                        : isCompleted 
+                                        ? 'text-emerald-50/90' 
+                                        : 'text-rose-50/90'
+                                }`}>
+                                    {isDisposed
+                                        ? 'This asset has completed the entire evaluation lifecycle and has been officially executed for disposal by ASID.'
+                                        : isCompleted 
+                                        ? 'This asset disposal request has successfully passed all evaluation stages and is now officially signed off for disposal processing by all required departments. Final execution will go through ASID Official.' 
+                                        : 'This asset disposal request has been disapproved by an evaluator and halted from further processing.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

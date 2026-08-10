@@ -29,7 +29,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin/workflow/assets', [AdminController::class, 'assetPass'])->name('admin.asset-pass');
     Route::post('/admin/secret/assets/{id}/approve', [AdminController::class, 'approveAssetPass'])
     ->name('assets.approve-pass');
-
 });
 
 // Add routes here for admin account
@@ -58,12 +57,14 @@ Route::middleware(['auth', 'verified', 'role:asid'])->group(function () {
     Route::post('asid-view/{id}/action', [AssetController::class, 'asidViewAssetAction'])->name('asid-view-asset-action');
     Route::get('asid-evaluate/{id}', [AssetController::class, 'asidEvaluate'])->name('asid-evaluate');
     Route::post('asid-evaluate/{id}/action', [AssetController::class, 'asidEvaluateAction'])->name('asid-evaluate-action');
-
+    
     Route::get('asid-evaluate-manager/{id}', [AssetController::class, 'asidEvaluateManager'])->name('asid-evaluate-manager');
+
+    Route::post('dispose/{id}/action', [AssetController::class, 'disposeAction'])->name('dispose-action');
 
 });
 
-// Add routes here for MANAGER account
+// Add routes here for ASID MANAGER account
 Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
     Route::get('manager-dashboard', [DashboardController::class, 'managerDashboard'])->name('manager-dashboard');
     Route::get('manager-evaluate/{id}', [AssetController::class, 'managerEvaluate'])->name('manager-evaluate');
@@ -89,6 +90,13 @@ Route::middleware(['auth', 'verified', 'role:mcd'])->group(function () {
     Route::get('mcd-dashboard', [DashboardController::class, 'mcdDashboard'])->name('mcd-dashboard');
     Route::get('mcd-evaluate/{id}', [AssetController::class, 'mcdEvaluate'])->name('mcd-evaluate');
     Route::post('mcd-evaluate/{id}/action', [AssetController::class, 'mcdEvaluateAction'])->name('mcd-evaluate-action');
+});
+
+// Add routes here for MCD MANAGER account
+Route::middleware(['auth', 'verified', 'role:mcd-manager'])->group(function () {
+    Route::get('mcd-manager-dashboard', [DashboardController::class, 'mcdManagerDashboard'])->name('mcd-manager-dashboard');
+    Route::get('mcd-manager-evaluate/{id}', [AssetController::class, 'mcdManagerEvaluate'])->name('mcd-manager-evaluate');
+    Route::post('mcd-manager-evaluate/{id}/action', [AssetController::class, 'mcdManagerEvaluateAction'])->name('mcd-manager-evaluate-action');
 });
 
 // Add routes here for MEPEO account
