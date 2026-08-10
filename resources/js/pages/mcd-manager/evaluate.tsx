@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { XIcon, CircleCheck, SquareArrowRightIcon, ArrowRightCircle } from 'lucide-react';
+import { XIcon, CircleCheck, ArrowLeft, SquareArrowRightIcon, ArrowRightCircle } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 
 interface User {
@@ -290,11 +290,17 @@ export default function McdManagerEvaluate({ asset, wasteClassifications = [], w
                                 </label>
                                 <textarea 
                                     placeholder="Type Manager Remarks.."
-                                    value={data.manager_remarks}
+                                    value={data.manager_remarks || ''}
                                     onChange={(e) => setData('manager_remarks', e.target.value)}
-                                    className={`w-full p-2 text-sm border rounded-lg text-gray-700 shadow-xs border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 ${
-                                        errors.manager_remarks ? 'border-red-500' : ''
-                                    }`}
+                                    disabled={Boolean(data.manager_remarks)}
+                                    readOnly={Boolean(data.manager_remarks)}
+                                    className={
+                                        data.manager_remarks
+                                            ? "w-full p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
+                                            : `w-full p-2 text-sm border rounded-lg text-gray-700 shadow-xs border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 ${
+                                                errors.manager_remarks ? 'border-red-500' : ''
+                                            }`
+                                    }
                                 ></textarea>
                                 {errors.manager_remarks && (
                                     <p className="text-red-500 text-xs mt-1">{errors.manager_remarks}</p>
@@ -302,18 +308,29 @@ export default function McdManagerEvaluate({ asset, wasteClassifications = [], w
                             </div>
 
                             <div>
-                                <button 
-                                    type="submit"
-                                    disabled={processing}
-                                    className="inline-flex items-center justify-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-none disabled:opacity-50"
-                                >
-                                    <ArrowRightCircle className="w-5 h-5 mr-2" />
-                                    {processing ? 'Processing...' : (
-                                        <>
-                                            Approve & &nbsp;<span className="text-amber-300">Push</span>&nbsp; to Next Stage
-                                        </>
-                                    )}
-                                </button>
+                                <Link 
+                                        href="/mcd-manager-dashboard"
+                                        className="inline-flex mr-3 items-center cursor-pointer px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-hidden"
+                                    >
+                                        <ArrowLeft className="w-5 h-5 mr-2" />
+                                        Back to Dashboard
+                                </Link>
+                                {data.manager_remarks ? (
+                                    ''
+                                ) : (
+                                    <button 
+                                        type="submit"
+                                        disabled={processing}
+                                        className="inline-flex items-center justify-center cursor-pointer px-4 py-2 bg-emerald-700 text-sm font-semibold text-white rounded-lg hover:bg-emerald-800 focus:outline-none disabled:opacity-50"
+                                    >
+                                        <ArrowRightCircle className="w-5 h-5 mr-2" />
+                                        {processing ? 'Processing...' : (
+                                            <>
+                                                Approve & &nbsp;<span className="text-amber-300">Push</span>&nbsp; to Next Stage
+                                            </>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </form>

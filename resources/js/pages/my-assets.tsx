@@ -308,7 +308,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                 <span
                                                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(asset.status)}`}
                                                 >
-                                                    {asset.status || 'Pending'} { asset.asset_disposal && <div className='inline-flex items-center text-nowrap'>&nbsp; and <span className='inline-flex items-center text-nowrap text-red-700'>&nbsp; Disposed</span> </div>}
+                                                    {asset.status || 'Pending'} { asset.asset_disposal && <div className='inline-flex items-center text-nowrap'>&nbsp; & <span className='inline-flex items-center text-nowrap text-red-700'>&nbsp; Disposed</span> </div>}
                                                 </span>
 
                                                 

@@ -658,6 +658,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                 <tr>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
@@ -694,8 +695,11 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                 <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
                                                     {item.asset?.control_number || '—'}
                                                 </td>
+                                                <td className="px-4 py-4 text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    {item.asset?.brand_make || ''} {item.asset?.model || ''}
+                                                </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
+                                                    <div className="font-medium text-gray-800 text-sm">{item.asset?.end_user_department || 'Asset Department'}</div>
                                                     <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
