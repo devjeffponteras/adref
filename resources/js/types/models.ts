@@ -30,6 +30,7 @@ export interface Asset {
     asid_information?: AsidInfo | null;
     mcd_information?: McdInfo | null;
     asset_disposal?: AssetDisposal | null;
+    asset_scraps?: AssetScraps | null;
 }
 
 export interface Approver {
@@ -95,4 +96,10 @@ export interface AssetDisposal {
     asset_id: number;
     user_id: number;
     others: string;
+}
+
+export interface AssetScraps {
+    id: number;
+    asset_id: number;
+    status: string;
 }

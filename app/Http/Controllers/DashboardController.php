@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Asset;
 use App\Models\AssetStatus;
 use App\Models\AssetBidding;
+use App\Models\ManagerInformation;
 use App\Models\TemporaryAssetRequest;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,13 +33,11 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $assets = Asset::with(['mepeo_information', 'manager_information', 'assetDisposal'])
-            ->whereHas('mepeo_information', function ($query) {
-                $query->where('waste_characteristic_id', 13); // 13 is SCRAP
-            })
+        $assets = Asset::with(['mepeo_information', 'manager_information', 'assetDisposal', 'mepeo_information', 'asset_scraps'])
             ->orderBy('created_at', 'desc')
             ->get();
-// dd($assetStatuses->toArray());
+
+        // dd($assetStatuses->toArray());
 
         return Inertia::render('asid/dashboard', [
             'assetStatuses' => $assetStatuses,
@@ -156,8 +155,11 @@ class DashboardController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        $assets = Asset::with('manager_information', 'asset_scraps')->get();
+        // dd($assets);
         return Inertia::render('user/dashboard', [
             'temporaryAssets' => $temporaryAssets,
+            'assets' => $assets,
             'filters' => [
                 'search'   => $search,
                 'per_page' => (int) $perPage,

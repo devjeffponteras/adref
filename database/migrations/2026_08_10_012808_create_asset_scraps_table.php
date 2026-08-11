@@ -15,8 +15,11 @@ return new class extends Migration
             $table->id();
             
             // Foreign keys
-            $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
-            $table->foreignId('approver_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('asset_id')
+                ->constrained('assets')
+                ->onDelete('cascade');
+
+            $table->integer('approver_id')->nullable();
             
             // JSON fields for arrays of file paths/data
             $table->json('img_proofs')->nullable();

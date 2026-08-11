@@ -29,6 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('admin/workflow/assets', [AdminController::class, 'assetPass'])->name('admin.asset-pass');
     Route::post('/admin/secret/assets/{id}/approve', [AdminController::class, 'approveAssetPass'])
     ->name('assets.approve-pass');
+
+    // SCRAP routing
+    Route::post('scrap-update/{id}', [AssetController::class, 'scrapUpdate'])
+    ->name('scrap.update');
 });
 
 // Add routes here for admin account
