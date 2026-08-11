@@ -110,4 +110,9 @@ class Asset extends Model implements Auditable
     {
         return $this->hasOne(AssetDisposal::class, 'asset_id');
     }
+
+    public function asset_scraps(): HasOne
+    {
+        return $this->hasOne(AssetScrap::class, 'asset_id');
+    }
 }

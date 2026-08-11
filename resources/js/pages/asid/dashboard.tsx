@@ -19,7 +19,12 @@ import {
     CheckCircle,
     CircleCheck,
     Recycle,
-    BookmarkCheckIcon
+    BookmarkCheckIcon,
+    EyeIcon,
+    FileText,
+    ExternalLink,
+    Download,
+    X
  } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import type { AssetStatusData, Asset } from '@/types/models';
@@ -159,6 +164,40 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
         });
     };
 
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [selectedDocument, setSelectedDocument] = useState<{
+        url: string;
+        title?: string;
+        type?: 'image' | 'pdf' | 'other';
+    } | null>(null);
+
+    const openViewModal = (documentPath: string | null, title: string = 'Scrap Document') => {
+        if (!documentPath) return;
+
+        const fileUrl = documentPath.startsWith('http') ? documentPath : `/storage/${documentPath}`;
+        
+        const extension = documentPath.split('.').pop()?.toLowerCase();
+        let type: 'image' | 'pdf' | 'other' = 'other';
+
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extension || '')) {
+            type = 'image';
+        } else if (extension === 'pdf') {
+            type = 'pdf';
+        }
+
+        setSelectedDocument({
+            url: fileUrl,
+            title,
+            type,
+        });
+        setIsViewModalOpen(true);
+    };
+
+    const closeViewModal = () => {
+        setIsViewModalOpen(false);
+        setSelectedDocument(null);
+    };
+
     // --- Bidding Approved Assets Pagination & Sorting ---
     const [t1PageSize, setT1PageSize] = useState<number>(5);
     const [t1Page, setT1Page] = useState<number>(1);
@@ -229,7 +268,8 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
     );
 
     const scrapTransactions = assetsInfo.filter(item => 
-        item?.mepeo_information?.waste_characteristic_id == 13
+        item?.asset_scraps && item.asset_scraps.id !== null
+        
     );
 
     const assetsForBiddingEntry = assetsInfo.filter(item => 
@@ -239,16 +279,16 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
         !item?.asset_disposal
     );
 
-    console.log(assetsInfo.filter(item => 
-        item?.status === 'Completed' &&
-        item?.manager_information?.asset_direction === 'For Bidding' &&
-        item?.mepeo_information?.waste_classification_id != 13
-    ).map(item => ({
-        id: item.id,
-        asset_disposal: item.asset_disposal,
-        disposal_type: typeof item.asset_disposal,
-        is_array: Array.isArray(item.asset_disposal)
-    })));
+    // console.log(assetsInfo.filter(item => 
+    //     item?.status === 'Completed' &&
+    //     item?.manager_information?.asset_direction === 'For Bidding' &&
+    //     item?.mepeo_information?.waste_classification_id != 13
+    // ).map(item => ({
+    //     id: item.id,
+    //     asset_disposal: item.asset_disposal,
+    //     disposal_type: typeof item.asset_disposal,
+    //     is_array: Array.isArray(item.asset_disposal)
+    // })));
 
     // --- Pagination Logic Helpers ---
     const getPaginatedData = (items: any[], currentPage: number, limit: number) => {
@@ -658,6 +698,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                 <tr>
                                     <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th>
                                     <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
@@ -694,8 +735,11 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                 <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
                                                     {item.asset?.control_number || '—'}
                                                 </td>
+                                                <td className="px-4 py-4 text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    {item.asset?.brand_make || ''} {item.asset?.model || ''}
+                                                </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
+                                                    <div className="font-medium text-gray-800 text-sm">{item.asset?.end_user_department || 'Asset Department'}</div>
                                                     <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
@@ -822,7 +866,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                    ======================================================== */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
                     <div className="overflow-x-auto">
-                        <h3 className='gap-2 font-bold text-sm px-6 py-4 text-gray-900 uppercase mb-0 bg-gray-50 border-b border-slate-200 flex items-center'><LucideMap className='w-5 h-5 text-indigo-600' /> SCRAPS</h3>
+                        <h3 className='gap-2 font-bold text-sm px-6 py-4 text-gray-900 uppercase mb-0 bg-gray-50 border-b border-slate-200 flex items-center'><LucideMap className='w-5 h-5 text-indigo-600' /> DEEMED AS SCRAPS</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
                             <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
                                 <tr>
@@ -830,6 +874,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Accountable Personnel</th>
                                     <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Action</th>
                                 </tr>
                             </thead>
                             
@@ -862,6 +907,24 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
                                                     {item.brand_make || 'Item Brand'} {item.model || 'Item Model'}
+                                                </td>
+                                                <td className="p-3">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const scrap = Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0] : item?.asset_scraps;
+                                                            openViewModal(scrap?.doc_proofs, `Document - ${item?.control_number || 'Scrap Asset'}`);
+                                                        }}
+                                                        disabled={! (Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0]?.doc_proofs : item?.asset_scraps?.doc_proofs)}
+                                                        className={`inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold transition-all px-3 py-1.5 rounded-lg border shadow-xs ${
+                                                            (Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0]?.doc_proofs : item?.asset_scraps?.doc_proofs)
+                                                                ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200/80'
+                                                                : 'text-zinc-400 bg-zinc-100 border-zinc-200 cursor-not-allowed opacity-60'
+                                                        }`}
+                                                    >
+                                                        <EyeIcon className="w-3.5 h-3.5" />
+                                                        View Document
+                                                    </button>
                                                 </td>
                                             </tr>
                                         );
@@ -1033,6 +1096,98 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Document Modal */}
+            {isViewModalOpen && selectedDocument && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-xs transition-opacity">
+                    <div 
+                        className="bg-white rounded-xl shadow-2xl border border-zinc-200 w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden transform transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="px-5 py-3.5 border-b border-zinc-200 flex items-center justify-between bg-zinc-50">
+                            <div className="flex items-center gap-2 truncate">
+                                <div className="p-1.5 rounded-md bg-emerald-100 text-emerald-700">
+                                    <FileText className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-sm font-semibold text-zinc-800 truncate">
+                                    {selectedDocument.title}
+                                </h3>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {/* Download / Open in New Tab Button */}
+                                <a
+                                    href={selectedDocument.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 bg-white border border-zinc-300 px-2.5 py-1.5 rounded transition-colors"
+                                >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Open in new tab</span>
+                                </a>
+                                
+                                <button
+                                    type="button"
+                                    onClick={closeViewModal}
+                                    className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md hover:bg-zinc-200/60 transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Body / Viewer */}
+                        <div className="flex-1 bg-zinc-100/60 p-4 flex items-center justify-center overflow-auto relative">
+                            {selectedDocument.type === 'image' && (
+                                <div className="max-w-full max-h-full flex items-center justify-center">
+                                    <img
+                                        src={selectedDocument.url}
+                                        alt="Uploaded Proof"
+                                        className="max-w-full max-h-[70vh] object-contain rounded-lg border border-zinc-200 shadow-xs bg-white"
+                                    />
+                                </div>
+                            )}
+
+                            {selectedDocument.type === 'pdf' && (
+                                <iframe
+                                    src={selectedDocument.url}
+                                    title="Document Viewer"
+                                    className="w-full h-full rounded-lg border border-zinc-200 bg-white shadow-xs"
+                                />
+                            )}
+
+                            {selectedDocument.type === 'other' && (
+                                <div className="text-center p-8 bg-white rounded-xl border border-zinc-200 shadow-xs max-w-sm">
+                                    <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
+                                    <p className="text-xs text-zinc-600 mb-4">
+                                        Preview not directly supported for this file type.
+                                    </p>
+                                    <a
+                                        href={selectedDocument.url}
+                                        download
+                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg transition-colors"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        Download File
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-5 py-3 border-t border-zinc-200 bg-zinc-50 flex items-center justify-end">
+                            <button
+                                type="button"
+                                onClick={closeViewModal}
+                                className="px-4 py-1.5 text-sm cursor-pointer font-medium text-zinc-700 bg-white border border-zinc-300 hover:bg-zinc-100 rounded transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

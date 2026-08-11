@@ -9,6 +9,7 @@ use App\Models\AssetApproval;
 use App\Models\AssetBidding;
 use App\Models\AssetClassification;
 use App\Models\AssetStatus;
+use App\Models\AssetScrap;
 use App\Models\Bidding;
 use App\Models\Form;
 use App\Models\McdInformation;
@@ -1832,4 +1833,35 @@ class AssetController extends Controller
         }
     }
     // End WorkFlow Controllers
+
+    // SCRAPS CONTROLLERS
+    public function scrapUpdate(Request $request, $id)
+    {   
+        // dd($id);
+        $request->validate([
+            'attachment' => 'required|file|mimes:jpeg,png,jpg,pdf|max:10240', // Max 10MB
+        ]);
+
+        $scrap = AssetScrap::find($id) ?? new AssetScrap();
+
+        if ($request->hasFile('attachment')) {
+
+            if ($scrap->exists && $scrap->doc_proofs && Storage::disk('public')->exists($scrap->doc_proofs)) {
+                Storage::disk('public')->delete($scrap->doc_proofs);
+            }
+
+            $filePath = $request->file('attachment')->store('scrap_proofs', 'public');
+
+            AssetScrap::updateOrCreate(
+                ['asset_id' => $id],
+                [
+                    'doc_proofs' => $filePath,
+                    'status'     => 'Updated',
+                ]
+            );
+        }
+
+        return redirect()->back()->with('success', 'Scrap asset successfully updated.');
+    }
+    // END SCRAPS CONTROLLERS
 }

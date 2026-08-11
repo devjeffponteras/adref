@@ -48,7 +48,7 @@ export default function managerDashboard({ assetStatuses, assets, assetOnBidding
     const historyTransactions = useMemo(() => {
         return safeStatuses.filter(item => 
             item.asset?.mcd_information &&
-            item.asset?.mcd_information?.manager_check == '0' &&
+            (item.asset?.mcd_information?.manager_check == '0' || item?.asset?.mcd_information?.manager_remarks != null) &&
             Number(item.seq_no) < 5
         );
     }, [safeStatuses]);
@@ -284,12 +284,11 @@ export default function managerDashboard({ assetStatuses, assets, assetOnBidding
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
                                                     <Link 
                                                         href={`/mcd-manager-evaluate/${item.asset_id}`} 
-                                                        className="
-                                                        {item.asset?.mcd_information?.manager_check == '0' ? 
-                                                        `inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors outline-1 outline-gray-300 px-3 py-2 rounded hover:bg-amber-50`
-                                                        :
-                                                        `inline-flex items-center gap-1.5 text-sm text-amber-500 hover:text-amber-700 font-medium transition-colors outline-1 outline-amber-300 px-3 py-2 rounded hover:bg-amber-50``
-                                                        }"
+                                                        className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors outline-1 px-3 py-2 rounded hover:bg-amber-50 ${
+                                                            item.asset?.mcd_information?.manager_check == '0'
+                                                                ? "text-gray-500 hover:text-gray-700 outline-gray-300"
+                                                                : "text-amber-500 hover:text-amber-700 outline-amber-300"
+                                                        }`}
                                                     >
                                                         {item.asset?.mcd_information?.manager_check == '0' ? 'Evaluate' : 'View Logs'}
                                                     </Link>
