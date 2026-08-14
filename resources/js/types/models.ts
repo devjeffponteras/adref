@@ -31,6 +31,7 @@ export interface Asset {
     mcd_information?: McdInfo | null;
     asset_disposal?: AssetDisposal | null;
     asset_scraps?: AssetScraps | null;
+    asset_bidding?: AssetBidding | null;
 }
 
 export interface Approver {
@@ -99,6 +100,12 @@ export interface AssetDisposal {
 }
 
 export interface AssetScraps {
+    id: number;
+    asset_id: number;
+    status: string;
+}
+
+export interface AssetBidding {
     id: number;
     asset_id: number;
     status: string;

@@ -429,7 +429,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
-                                            {paginatedT1Data.map((item) => (
+                                            {assetsForBiddingEntry.map((item) => (
                                                 <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors duration-150 group">
                                                     <td className="py-4 px-5">
                                                         <div className="font-mono font-bold text-emerald-800 text-xs bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block mb-1">
@@ -454,7 +454,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                         </p>
                                                     </td>
                                                     <td className="py-4 px-5 text-right align-middle">
-                                                        {item?.asset_disposal ? 
+                                                        {item?.asset_bidding ? 
                                                         <button
                                                             type="button"
                                                             disabled
@@ -688,91 +688,6 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                 <hr className="border-gray-100" />
 
                 {/* ========================================================
-                     All Transactions Table Section
-                   ======================================================== */}
-                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
-                    <div className="overflow-x-auto">
-                        <h3 className='font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-gray-50 border-b border-gray-200 flex gap-2 items-center'><FolderOpen className='w-5 h-5 text-emerald-600' />All Transactions</h3>
-                        <table className="w-full min-w-full divide-y divide-slate-100 text-left align-middle text-sm">
-                            <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
-                                <tr>
-                                    <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th>
-                                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
-                                </tr>
-                            </thead>
-                            
-                            <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {safeStatuses.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
-                                            No active asset disposal data found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    getPaginatedData(safeStatuses, allPage, allLimit).map((item) => {
-                                        const formattedDate = item.created_at 
-                                            ? new Date(item.created_at).toLocaleString('en-US', {
-                                                month: 'short', day: 'numeric', year: 'numeric',
-                                                hour: '2-digit', minute: '2-digit',
-                                            }) : 'No Date Recorded';
-
-                                        return (
-                                            <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
-                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
-                                                    <Link 
-                                                        href={`/assets/${item.asset_id}/asset-status`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-white font-medium transition-colors outline-1 px-2 py-2 rounded-full shadow bg-linear-to-br from-cyan-700 to-[#01a78b]"
-                                                        title='View Status'
-                                                    >
-                                                        <FileSearch2 className='w-5 h-5'  />
-                                                    </Link>
-                                                </td>
-                                                <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.control_number || '—'}
-                                                </td>
-                                                <td className="px-4 py-4 text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.brand_make || ''} {item.asset?.model || ''}
-                                                </td>
-                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800 text-sm">{item.asset?.end_user_department || 'Asset Department'}</div>
-                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
-                                                </td>
-                                                <td className="px-4 py-4 font-medium text-gray-700">
-                                                    {item.approver?.name || 'System Auto'}
-                                                </td>
-                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
-                                                    {formattedDate}
-                                                </td>
-                                                <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    Stage {item.seq_no}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    <TableFooter 
-                        currentPage={allPage}
-                        totalPages={getTotalPages(safeStatuses, allLimit)}
-                        onPageChange={setAllPage}
-                        totalItems={safeStatuses.length}
-                        currentItemsCount={getPaginatedData(safeStatuses, allPage, allLimit).length}
-                        startIndex={(allPage - 1) * allLimit}
-                        itemsPerPage={allLimit}
-                        onItemsPerPageChange={handleLimitChange(setAllLimit, setAllPage)}
-                    />
-                </div>
-
-                <hr className="border-gray-100" />
-
-                {/* ========================================================
                      Final Stages Table Section
                    ======================================================== */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
@@ -942,6 +857,91 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                         startIndex={(scrapsPage - 1) * scrapsLimit}
                         itemsPerPage={scrapsLimit}
                         onItemsPerPageChange={handleLimitChange(setScrapsLimit, setScrapsPage)}
+                    />
+                </div>
+
+                <hr className="border-gray-100" />
+
+                {/* ========================================================
+                     All Transactions Table Section
+                   ======================================================== */}
+                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
+                    <div className="overflow-x-auto">
+                        <h3 className='font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-gray-50 border-b border-gray-200 flex gap-2 items-center'><FolderOpen className='w-5 h-5 text-emerald-600' />All Transactions</h3>
+                        <table className="w-full min-w-full divide-y divide-slate-100 text-left align-middle text-sm">
+                            <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
+                                <tr>
+                                    <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th>
+                                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
+                                    <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
+                                </tr>
+                            </thead>
+                            
+                            <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                {safeStatuses.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
+                                            No active asset disposal data found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    getPaginatedData(safeStatuses, allPage, allLimit).map((item) => {
+                                        const formattedDate = item.created_at 
+                                            ? new Date(item.created_at).toLocaleString('en-US', {
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit',
+                                            }) : 'No Date Recorded';
+
+                                        return (
+                                            <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
+                                                    <Link 
+                                                        href={`/assets/${item.asset_id}/asset-status`} 
+                                                        className="inline-flex items-center gap-1.5 text-sm text-white font-medium transition-colors outline-1 px-2 py-2 rounded-full shadow bg-linear-to-br from-cyan-700 to-[#01a78b]"
+                                                        title='View Status'
+                                                    >
+                                                        <FileSearch2 className='w-5 h-5'  />
+                                                    </Link>
+                                                </td>
+                                                <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    {item.asset?.control_number || '—'}
+                                                </td>
+                                                <td className="px-4 py-4 text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    {item.asset?.brand_make || ''} {item.asset?.model || ''}
+                                                </td>
+                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
+                                                    <div className="font-medium text-gray-800 text-sm">{item.asset?.end_user_department || 'Asset Department'}</div>
+                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
+                                                </td>
+                                                <td className="px-4 py-4 font-medium text-gray-700">
+                                                    {item.approver?.name || 'System Auto'}
+                                                </td>
+                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
+                                                    {formattedDate}
+                                                </td>
+                                                <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                    Stage {item.seq_no}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    <TableFooter 
+                        currentPage={allPage}
+                        totalPages={getTotalPages(safeStatuses, allLimit)}
+                        onPageChange={setAllPage}
+                        totalItems={safeStatuses.length}
+                        currentItemsCount={getPaginatedData(safeStatuses, allPage, allLimit).length}
+                        startIndex={(allPage - 1) * allLimit}
+                        itemsPerPage={allLimit}
+                        onItemsPerPageChange={handleLimitChange(setAllLimit, setAllPage)}
                     />
                 </div>
                 
@@ -1128,7 +1128,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                 >
                                     <ExternalLink className="w-3.5 h-3.5" />
                                     <span className="hidden sm:inline">Open in new tab</span>
-                                </a>
+                                </a> 
                                 
                                 <button
                                     type="button"

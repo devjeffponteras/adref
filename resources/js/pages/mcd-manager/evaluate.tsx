@@ -292,10 +292,10 @@ export default function McdManagerEvaluate({ asset, wasteClassifications = [], w
                                     placeholder="Type Manager Remarks.."
                                     value={data.manager_remarks || ''}
                                     onChange={(e) => setData('manager_remarks', e.target.value)}
-                                    disabled={Boolean(data.manager_remarks)}
-                                    readOnly={Boolean(data.manager_remarks)}
+                                    disabled={Boolean(asset?.mcd_information?.manager_remarks)}
+                                    readOnly={Boolean(asset?.mcd_information?.manager_remarks)}
                                     className={
-                                        data.manager_remarks
+                                        asset?.mcd_information?.manager_remarks
                                             ? "w-full p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
                                             : `w-full p-2 text-sm border rounded-lg text-gray-700 shadow-xs border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 ${
                                                 errors.manager_remarks ? 'border-red-500' : ''
@@ -315,7 +315,7 @@ export default function McdManagerEvaluate({ asset, wasteClassifications = [], w
                                         <ArrowLeft className="w-5 h-5 mr-2" />
                                         Back to Dashboard
                                 </Link>
-                                {data.manager_remarks ? (
+                                {asset?.mcd_information?.manager_remarks ? (
                                     ''
                                 ) : (
                                     <button 
