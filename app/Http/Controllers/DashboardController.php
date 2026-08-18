@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 use App\Models\Asset;
@@ -15,6 +16,29 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     // Dashboards
+
+    public function index(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        $roleName = is_object($user->role) ? ($user->role->name ?? '') : ($user->role ?? 'user');
+        $role = strtolower((string) $roleName);
+
+        return match ($role) {
+            'admin'       => redirect()->route('admin-dashboard'),
+            'asid'        => redirect()->route('asid-dashboard'),
+            'manager'     => redirect()->route('manager-dashboard'),
+            'accounting'  => redirect()->route('accounting-dashboard'),
+            'mcd'         => redirect()->route('mcd-dashboard'),
+            'mcd-manager' => redirect()->route('mcd-manager-dashboard'),
+            'mepeo'       => redirect()->route('mepeo-dashboard'),
+            default       => redirect()->route('user-dashboard'),
+        };
+    }
 
     public function adminDashboard(): Response
     {

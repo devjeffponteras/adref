@@ -217,25 +217,6 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
         setT1Page(1);
     };
 
-    const sortedT1Data = useMemo(() => {
-        let data = [...approvedAssets];
-        if (!t1SortField || !t1SortDir) return data;
-        return data.sort((a, b) => {
-            let valA = a[t1SortField as keyof Asset] ?? '';
-            let valB = b[t1SortField as keyof Asset] ?? '';
-            return t1SortDir === 'asc' 
-                ? String(valA).localeCompare(String(valB)) 
-                : String(valB).localeCompare(String(valA));
-        });
-    }, [approvedAssets, t1SortField, t1SortDir]);
-
-    const paginatedT1Data = useMemo(() => {
-        const start = (t1Page - 1) * t1PageSize;
-        return sortedT1Data.slice(start, start + t1PageSize);
-    }, [sortedT1Data, t1Page, t1PageSize]);
-
-    const t1TotalPages = Math.ceil(sortedT1Data.length / t1PageSize) || 1;
-
     // --- Dynamic Items Per Page Limits ---
     const [completedLimit, setCompletedLimit] = useState(5);
     const [pendingLimit, setPendingLimit] = useState(5);
@@ -272,12 +253,33 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
         
     );
 
-    const assetsForBiddingEntry = assetsInfo.filter(item => 
-        item?.status === 'Completed' &&
-        item?.manager_information?.asset_direction === 'For Bidding' &&
-        item?.mepeo_information?.waste_classification_id != 13 &&
-        !item?.asset_disposal
-    );
+    const assetsForBiddingEntry = useMemo(() => {
+        return assetsInfo.filter(item => 
+            item?.status === 'Completed' &&
+            item?.manager_information?.asset_direction === 'For Bidding' &&
+            item?.mepeo_information?.waste_classification_id != 13 &&
+            !item?.asset_disposal
+        );
+    }, [assetsInfo]);
+
+    const sortedT1Data = useMemo(() => {
+        let data = [...assetsForBiddingEntry];
+        if (!t1SortField || !t1SortDir) return data;
+        return data.sort((a, b) => {
+            let valA = a[t1SortField as keyof Asset] ?? '';
+            let valB = b[t1SortField as keyof Asset] ?? '';
+            return t1SortDir === 'asc' 
+                ? String(valA).localeCompare(String(valB)) 
+                : String(valB).localeCompare(String(valA));
+        });
+    }, [assetsForBiddingEntry, t1SortField, t1SortDir]);
+
+    const paginatedT1Data = useMemo(() => {
+        const start = (t1Page - 1) * t1PageSize;
+        return sortedT1Data.slice(start, start + t1PageSize);
+    }, [sortedT1Data, t1Page, t1PageSize]);
+
+    const t1TotalPages = Math.ceil(sortedT1Data.length / t1PageSize) || 1;
 
     // console.log(assetsInfo.filter(item => 
     //     item?.status === 'Completed' &&
@@ -401,124 +403,203 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                     </div>
                 </div>
 
-                {/* APPROVED STAGING REGISTRY */}
-                <div className="mt-8">
-                    <div className="my-4">
-                        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Approved Assets Registry for Bidding</h1>
-                        <p className="text-sm text-gray-500 mt-1">Review approved items and deploy them directly into active bidding cycles.</p>
+                <div className="w-full inline-flex gap-4">
+
+                    {/* APPROVED STAGING REGISTRY */}
+                    <div className="mt-8 w-1/2">
+                        <div className="my-4">
+                            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Approved Assets Registry for Bidding</h1>
+                            <p className="text-sm text-gray-500 mt-1">Review approved items and deploy them directly into active bidding cycles.</p>
+                        </div>
+
+                        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-6">
+                            {assetsForBiddingEntry.length > 0 ? (
+                                <>
+                                    <div className="overflow-x-auto flex flex-col justify-between max-h-127.25">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-emerald-950/5 border-b border-gray-100 text-xs font-semibold uppercase tracking-wider text-slate-900">
+                                                    <th onClick={() => handleT1Sort('control_number')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
+                                                        <span className="flex items-center">Control No. / Model {renderSortIcon('control_number', t1SortField, t1SortDir)}</span>
+                                                    </th>
+                                                    <th onClick={() => handleT1Sort('accountable_personnel')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
+                                                        <span className="flex items-center">Accountable Personnel {renderSortIcon('accountable_personnel', t1SortField, t1SortDir)}</span>
+                                                    </th>
+                                                    <th onClick={() => handleT1Sort('end_user_department')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
+                                                        <span className="flex items-center">Department {renderSortIcon('end_user_department', t1SortField, t1SortDir)}</span>
+                                                    </th>
+                                                    {/* <th className="py-4 px-5">Description</th> */}
+                                                    <th className="py-4 px-5 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                                                {paginatedT1Data.map((item) => (
+                                                    <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors duration-150 group">
+                                                        <td className="py-4 px-5">
+                                                            <div className="font-mono font-bold text-emerald-800 text-xs bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block mb-1">
+                                                                {item.control_number || 'N/A'}
+                                                            </div>
+                                                            <div className="font-medium text-gray-900 text-xs">
+                                                                {item.brand_make || ''} {item.model || ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 px-5 align-middle">
+                                                            <div className="font-medium text-gray-900 text-xs">{item.accountable_personnel}</div>
+                                                            <div className="text-xs text-gray-400">Created by: {item.user?.name || 'System'}</div>
+                                                        </td>
+                                                        <td className="py-4 px-5 align-middle">
+                                                            <span className="text-xs font-medium">
+                                                                {item.end_user_department === 'INFORMATION COMMUNICATIONS TECHNOLOGY'? 'ICT' : item.end_user_department}
+                                                            </span>
+                                                        </td>
+                                                        {/* <td className="py-4 px-5 align-middle max-w-xs">
+                                                            <p className="truncate text-gray-500 text-sm" title={item.description || ''}>
+                                                                {item.description || <span className="italic text-gray-300">No descriptive brief available</span>}
+                                                            </p>
+                                                        </td> */}
+                                                        <td className="py-4 px-5 text-right align-middle">
+                                                            {item?.asset_bidding ? 
+                                                            <button
+                                                                type="button"
+                                                                disabled
+                                                                className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-lg text-white bg-amber-700 hover:bg-amber-800 active:bg-amber-900 shadow-xs transition-all duration-150 cursor-not-allowed focus:outline-hidden"
+                                                            >
+                                                                <BookmarkCheckIcon className="h-3.5 w-3.5 mr-1.5" />
+                                                                Published
+                                                            </button>
+                                                            :
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOpenConfirmModal(item)}
+                                                                className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-lg text-white bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 shadow-xs transition-all duration-150 cursor-pointer focus:outline-hidden"
+                                                            >
+                                                                <Gavel className="h-3.5 w-3.5 mr-1.5" />
+                                                                Publish
+                                                            </button>
+                                                            }
+                                                            
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {/* Footer row pagination control unit */}
+                                    <div className="bg-zinc-50 border-t border-gray-100 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                                            <span>Showing {Math.min(sortedT1Data.length, (t1Page - 1) * t1PageSize + 1)}–{Math.min(sortedT1Data.length, t1Page * t1PageSize)} of {sortedT1Data.length} records</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1.5 pe-5">
+                                                <span className='text-xs'>Rows:</span>
+                                                <select 
+                                                    value={t1PageSize} 
+                                                    onChange={(e) => { setT1PageSize(Number(e.target.value)); setT1Page(1); }}
+                                                    className="bg-white border border-gray-200 text-gray-700 text-xs rounded-lg p-1 pr-5 focus:outline-hidden focus:border-zinc-500 cursor-pointer"
+                                                >
+                                                    {[5, 10, 25, 50].map(sz => <option key={sz} value={sz}>{sz}</option>)}
+                                                </select>
+                                            </div>
+                                            {Array.from({ length: t1TotalPages }).map((_, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setT1Page(idx + 1)}
+                                                    className={`h-7 w-7 rounded-lg flex items-center justify-center text-xs font-medium border transition-colors cursor-pointer ${t1Page === idx + 1 ? 'bg-zinc-700 border-zinc-800 text-white shadow-xs' : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'}`}
+                                                >
+                                                    {idx + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center text-center p-12 bg-gray-50/50">
+                                    <div className="h-12 w-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 mb-4 border border-purple-100">
+                                        <FolderSync className="h-6 w-6" />
+                                    </div>
+                                    <h3 className="text-sm font-bold text-gray-900">No Approved Assets Available for Bidding</h3>
+                                    <p className="text-xs text-gray-500 max-w-sm mt-1 mx-auto">There are currently no asset items holding for bidding cycle.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-6">
-                        {assetsForBiddingEntry.length > 0 ? (
-                            <>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-emerald-950/5 border-b border-gray-100 text-xs font-semibold uppercase tracking-wider text-slate-900">
-                                                <th onClick={() => handleT1Sort('control_number')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
-                                                    <span className="flex items-center">Control No. / Model {renderSortIcon('control_number', t1SortField, t1SortDir)}</span>
-                                                </th>
-                                                <th onClick={() => handleT1Sort('accountable_personnel')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
-                                                    <span className="flex items-center">Accountable Personnel {renderSortIcon('accountable_personnel', t1SortField, t1SortDir)}</span>
-                                                </th>
-                                                <th onClick={() => handleT1Sort('end_user_department')} className="py-4 px-5 cursor-pointer select-none hover:bg-emerald-950/10">
-                                                    <span className="flex items-center">Department {renderSortIcon('end_user_department', t1SortField, t1SortDir)}</span>
-                                                </th>
-                                                <th className="py-4 px-5">Description</th>
-                                                <th className="py-4 px-5 text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
-                                            {assetsForBiddingEntry.map((item) => (
-                                                <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors duration-150 group">
-                                                    <td className="py-4 px-5">
-                                                        <div className="font-mono font-bold text-emerald-800 text-xs bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block mb-1">
-                                                            {item.control_number || 'N/A'}
-                                                        </div>
-                                                        <div className="font-medium text-gray-900">
-                                                            {item.brand_make || ''} {item.model || ''}
-                                                        </div>
+                    {/* ========================================================
+                    Pending Transactions Table 
+                    ======================================================== */}
+                    <div className="mt-8 rounded-2xl border border-slate-100 shadow-sm bg-white w-1/2 flex flex-col justify-between max-h-148.25 overflow-auto">
+                        <div className="overflow-x-auto">
+                            <h3 className='font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-gray-50 border-b border-gray-200 flex gap-2 items-center'><Folder className='w-5 h-5 text-amber-600' /> Pending Transactions</h3>
+                            <table className="w-full min-w-full divide-y divide-slate-100/40 text-left align-middle text-sm">
+                                <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-slate-800">
+                                    <tr>
+                                        <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Applicant</th>
+                                        {/* <th scope="col" className="px-4 py-3.5 font-semibold">Department</th> */}
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
+                                        <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                
+                                <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                    {pendingTransactions.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} className="text-center py-10 text-gray-400 font-medium bg-white">
+                                                No pending asset evaluations waiting.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        getPaginatedData(pendingTransactions, pendingPage, pendingLimit).map((item) => {
+                                            const formattedDate = item.created_at 
+                                                ? new Date(item.created_at).toLocaleString('en-US', {
+                                                    month: 'short', day: 'numeric', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit',
+                                                }) : 'No Date Recorded';
+
+                                            return (
+                                                <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                    <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors text-xs">
+                                                        {formattedDate}
                                                     </td>
-                                                    <td className="py-4 px-5 align-middle">
-                                                        <div className="font-medium text-gray-900">{item.accountable_personnel}</div>
-                                                        <div className="text-xs text-gray-400">Created by: {item.user?.name || 'System'}</div>
+                                                    <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent capitalize">
+                                                        {item.asset?.user?.name || 'N/A'}
                                                     </td>
-                                                    <td className="py-4 px-5 align-middle">
-                                                        <span className="text-sm font-medium">
-                                                            {item.end_user_department}
-                                                        </span>
+                                                    {/* <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
+                                                        <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'The Users Department'}</div>
+                                                    </td> */}
+                                                    <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700 text-xs">
+                                                        <div className="font-medium text-gray-800">{item.asset?.brand_make || 'Asset Brand / Make'} {item.asset?.model || 'Asset Model'}</div>
                                                     </td>
-                                                    <td className="py-4 px-5 align-middle max-w-xs">
-                                                        <p className="truncate text-gray-500 text-sm" title={item.description || ''}>
-                                                            {item.description || <span className="italic text-gray-300">No descriptive brief available</span>}
-                                                        </p>
-                                                    </td>
-                                                    <td className="py-4 px-5 text-right align-middle">
-                                                        {item?.asset_bidding ? 
-                                                        <button
-                                                            type="button"
-                                                            disabled
-                                                            className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-lg text-white bg-amber-700 hover:bg-amber-800 active:bg-amber-900 shadow-xs transition-all duration-150 cursor-not-allowed focus:outline-hidden"
+                                                    <td className="py-4 pr-6 text-center whitespace-nowrap">
+                                                        <Link 
+                                                            href={`/asid-view/${item.asset_id}`} 
+                                                            className="inline-flex items-center gap-1.5 text-xs text-emerald-500 hover:text-emerald-700 font-medium transition-colors outline-1 outline-emerald-300 px-3 py-2 rounded hover:bg-emerald-50"
                                                         >
-                                                            <BookmarkCheckIcon className="h-3.5 w-3.5 mr-1.5" />
-                                                            Published
-                                                        </button>
-                                                        :
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleOpenConfirmModal(item)}
-                                                            className="inline-flex items-center justify-center font-semibold text-xs px-3.5 py-2 rounded-lg text-white bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 shadow-xs transition-all duration-150 cursor-pointer focus:outline-hidden"
-                                                        >
-                                                            <Gavel className="h-3.5 w-3.5 mr-1.5" />
-                                                            Publish
-                                                        </button>
-                                                        }
-                                                        
+                                                            <SearchCheckIcon className='w-4 h-4' /> View
+                                                        </Link>
                                                     </td>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                {/* Footer row pagination control unit */}
-                                <div className="bg-zinc-50 border-t border-gray-100 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                                        <span>Showing {Math.min(sortedT1Data.length, (t1Page - 1) * t1PageSize + 1)}–{Math.min(sortedT1Data.length, t1Page * t1PageSize)} of {sortedT1Data.length} records</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <div className="flex items-center gap-1.5 pe-5">
-                                            <span className='text-xs'>Rows:</span>
-                                            <select 
-                                                value={t1PageSize} 
-                                                onChange={(e) => { setT1PageSize(Number(e.target.value)); setT1Page(1); }}
-                                                className="bg-white border border-gray-200 text-gray-700 text-xs rounded-lg p-1 pr-5 focus:outline-hidden focus:border-zinc-500 cursor-pointer"
-                                            >
-                                                {[5, 10, 25, 50].map(sz => <option key={sz} value={sz}>{sz}</option>)}
-                                            </select>
-                                        </div>
-                                        {Array.from({ length: t1TotalPages }).map((_, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => setT1Page(idx + 1)}
-                                                className={`h-7 w-7 rounded-lg flex items-center justify-center text-xs font-medium border transition-colors cursor-pointer ${t1Page === idx + 1 ? 'bg-zinc-700 border-zinc-800 text-white shadow-xs' : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200'}`}
-                                            >
-                                                {idx + 1}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center text-center p-12 bg-gray-50/50">
-                                <div className="h-12 w-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 mb-4 border border-purple-100">
-                                    <FolderSync className="h-6 w-6" />
-                                </div>
-                                <h3 className="text-sm font-bold text-gray-900">No Approved Assets Available for Bidding</h3>
-                                <p className="text-xs text-gray-500 max-w-sm mt-1 mx-auto">There are currently no asset items holding for bidding cycle.</p>
-                            </div>
-                        )}
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <TableFooter 
+                            currentPage={pendingPage}
+                            totalPages={getTotalPages(pendingTransactions, pendingLimit)}
+                            onPageChange={setPendingPage}
+                            totalItems={pendingTransactions.length}
+                            currentItemsCount={getPaginatedData(pendingTransactions, pendingPage, pendingLimit).length}
+                            startIndex={(pendingPage - 1) * pendingLimit}
+                            itemsPerPage={pendingLimit}
+                            onItemsPerPageChange={handleLimitChange(setPendingLimit, setPendingPage)}
+                        />
                     </div>
+
                 </div>
+
+                <hr className="border-gray-100 my-4" />
 
                 {/* ========================================================
                     Completed Transactions Table 
@@ -563,7 +644,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                     {item.asset?.accountable_personnel || 'N/A'}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
-                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'The Users Department'}</div>
+                                                    <div className="font-medium text-gray-800">{ (item.asset?.end_user_department === 'INFORMATION COMMUNICATIONS TECHNOLOGY'? 'ICT' : item.asset?.end_user_department) || 'The Users Department'}</div>
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
                                                     <div className="font-medium text-gray-800">{item.asset?.brand_make || 'Asset Brand / Make'} {item.asset?.model || 'Asset Model'}</div>
@@ -611,81 +692,6 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                 </div>
 
                 <hr className="border-gray-100 my-4" />
-
-                {/* ========================================================
-                 Pending Transactions Table 
-                   ======================================================== */}
-                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
-                    <div className="overflow-x-auto">
-                        <h3 className='font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-gray-50 border-b border-gray-200 flex gap-2 items-center'><Folder className='w-5 h-5 text-amber-600' /> Pending Transactions</h3>
-                        <table className="w-full min-w-full divide-y divide-slate-100/40 text-left align-middle text-sm">
-                            <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-slate-800">
-                                <tr>
-                                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Applicant</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Department</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
-                                    <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Action</th>
-                                </tr>
-                            </thead>
-                            
-                            <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {pendingTransactions.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="text-center py-10 text-gray-400 font-medium bg-white">
-                                            No pending asset evaluations waiting.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    getPaginatedData(pendingTransactions, pendingPage, pendingLimit).map((item) => {
-                                        const formattedDate = item.created_at 
-                                            ? new Date(item.created_at).toLocaleString('en-US', {
-                                                month: 'short', day: 'numeric', year: 'numeric',
-                                                hour: '2-digit', minute: '2-digit',
-                                            }) : 'No Date Recorded';
-
-                                        return (
-                                            <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
-                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
-                                                    {formattedDate}
-                                                </td>
-                                                <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent capitalize">
-                                                    {item.asset?.user?.name || 'N/A'}
-                                                </td>
-                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
-                                                    <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'The Users Department'}</div>
-                                                </td>
-                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700">
-                                                    <div className="font-medium text-gray-800">{item.asset?.brand_make || 'Asset Brand / Make'} {item.asset?.model || 'Asset Model'}</div>
-                                                </td>
-                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
-                                                    <Link 
-                                                        href={`/asid-view/${item.asset_id}`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emerald-700 font-medium transition-colors outline-1 outline-emerald-300 px-3 py-2 rounded hover:bg-emerald-50"
-                                                    >
-                                                        <SearchCheckIcon className='w-5 h-5' /> View
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    <TableFooter 
-                        currentPage={pendingPage}
-                        totalPages={getTotalPages(pendingTransactions, pendingLimit)}
-                        onPageChange={setPendingPage}
-                        totalItems={pendingTransactions.length}
-                        currentItemsCount={getPaginatedData(pendingTransactions, pendingPage, pendingLimit).length}
-                        startIndex={(pendingPage - 1) * pendingLimit}
-                        itemsPerPage={pendingLimit}
-                        onItemsPerPageChange={handleLimitChange(setPendingLimit, setPendingPage)}
-                    />
-                </div>
-
-                <hr className="border-gray-100" />
 
                 {/* ========================================================
                      Final Stages Table Section
@@ -776,173 +782,175 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
 
                 <hr className="border-gray-100" />
 
-                {/* ========================================================
-                     SCRAPS Table Section
-                   ======================================================== */}
-                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
-                    <div className="overflow-x-auto">
-                        <h3 className='gap-2 font-bold text-sm px-6 py-4 text-gray-900 uppercase mb-0 bg-gray-50 border-b border-slate-200 flex items-center'><LucideMap className='w-5 h-5 text-indigo-600' /> DEEMED AS SCRAPS</h3>
-                        <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
-                            <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
-                                <tr>
-                                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Accountable Personnel</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Action</th>
-                                </tr>
-                            </thead>
-                            
-                            <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {scrapTransactions.length === 0 ? (
+                <div className="w-full inline-flex gap-4">
+
+                    {/* ========================================================
+                        All Transactions Table Section
+                    ======================================================== */}
+                    <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white w-1/2">
+                        <div className="overflow-x-auto">
+                            <h3 className='font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-gray-50 border-b border-gray-200 flex gap-2 items-center'><FolderOpen className='w-5 h-5 text-emerald-600' />All Transactions</h3>
+                            <table className="w-full min-w-full divide-y divide-slate-100 text-left align-middle text-sm">
+                                <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
                                     <tr>
-                                        <td colSpan={4} className="text-center py-10 text-gray-400 font-medium bg-white">
-                                            No SCRAP asset/s data found.
-                                        </td>
+                                        <th scope="col" className="py-3.5 pl-3 pr-6 font-semibold text-center">Status</th>
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
+                                        {/* <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th> */}
+                                        {/* <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th> */}
+                                        <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
                                     </tr>
-                                ) : (
-                                    getPaginatedData(scrapTransactions, scrapsPage, scrapsLimit).map((item) => {
-                                        const formattedDate = item.created_at 
-                                            ? new Date(item.created_at).toLocaleString('en-US', {
-                                                month: 'short', day: 'numeric', year: 'numeric',
-                                                hour: '2-digit', minute: '2-digit',
-                                            }) : 'No Date Recorded';
+                                </thead>
+                                
+                                <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                    {safeStatuses.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
+                                                No active asset disposal data found.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        getPaginatedData(safeStatuses, allPage, allLimit).map((item) => {
+                                            const formattedDate = item.created_at 
+                                                ? new Date(item.created_at).toLocaleString('en-US', {
+                                                    month: 'short', day: 'numeric', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit',
+                                                }) : 'No Date Recorded';
 
-                                        return (
-                                            <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
-                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
-                                                    {formattedDate}
-                                                </td>
-                                                <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.control_number}
-                                                </td>
-                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800">{item.accountable_personnel || 'Asset Department'}</div>
-                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.reasons_for_disposal || '—'}</div>
-                                                </td>
-                                                <td className="px-4 py-4 font-medium text-gray-700">
-                                                    {item.brand_make || 'Item Brand'} {item.model || 'Item Model'}
-                                                </td>
-                                                <td className="p-3">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const scrap = Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0] : item?.asset_scraps;
-                                                            openViewModal(scrap?.doc_proofs, `Document - ${item?.control_number || 'Scrap Asset'}`);
-                                                        }}
-                                                        disabled={! (Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0]?.doc_proofs : item?.asset_scraps?.doc_proofs)}
-                                                        className={`inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold transition-all px-3 py-1.5 rounded-lg border shadow-xs ${
-                                                            (Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0]?.doc_proofs : item?.asset_scraps?.doc_proofs)
-                                                                ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200/80'
-                                                                : 'text-zinc-400 bg-zinc-100 border-zinc-200 cursor-not-allowed opacity-60'
-                                                        }`}
-                                                    >
-                                                        <EyeIcon className="w-3.5 h-3.5" />
-                                                        View Document
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                                            return (
+                                                <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                    <td className="py-4 pr-6 text-center whitespace-nowrap">
+                                                        <Link 
+                                                            href={`/assets/${item.asset_id}/asset-status`} 
+                                                            className="inline-flex items-center gap-1.5 text-sm text-white font-medium transition-colors outline-1 px-2 py-2 rounded-full shadow bg-linear-to-br from-cyan-700 to-[#01a78b]"
+                                                            title='View Status'
+                                                        >
+                                                            <FileSearch2 className='w-5 h-5'  />
+                                                        </Link>
+                                                    </td>
+                                                    <td className="px-4 py-4 font-mono font-semibold text-xs text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                        {item.asset?.control_number || '—'}
+                                                    </td>
+                                                    <td className="px-4 py-4 text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                        {item.asset?.brand_make || ''} {item.asset?.model || ''}
+                                                    </td>
+                                                    {/* <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
+                                                        <div className="font-medium text-gray-800 text-sm">{item.asset?.end_user_department || 'Asset Department'}</div>
+                                                        <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
+                                                    </td>
+                                                    <td className="px-4 py-4 font-medium text-gray-700">
+                                                        {item.approver?.name || 'System Auto'}
+                                                    </td> */}
+                                                    <td className="py-4 pl-6 pr-3 font-medium text-xs text-gray-900 group-hover:text-emerald-900 transition-colors">
+                                                        {formattedDate}
+                                                    </td>
+                                                    <td className="px-4 py-4 font-mono text-xs font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                        Stage {item.seq_no}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <TableFooter 
+                            currentPage={allPage}
+                            totalPages={getTotalPages(safeStatuses, allLimit)}
+                            onPageChange={setAllPage}
+                            totalItems={safeStatuses.length}
+                            currentItemsCount={getPaginatedData(safeStatuses, allPage, allLimit).length}
+                            startIndex={(allPage - 1) * allLimit}
+                            itemsPerPage={allLimit}
+                            onItemsPerPageChange={handleLimitChange(setAllLimit, setAllPage)}
+                        />
                     </div>
-                    <TableFooter 
-                        currentPage={scrapsPage}
-                        totalPages={getTotalPages(scrapTransactions, scrapsLimit)}
-                        onPageChange={setScrapsPage}
-                        totalItems={scrapTransactions.length}
-                        currentItemsCount={getPaginatedData(scrapTransactions, scrapsPage, scrapsLimit).length}
-                        startIndex={(scrapsPage - 1) * scrapsLimit}
-                        itemsPerPage={scrapsLimit}
-                        onItemsPerPageChange={handleLimitChange(setScrapsLimit, setScrapsPage)}
-                    />
-                </div>
 
-                <hr className="border-gray-100" />
-
-                {/* ========================================================
-                     All Transactions Table Section
-                   ======================================================== */}
-                <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
-                    <div className="overflow-x-auto">
-                        <h3 className='font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-gray-50 border-b border-gray-200 flex gap-2 items-center'><FolderOpen className='w-5 h-5 text-emerald-600' />All Transactions</h3>
-                        <table className="w-full min-w-full divide-y divide-slate-100 text-left align-middle text-sm">
-                            <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
-                                <tr>
-                                    <th scope="col" className="py-3.5 pr-6 font-semibold text-center">Status</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Department / Latest Remarks</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Created By</th>
-                                    <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th>
-                                    <th scope="col" className="px-4 py-3.5 font-semibold">Current Step</th>
-                                </tr>
-                            </thead>
-                            
-                            <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
-                                {safeStatuses.length === 0 ? (
+                    {/* ========================================================
+                        SCRAPS Table Section
+                    ======================================================== */}
+                    <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white w-1/2 flex flex-col justify-between">
+                        <div className="overflow-x-auto">
+                            <h3 className='gap-2 font-bold text-sm px-6 py-4 text-gray-900 uppercase mb-0 bg-gray-50 border-b border-slate-200 flex items-center'><LucideMap className='w-5 h-5 text-indigo-600' /> DEEMED AS SCRAPS</h3>
+                            <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
+                                <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
                                     <tr>
-                                        <td colSpan={6} className="text-center py-10 text-gray-400 font-medium bg-white">
-                                            No active asset disposal data found.
-                                        </td>
+                                        {/* <th scope="col" className="py-3.5 pl-6 pr-3 font-semibold">Application Date &amp; Time</th> */}
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Asset Control Number</th>
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Accountable Personnel</th>
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Brand & Model</th>
+                                        <th scope="col" className="px-4 py-3.5 font-semibold">Action</th>
                                     </tr>
-                                ) : (
-                                    getPaginatedData(safeStatuses, allPage, allLimit).map((item) => {
-                                        const formattedDate = item.created_at 
-                                            ? new Date(item.created_at).toLocaleString('en-US', {
-                                                month: 'short', day: 'numeric', year: 'numeric',
-                                                hour: '2-digit', minute: '2-digit',
-                                            }) : 'No Date Recorded';
+                                </thead>
+                                
+                                <tbody className="divide-y divide-emerald-100/30 bg-white text-gray-600">
+                                    {scrapTransactions.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} className="text-center py-10 text-gray-400 font-medium bg-white">
+                                                No SCRAP asset/s data found.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        getPaginatedData(scrapTransactions, scrapsPage, scrapsLimit).map((item) => {
+                                            const formattedDate = item.created_at 
+                                                ? new Date(item.created_at).toLocaleString('en-US', {
+                                                    month: 'short', day: 'numeric', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit',
+                                                }) : 'No Date Recorded';
 
-                                        return (
-                                            <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
-                                                <td className="py-4 pr-6 text-center whitespace-nowrap">
-                                                    <Link 
-                                                        href={`/assets/${item.asset_id}/asset-status`} 
-                                                        className="inline-flex items-center gap-1.5 text-sm text-white font-medium transition-colors outline-1 px-2 py-2 rounded-full shadow bg-linear-to-br from-cyan-700 to-[#01a78b]"
-                                                        title='View Status'
-                                                    >
-                                                        <FileSearch2 className='w-5 h-5'  />
-                                                    </Link>
-                                                </td>
-                                                <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.control_number || '—'}
-                                                </td>
-                                                <td className="px-4 py-4 text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.brand_make || ''} {item.asset?.model || ''}
-                                                </td>
-                                                <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
-                                                    <div className="font-medium text-gray-800 text-sm">{item.asset?.end_user_department || 'Asset Department'}</div>
-                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
-                                                </td>
-                                                <td className="px-4 py-4 font-medium text-gray-700">
-                                                    {item.approver?.name || 'System Auto'}
-                                                </td>
-                                                <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
-                                                    {formattedDate}
-                                                </td>
-                                                <td className="px-4 py-4 font-mono text-base font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    Stage {item.seq_no}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    <TableFooter 
-                        currentPage={allPage}
-                        totalPages={getTotalPages(safeStatuses, allLimit)}
-                        onPageChange={setAllPage}
-                        totalItems={safeStatuses.length}
-                        currentItemsCount={getPaginatedData(safeStatuses, allPage, allLimit).length}
-                        startIndex={(allPage - 1) * allLimit}
-                        itemsPerPage={allLimit}
-                        onItemsPerPageChange={handleLimitChange(setAllLimit, setAllPage)}
-                    />
+                                            return (
+                                                <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-150">
+                                                    {/* <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
+                                                        {formattedDate}
+                                                    </td> */}
+                                                    <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
+                                                        {item.control_number}
+                                                    </td>
+                                                    <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
+                                                        <div className="font-medium text-gray-800">{item.accountable_personnel || 'Asset Department'}</div>
+                                                        <div className="text-xs text-gray-400 truncate max-w-50">{item.reasons_for_disposal || '—'}</div>
+                                                    </td>
+                                                    <td className="px-4 py-4 font-medium text-gray-700">
+                                                        {item.brand_make || 'Item Brand'} {item.model || 'Item Model'}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const scrap = Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0] : item?.asset_scraps;
+                                                                openViewModal(scrap?.doc_proofs, `Document - ${item?.control_number || 'Scrap Asset'}`);
+                                                            }}
+                                                            disabled={! (Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0]?.doc_proofs : item?.asset_scraps?.doc_proofs)}
+                                                            className={`inline-flex text-nowrap cursor-pointer items-center gap-1.5 text-xs font-semibold transition-all px-3 py-1.5 rounded-lg border shadow-xs ${
+                                                                (Array.isArray(item?.asset_scraps) ? item?.asset_scraps[0]?.doc_proofs : item?.asset_scraps?.doc_proofs)
+                                                                    ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200/80'
+                                                                    : 'text-zinc-400 bg-zinc-100 border-zinc-200 cursor-not-allowed opacity-60'
+                                                            }`}
+                                                        >
+                                                            <EyeIcon className="w-3.5 h-3.5" />
+                                                            View Document
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <TableFooter 
+                            currentPage={scrapsPage}
+                            totalPages={getTotalPages(scrapTransactions, scrapsLimit)}
+                            onPageChange={setScrapsPage}
+                            totalItems={scrapTransactions.length}
+                            currentItemsCount={getPaginatedData(scrapTransactions, scrapsPage, scrapsLimit).length}
+                            startIndex={(scrapsPage - 1) * scrapsLimit}
+                            itemsPerPage={scrapsLimit}
+                            onItemsPerPageChange={handleLimitChange(setScrapsLimit, setScrapsPage)}
+                        />
+                    </div> 
+
                 </div>
                 
             </div>
