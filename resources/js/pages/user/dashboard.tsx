@@ -55,7 +55,7 @@ export default function UserDashboard({ temporaryAssets, assets = [], filters }:
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Filter assets array to only include items deemed as SCRAP
+    // Filter assets array to only include items deemed as SCRAP -- DUNGAGAN NATO DIRA NEXT TIME OG IF NOT COMPLETED KY KULANG ANG CONDITION
     const scrapAssetsList = useMemo(() => {
         return assets.filter((item: any) => {
             const direction = item?.manager_information?.asset_direction || item?.asset?.manager_information?.asset_direction;

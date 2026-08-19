@@ -10,6 +10,9 @@ Route::inertia('/', 'auth/login')->name('home');
 
 // Add routes here for GLOBAL account
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
     Route::inertia('profile', 'profile')->name('profile');
     Route::get('bidding', [AssetController::class, 'userBidding'])->name('bidding');
     Route::post('user/bidding/entry/{id}', [AssetController::class, 'userBiddingEntry'])->name('bidding.entry');
@@ -38,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Add routes here for admin account
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     // Route::inertia('dashboard', 'dashboard')->name('dashboard');
-    Route::get('dashboard', [DashboardController::class, 'adminDashboard'])->name('dashboard');
+    Route::get('admin-dashboard', [DashboardController::class, 'adminDashboard'])->name('admin-dashboard');
     Route::inertia('reports', 'reports')->name('reports');
 
     Route::get('disposals', [AssetController::class, 'disposals'])->name('disposals');
