@@ -20,6 +20,12 @@ interface assetStatus {
     approver?: Approver | null;
 }
 
+interface assetStatuses {
+    id: number;
+    asset_id: number;
+    remarks: string | null;
+}
+
 interface Department {
     id: number;
     name: string;
@@ -53,6 +59,7 @@ interface AssetDisposal {
 interface Props {
     asset: {
         id: number;
+        user_id: string;
         control_number: string;
         serial_plate_id_number: string;
         model: string;
@@ -63,6 +70,7 @@ interface Props {
         asid_information?: AsidInfo | null;
         manager_information?: ManagerInfo | null;
         asset_disposal?: AssetDisposal | null;
+        asset_statuses?: assetStatuses[] | null;
     };
     currentUserId: number;
 }
@@ -75,6 +83,8 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         remarks: '',
     });
+
+    const is_return_ramark = asset?.asset_statuses?.[0]?.remarks ?? '';
 
     // Asset raw status
     const isReturned = asset?.status === 'Returned';
@@ -155,7 +165,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
     return (
         <>
-            <Head title={`Document Tracker - ${asset.serial_plate_id_number || 'Asset'}`} />
+            <Head title={`Asset Request Tracker - ${asset.serial_plate_id_number || 'Asset'}`} />
 
             <div className="w-full p-4 max-w-3xl mx-auto space-y-6 antialiased selection:bg-emerald-500/10">
 
@@ -181,12 +191,13 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                         {asset.brand_make || 'Generic'} <span className="font-light text-emerald-100/80">{asset.model || 'Asset Profile'}</span>
                     </h1>
 
-                    {/* { ((isReturned || !isRejected) && !isOnGoing && !isCompleted ) && 
+                    { ((isReturned || !isRejected) && !isOnGoing && !isCompleted && (asset?.user_id == String(auth?.user?.id))) && 
                         <a href={`/asset/edit-asset/${asset.id}`} className='absolute top-4 right-4 px-4 py-2 rounded-lg shadow hover:bg-zinc-100 hover:text-zinc-900 bg-white text-zinc-700 text-sm font-bold inline-flex gap-2'>
                             <Edit className='h-4 w-4'></Edit>
                             Update Details
                         </a>
-                    } */}
+                    }
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-t border-white/10 pt-4">
                         <div className="flex flex-col gap-0.5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300/60">Control Number</span>
@@ -281,6 +292,13 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                                         : 'Pending Release'}
                                                 </p>
                                             </div>
+                                        </div>
+
+                                        <div className="sm:col-span-2 flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Return Remarks:</span> 
+                                            <span className={`text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5`}>
+                                                {isReturned && idx == 0 ? is_return_ramark : step.status}
+                                            </span>
                                         </div>
                                         
                                         <div className="sm:col-span-2 flex items-center gap-2 mt-1">

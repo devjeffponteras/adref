@@ -511,13 +511,14 @@ class AssetController extends Controller
             'asid_information',
             'manager_information',
             'accounting_information',
-            'assetDisposal'
+            'assetDisposal',
+            'assetStatuses'
         ])->findOrFail($id);
 
         // Mao ni ang call service to perform sync logic men!
         $assetStatusData = $syncService->syncAssetStatus($asset);
 
-        $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information', 'user.department']);
+        $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information', 'user.department', 'assetStatuses']);
 
         return Inertia::render('asset-status', [
             'asset' => $asset,
