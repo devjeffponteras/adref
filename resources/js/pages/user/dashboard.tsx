@@ -239,7 +239,7 @@ export default function UserDashboard({ temporaryAssets, assets = [], filters }:
                 </div>
 
                 {/* Temporary Asset Applications Table Card */}
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 shadow-xs overflow-hidden">
+                <div className="hidden rounded-xl border border-zinc-200 bg-zinc-50/50 shadow-xs overflow-hidden">
                     <div className="p-4 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
                         <div>
                             <h3 className="text-base font-semibold text-zinc-800">
@@ -349,10 +349,10 @@ export default function UserDashboard({ temporaryAssets, assets = [], filters }:
                 </div>
 
                 {/* SCRAP Assets Table Card */}
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 shadow-xs overflow-hidden mb-8">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 shadow-xs overflow-hidden mb-8 deemed-as-scraps-container">
                     <div className="p-4 border-b border-zinc-200 bg-white">
                         <h3 className="text-base font-semibold text-zinc-800">
-                            SCRAPS
+                            DEEMED AS SCRAPS
                         </h3>
                         <p className="text-xs text-zinc-500 mt-0.5">
                             Asset Disposal Requests that are deemed as scrap by evaluation results.
