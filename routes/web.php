@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Route;
 // Route::inertia('/', 'welcome')->name('home');
 Route::inertia('/', 'auth/login')->name('home');
 
+// Globol no auth link for viewing of transaction
+Route::get('viewer/{id}', [AssetController::class, 'viewer'])->name('asset.viewer');
+
 // Add routes here for GLOBAL account
 Route::middleware(['auth', 'verified'])->group(function () {
 

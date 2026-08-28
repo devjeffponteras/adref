@@ -13,6 +13,11 @@ interface AssetDisposal {
     [key: string]: any;
 }
 
+interface ManagerInformation {
+    id: number;
+    manager_disposition: string;
+}
+
 interface Asset {
     id: number;
     accountable_personnel: string;
@@ -27,6 +32,7 @@ interface Asset {
     created_at: string;
     classification: Classification | null;
     asset_disposal?: AssetDisposal | null;
+    manager_information?: ManagerInformation | null;
 }
 
 interface MyAssetsProps {
@@ -240,7 +246,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                     <th className="px-6 py-4 w-28">Action</th>
                                     
                                     <th onClick={() => handleSort('serial_plate_id_number')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
-                                        <div className="flex items-center gap-1.5">Serial / Tag ID <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
+                                        <div className="flex items-center gap-1.5">Asset Details<ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
 
                                     <th onClick={() => handleSort('status')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
@@ -252,11 +258,11 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                     </th>
 
                                     <th onClick={() => handleSort('model')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
-                                        <div className="flex items-center gap-1.5">Asset Details <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
+                                        <div className="flex items-center gap-1.5">Requested By<ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
 
                                     <th onClick={() => handleSort('accountable_personnel')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
-                                        <div className="flex items-center gap-1.5">Custodian & Office <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
+                                        <div className="flex items-center gap-1.5">Disposition <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
 
                                     <th onClick={() => handleSort('created_at')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
@@ -278,50 +284,6 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                 </Link>
                                             </td>
 
-                                            <td className="px-6 py-3.5 font-mono font-medium text-base text-gray-900 uppercase">
-                                                {asset.serial_plate_id_number || <span className="text-gray-300 italic">No SN Tag</span>}
-                                            </td>
-
-                                            <td className="px-6 py-3.5">
-                                                {/* <span
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(
-                                                    asset.status
-                                                    )} ${
-                                                    (asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status)
-                                                        ? 'group-hover:hidden'
-                                                        : ''
-                                                    }`}
-                                                >
-                                                    {asset.status || 'Pending'}
-                                                </span> */}
-
-                                                {/* {(asset.status?.toLowerCase() === 'pending' || asset.status?.toLowerCase() === 'returned' || !asset.status) && (
-                                                    <Link
-                                                    href={`/asset/edit-asset/${asset.id}`}
-                                                    className="hidden group-hover:inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 shadow text-zinc-700 hover:text-emerald-600 hover:border-emerald-300 transition-colors text-xs"
-                                                    >
-                                                    <Edit className="h-3 w-3" />
-                                                    Edit
-                                                    </Link>
-                                                )} */}
-
-                                                <span
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(asset.status)}`}
-                                                >
-                                                    {asset.status || 'Pending'} { asset.asset_disposal && <div className='inline-flex items-center text-nowrap'>&nbsp; & <span className='inline-flex items-center text-nowrap text-red-700'>&nbsp; Disposed</span> </div>}
-                                                </span>
-
-                                                
-                                                   
-                                            </td>
-
-                                            <td className="px-6 py-3.5">
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-purple-50 text-purple-700 border-purple-200">
-                                                    <Tag className="h-2.5 w-2.5" />
-                                                    {asset.classification?.name || 'Unclassified'}
-                                                </span>
-                                            </td>
-
                                             <td className="px-6 py-3.5">
                                                 <div className="font-medium text-gray-800">
                                                     {asset.brand_make || ''} {asset.model || 'Generic Item'}
@@ -332,8 +294,50 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                             </td>
 
                                             <td className="px-6 py-3.5">
+                                                <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(
+                                                    asset.status
+                                                    )} ${
+                                                    (asset.status?.toLowerCase() === 'returned' || !asset.status)
+                                                        ? 'group-hover:hidden'
+                                                        : ''
+                                                    }`}
+                                                >
+                                                    {asset.status || 'Pending'}
+                                                </span>
+
+                                                {(asset.status?.toLowerCase() === 'returned' || !asset.status) && (
+                                                    <Link
+                                                    href={`/asset/edit-asset/${asset.id}`}
+                                                    className="hidden group-hover:inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium bg-white border border-gray-200 shadow text-zinc-700 hover:text-emerald-600 hover:border-emerald-300 transition-colors text-xs"
+                                                    >
+                                                    <Edit className="h-3 w-3" />
+                                                    Edit
+                                                    </Link>
+                                                )}
+
+                                                {/* <span
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(asset.status)}`}
+                                                >
+                                                    {asset.status || 'Pending'} { asset.asset_disposal && <div className='inline-flex items-center text-nowrap'>&nbsp; & <span className='inline-flex items-center text-nowrap text-red-700'>&nbsp; Disposed</span> </div>}
+                                                </span> */}
+
+                                            </td>
+
+                                            <td className="px-6 py-3.5">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-purple-50 text-purple-700 border-purple-200">
+                                                    <Tag className="h-2.5 w-2.5" />
+                                                    {asset.classification?.name || 'Unclassified'}
+                                                </span>
+                                            </td>
+
+                                            <td className="px-6 py-3.5">
                                                 <div className="text-gray-900 font-medium">{asset.accountable_personnel}</div>
                                                 <div className="text-xs text-gray-400">{asset.end_user_department}</div>
+                                            </td>
+
+                                            <td className="px-6 py-3.5 font-mono font-medium text-base text-gray-900 uppercase">
+                                                {asset.manager_information?.manager_disposition || <span className="text-gray-300 text-xs italic">--</span>}
                                             </td>
 
                                             <td className="px-6 py-3.5 text-gray-500 whitespace-nowrap">

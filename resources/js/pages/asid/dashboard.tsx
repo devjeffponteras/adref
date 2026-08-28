@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useState, useMemo, useEffect } from 'react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { 
     Folder, 
     FolderCheck, 
@@ -24,16 +24,54 @@ import {
     FileText,
     ExternalLink,
     Download,
+    Search,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
     X
  } from 'lucide-react';
 import { WelcomeNote } from '@/components/welcome-note';
 import type { AssetStatusData, Asset } from '@/types/models';
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedData<T> {
+    data: T[];
+    from: number | null;
+    to: number | null;
+    total: number;
+    links: PaginationLink[];
+}
+
+interface Filters {
+    search?: string;
+    per_page?: number;
+    sort_by?: string;
+    sort_dir?: string;
+}
+
+interface TemporaryAssetItem {
+    id: number;
+    refno: string | null;
+    transid: string | null;
+    status: string | null;
+    accountable_personnel: string | null;
+    brand_make: string | null;
+    model: string | null;
+    end_user_department: string | null;
+}
 
 interface DashboardProps {
     assetStatuses: AssetStatusData[];
     assets: Asset[];
     assetOnBidding: AssetBiddingData[];
     assetsForDisposal: AssetDisposals[];
+    temporaryAssets: PaginatedData<TemporaryAssetItem>;
+    filters: Filters;
 }
 
 interface AssetBiddingData {
@@ -135,9 +173,14 @@ function TableFooter({
 
 type SortDirection = 'asc' | 'desc' | null;
 
-export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, assetsForDisposal }: DashboardProps) {
+export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, assetsForDisposal, temporaryAssets, filters }: DashboardProps) {
     const { flash } = usePage().props as any;
     
+    const [search, setSearch] = useState<string>(filters?.search || '');
+    const [perPage, setPerPage] = useState<number>(filters?.per_page || 10);
+    const [sortBy, setSortBy] = useState<string>(filters?.sort_by || 'created_at');
+    const [sortDir, setSortDir] = useState<string>(filters?.sort_dir || 'desc');
+
     const safeStatuses = assetStatuses || [];
     const assetsInfo = assets || [];
 
@@ -147,6 +190,47 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
         asset_id: null,
         others: '',
     });
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (search !== (filters?.search || '')) {
+                fetchData({ search, page: 1 });
+            }
+        }, 300);
+        return () => clearTimeout(timeout);
+    }, [search]);
+
+    const fetchData = (params: { search?: string; per_page?: number; sort_by?: string; sort_dir?: string; page?: number } = {}) => {
+        router.get(
+            '/user-dashboard',
+            {
+                search: params.search ?? search,
+                per_page: params.per_page ?? perPage,
+                sort_by: params.sort_by ?? sortBy,
+                sort_dir: params.sort_dir ?? sortDir,
+                page: params.page ?? 1,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }
+        );
+    };
+
+    const handleSort = (column: string) => {
+        const nextDir = sortBy === column && sortDir === 'asc' ? 'desc' : 'asc';
+        setSortBy(column);
+        setSortDir(nextDir);
+        fetchData({ sort_by: column, sort_dir: nextDir, page: 1 });
+    };
+
+    const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newLimit = parseInt(e.target.value, 10);
+        setPerPage(newLimit);
+        fetchData({ per_page: newLimit, page: 1 });
+    };
+
     
     // --- Core Action Handlers ---
     const handleOpenConfirmModal = (asset: Asset) => {
@@ -314,6 +398,16 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
             : <ChevronDown className="h-3 w-3 text-gray-800 ml-1.5 inline-block shrink-0" />;
     };
 
+    // version 2 ta ky para goods
+    const renderSortIcon2 = (column: string) => {
+        if (sortBy !== column) return <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400 opacity-60 group-hover:opacity-100" />;
+        return sortDir === 'asc' ? (
+            <ArrowUp className="w-3.5 h-3.5 text-zinc-800" />
+        ) : (
+            <ArrowDown className="w-3.5 h-3.5 text-zinc-800" />
+        );
+    };
+
     // Sa ubos kay modal popup of asset disposal button
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -338,6 +432,60 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
         post(`/dispose/${selectedAssetId}/action`, {
             onSuccess: () => closeModal(),
         });
+    };
+
+    const renderPagination = (paginatedData: PaginatedData<any>) => {
+        if (!paginatedData) return null;
+
+        return (
+            <div className="p-3 border-t border-zinc-200 bg-zinc-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
+                <div>
+                    Showing <span className="font-semibold text-zinc-800">{paginatedData.from || 0}</span> to{' '}
+                    <span className="font-semibold text-zinc-800">{paginatedData.to || 0}</span> of{' '}
+                    <span className="font-semibold text-zinc-800">{paginatedData.total || 0}</span> results
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-zinc-500 whitespace-nowrap">Per page:</label>
+                        <select
+                            value={perPage}
+                            onChange={handlePerPageChange}
+                            className="py-1.5 px-2 text-xs border border-zinc-300 rounded-lg bg-zinc-50 text-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-zinc-400"
+                        >
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                        </select>
+                    </div>
+
+                    {paginatedData.links && paginatedData.links.length > 3 && (
+                        <div className="flex items-center gap-1">
+                            {paginatedData.links.map((link, idx) => (
+                                <button
+                                    key={idx}
+                                    disabled={!link.url}
+                                    onClick={() => {
+                                        if (link.url) {
+                                            router.get(link.url, {}, { preserveState: true, preserveScroll: true });
+                                        }
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                                        link.active
+                                            ? 'bg-zinc-800 text-white'
+                                            : link.url
+                                            ? 'bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                                            : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -376,20 +524,23 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                         </div>
                     </div>
 
-                    <div className="group relative overflow-hidden rounded-2xl border border-cyan-100 bg-linear-to-br from-cyan-50 to-cyan-50/50 p-5 text-slate-800 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:shadow-cyan-500/5">
+                    <a 
+                        href="#evaluation_of_disposition"
+                        className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-cyan-100 bg-linear-to-br from-cyan-50 to-cyan-50/50 p-5 text-slate-800 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:shadow-cyan-500/5"
+                    >
                         <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-cyan-200/20 blur-xl transition-all group-hover:scale-150" />
                         <div className="flex justify-between items-start">
-                            <div className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700/80">Final Stages</p>
-                                <h2 className="font-extrabold text-3xl tracking-tight text-cyan-950">{historyTransactions.length}</h2>
-                            </div>
-                            <div className="rounded-xl bg-cyan-50 p-3 border border-cyan-200/60 transition-transform duration-300 group-hover:scale-110 group-hover:bg-cyan-100">
-                                <FolderCheck className='h-6 w-6 text-cyan-600' />
-                            </div>
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700/80">Evaluation of Disposition (Final Stages)</p>
+                            <h2 className="font-extrabold text-3xl tracking-tight text-cyan-950">{historyTransactions.length}</h2>
                         </div>
-                    </div>
-
-                    <div className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-linear-to-br from-emerald-50 to-emerald-50/50 p-5 text-slate-800 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:shadow-emerald-500/5">
+                        <div className="rounded-xl bg-cyan-50 p-3 border border-cyan-200/60 transition-transform duration-300 group-hover:scale-110 group-hover:bg-cyan-100">
+                            <FolderCheck className='h-6 w-6 text-cyan-600' />
+                        </div>
+                        </div>
+                    </a>
+                    <a 
+                        href="#all_request_transactions" className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-linear-to-br from-emerald-50 to-emerald-50/50 p-5 text-slate-800 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md hover:shadow-emerald-500/5">
                         <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-emerald-200/20 blur-xl transition-all group-hover:scale-150" />
                         <div className="flex justify-between items-start">
                             <div className="space-y-2">
@@ -400,7 +551,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                 <FolderOpen className='h-6 w-6 text-emerald-600' />
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
 
                 <div className="w-full inline-flex gap-4">
@@ -698,7 +849,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                    ======================================================== */}
                 <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white">
                     <div className="overflow-x-auto">
-                        <h3 className='gap-2 font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex items-center'><FolderCheck className='w-5 h-5 text-cyan-600' /> Evaluation of DISPOSITION</h3>
+                        <h3 id='evaluation_of_disposition' className='gap-2 font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-slate-50 border-b border-slate-200 flex items-center'><FolderCheck className='w-5 h-5 text-cyan-600' /> Evaluation of DISPOSITION</h3>
                         <table className="w-full min-w-full divide-y divide-emerald-100/40 text-left align-middle text-sm">
                             <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
                                 <tr>
@@ -790,7 +941,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                     <div className="my-6 overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white w-1/2">
                         <div className="overflow-x-auto">
                             <h3 className='font-bold text-sm px-6 py-4 text-slate-900 uppercase mb-0 bg-gray-50 border-b border-gray-200 flex gap-2 items-center'><FolderOpen className='w-5 h-5 text-emerald-600' />All Transactions</h3>
-                            <table className="w-full min-w-full divide-y divide-slate-100 text-left align-middle text-sm">
+                            <table id='all_request_transactions' className="w-full min-w-full divide-y divide-slate-100 text-left align-middle text-sm">
                                 <thead className="bg-gray-100 text-xs font-bold uppercase tracking-wider text-gray-800">
                                     <tr>
                                         <th scope="col" className="py-3.5 pl-3 pr-6 font-semibold text-center">Status</th>
@@ -951,6 +1102,120 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                         />
                     </div> 
 
+                </div>
+                
+                <hr className="border-gray-100 mt-4 mb-8" />
+
+                {/* ========================================================
+                    Temporary Asset Applications Section
+                ======================================================== */}
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 shadow-xs overflow-hidden">
+                    <div className="p-4 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
+                        <div>
+                            <h3 className="text-base font-semibold text-zinc-800">
+                                Asset Disposal Request Applications Registry (WORKFLOW)
+                            </h3>
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                                Real-time status of asset requests applications from ADREF to WORKFLOW System.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search applications..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="pl-9 pr-3 py-1.5 text-xs border border-zinc-300 rounded-lg bg-zinc-50 text-zinc-800 placeholder-zinc-400 focus:outline-hidden focus:ring-2 focus:ring-zinc-400 focus:bg-white transition-all w-full sm:w-64"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto bg-white">
+                        <table className="w-full text-left text-xs text-zinc-700">
+                            <thead className="bg-zinc-100/80 text-zinc-600 font-semibold uppercase tracking-wider border-b border-zinc-200">
+                                <tr>
+                                    <th onClick={() => handleSort('refno')} className="p-3 cursor-pointer group hover:bg-zinc-200/60 transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Ref No.</span>
+                                            {renderSortIcon2('refno')}
+                                        </div>
+                                    </th>
+                                    <th onClick={() => handleSort('transid')} className="p-3 cursor-pointer group hover:bg-zinc-200/60 transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Trans ID</span>
+                                            {renderSortIcon2('transid')}
+                                        </div>
+                                    </th>
+                                    <th onClick={() => handleSort('accountable_personnel')} className="p-3 cursor-pointer group hover:bg-zinc-200/60 transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Accountable Personnel</span>
+                                            {renderSortIcon2('accountable_personnel')}
+                                        </div>
+                                    </th>
+                                    <th onClick={() => handleSort('brand_make')} className="p-3 cursor-pointer group hover:bg-zinc-200/60 transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Brand & Model</span>
+                                            {renderSortIcon2('brand_make')}
+                                        </div>
+                                    </th>
+                                    <th onClick={() => handleSort('end_user_department')} className="p-3 cursor-pointer group hover:bg-zinc-200/60 transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Department</span>
+                                            {renderSortIcon2('end_user_department')}
+                                        </div>
+                                    </th>
+                                    <th onClick={() => handleSort('status')} className="p-3 cursor-pointer group hover:bg-zinc-200/60 transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Status</span>
+                                            {renderSortIcon2('status')}
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100">
+                                {temporaryAssets?.data?.length > 0 ? (
+                                    temporaryAssets.data.map((item) => (
+                                        <tr key={item.id} className="hover:bg-zinc-50/80 transition-colors text-sm">
+                                            <td className="p-3 font-medium text-zinc-900">{item.refno || 'N/A'}</td>
+                                            <td className="p-3 text-zinc-600">{item.transid || 'N/A'}</td>
+                                            <td className="p-3 text-zinc-700">{item.accountable_personnel || 'N/A'}</td>
+                                            <td className="p-3 text-zinc-700">
+                                                {item.brand_make || item.model ? (
+                                                    `${item.brand_make || ''} ${item.model || ''}`.trim()
+                                                ) : (
+                                                    <span className="text-zinc-400">N/A</span>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-zinc-700">{item.end_user_department || 'N/A'}</td>
+                                            <td className="p-3">
+                                                <span
+                                                    className={`inline-flex uppercase items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                                                        (item.status || 'Pending').toLowerCase() === 'approved'
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                                            : 'bg-zinc-100 text-zinc-700 border-zinc-300'
+                                                    }`}
+                                                >
+                                                    {item.status || 'Pending'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={6} className="p-6 text-center text-zinc-500">
+                                            No temporary asset applications found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {renderPagination(temporaryAssets)}
                 </div>
                 
             </div>

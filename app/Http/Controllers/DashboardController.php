@@ -51,7 +51,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function asidDashboard(): Response
+    public function asidDashboard(Request $request): Response
     {
         $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.classification', 'asset.assetDisposal'])
             ->orderBy('created_at', 'desc')
@@ -61,11 +61,55 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Temporary ra na mga assets that is waiting for WORKFLOW response and butangan nato of functions para easy
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 10);
+        $sortColumn = $request->input('sort_by', 'created_at');
+        $sortDirection = $request->input('sort_dir', 'desc');
+
+        $allowedSorts = ['refno', 'transid', 'status', 'accountable_personnel', 'brand_make', 'model', 'end_user_department', 'created_at'];
+        if (!in_array($sortColumn, $allowedSorts)) {
+            $sortColumn = 'created_at';
+        }
+
+        $temporaryAssets = TemporaryAssetRequest::query()
+            ->select([
+                'id',
+                'refno',
+                'transid',
+                'status',
+                'accountable_personnel',
+                'brand_make',
+                'model',
+                'end_user_department',
+            ])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('refno', 'like', "%{$search}%")
+                      ->orWhere('transid', 'like', "%{$search}%")
+                      ->orWhere('status', 'like', "%{$search}%")
+                      ->orWhere('accountable_personnel', 'like', "%{$search}%")
+                      ->orWhere('brand_make', 'like', "%{$search}%")
+                      ->orWhere('model', 'like', "%{$search}%")
+                      ->orWhere('end_user_department', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sortColumn, $sortDirection)
+            ->paginate($perPage)
+            ->withQueryString();
+
         // dd($assetStatuses->toArray());
 
         return Inertia::render('asid/dashboard', [
+            'temporaryAssets' => $temporaryAssets,
             'assetStatuses' => $assetStatuses,
-            'assets' => $assets
+            'assets' => $assets,
+            'filters' => [
+                'search'   => $search,
+                'per_page' => (int) $perPage,
+                'sort_by'  => $sortColumn,
+                'sort_dir' => $sortDirection,
+            ],
         ]);
     }
 
@@ -143,53 +187,21 @@ class DashboardController extends Controller
 
     public function userDashboard(Request $request): Response
     {
-        $search = $request->input('search');
-        $perPage = $request->input('per_page', 10);
-        $sortColumn = $request->input('sort_by', 'created_at');
-        $sortDirection = $request->input('sort_dir', 'desc');
-
-        $allowedSorts = ['refno', 'transid', 'status', 'accountable_personnel', 'brand_make', 'model', 'end_user_department', 'created_at'];
-        if (!in_array($sortColumn, $allowedSorts)) {
-            $sortColumn = 'created_at';
-        }
-
-        $temporaryAssets = TemporaryAssetRequest::query()
-            ->select([
-                'id',
-                'refno',
-                'transid',
-                'status',
-                'accountable_personnel',
-                'brand_make',
-                'model',
-                'end_user_department',
-            ])
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('refno', 'like', "%{$search}%")
-                      ->orWhere('transid', 'like', "%{$search}%")
-                      ->orWhere('status', 'like', "%{$search}%")
-                      ->orWhere('accountable_personnel', 'like', "%{$search}%")
-                      ->orWhere('brand_make', 'like', "%{$search}%")
-                      ->orWhere('model', 'like', "%{$search}%")
-                      ->orWhere('end_user_department', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy($sortColumn, $sortDirection)
-            ->paginate($perPage)
-            ->withQueryString();
-
         $assets = Asset::with('manager_information', 'asset_scraps')->get();
+
+        // $scraps = Asset::with('asset_scraps')->where('user_id', auth()->user()->id)->get();
+        // $assets = Asset::where('user_id', auth()->id())
+        //     ->has('asset_scraps')
+        //     ->with('asset_scraps')
+        //     ->get();
+
+        // $assets = Asset::where('user_id', auth()->id())
+        // ->has('asset_scraps')
+        // ->with(['manager_information', 'asset_scraps'])
+        // ->get();
         // dd($assets);
         return Inertia::render('user/dashboard', [
-            'temporaryAssets' => $temporaryAssets,
-            'assets' => $assets,
-            'filters' => [
-                'search'   => $search,
-                'per_page' => (int) $perPage,
-                'sort_by'  => $sortColumn,
-                'sort_dir' => $sortDirection,
-            ],
+            'assets' => $assets
         ]);
     }
 }

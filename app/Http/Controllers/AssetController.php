@@ -42,10 +42,10 @@ class AssetController extends Controller
     public function myAssets(AssetSyncService $syncService): Response
     {
         $myAssets = Asset::where('user_id', auth()->id())
-            ->with('classification', 'assetDisposal')
+            ->with('classification', 'assetDisposal', 'manager_information')
             ->get();
-
-        // Another call of API for initial asset disposal request
+        // dd($myAssets);
+        // Another call of API for initial asset disposal request mano mano para walay laparo
         $assetStatusData = $syncService->syncPendingTemporaryAssetRequests();
 
         return Inertia::render('my-assets', [
@@ -362,7 +362,7 @@ class AssetController extends Controller
                 'refno'            => $tempRefNo,
                 'transid'          => $tempTransId,
                 'sourceapp'        => 'ADREF System',
-                'sourceurl'        => url('/'),
+                'sourceurl'        => url('/assets/viewer/' . ($tempTransId ?? '') ),
                 'status'           => 'PENDING',
                 'created_at'       => now()->toDateTimeString(),
                 
@@ -511,13 +511,14 @@ class AssetController extends Controller
             'asid_information',
             'manager_information',
             'accounting_information',
-            'assetDisposal'
+            'assetDisposal',
+            'assetStatuses'
         ])->findOrFail($id);
 
         // Mao ni ang call service to perform sync logic men!
         $assetStatusData = $syncService->syncAssetStatus($asset);
 
-        $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information', 'user.department']);
+        $asset->load(['user', 'classification', 'accounting_information', 'workflow', 'manager_information', 'user.department', 'assetStatuses']);
 
         return Inertia::render('asset-status', [
             'asset' => $asset,
@@ -797,18 +798,14 @@ class AssetController extends Controller
 
     public function asidEvaluate($id): Response
     {
-        $asset = Asset::findOrFail($id);
-        $asidInformation = AsidInformation::where('asset_id', $id)->first();
-        $managerInformation = ManagerInformation::where('asset_id', $id)->first();
-        $mepeoInformation = MepeoInformation::where('asset_id', $id)->first();
-        $mcdInformation = McdInformation::where('asset_id', $id)->first();
-        $accountingInformation = AccountingInformation::where('asset_id', $id)->first();
-
-        $asset->asid_information = $asidInformation;
-        $asset->manager_information = $managerInformation;
-        $asset->mepeo_information = $mepeoInformation;
-        $asset->mcd_information = $mcdInformation;
-        $asset->accounting_information = $accountingInformation;
+        $asset = Asset::with([
+            'classification',
+            'asid_information',
+            'manager_information',
+            'mepeo_information',
+            'mcd_information',
+            'accounting_information',
+        ])->findOrFail($id);
 
         $wasteClassifications = WasteClassification::all(['id', 'name']);
         $wasteCharacteristics = WasteCharacteristic::all(['id', 'name']);
@@ -966,7 +963,7 @@ class AssetController extends Controller
                 'refno'            => $asset->id ?? 'REF-' . time(),
                 'transid'          => 'ADREF-' . uniqid(),
                 'sourceapp'        => 'ADREF System',
-                'sourceurl'        => url('/assets/' . ($id ?? '') . '/asset-status'),
+                'sourceurl'        => url('/assets/viewer/' . ($id ?? '') ),
                 'status'           => 'PENDING',
                 'created_at'       => now()->toDateTimeString(),
                 'requestor'        => $user->name ?? 'System',
@@ -976,7 +973,7 @@ class AssetController extends Controller
                 'locsite'          => 'Main Site',
                 'purpose'          => $asset->reasons_for_disposal ?? 'Asset Management Request',
                 'approval_url'     => url('/assets/' . ($id ?? ''). '/asset-status'),
-                'totalamount'      => $accounting_info->acquisition_cost ?? 0,
+                'totalamount'      => $validated['bidding_price'] ?? 0, //kani ang mag reflect sa WFS
                 'converted_amount' => $accounting_info->book_value ?? 0,
                 'currency'         => 'PHP',
                 'is_multiple'      => $request->boolean('is_multiple'),
@@ -1790,7 +1787,7 @@ class AssetController extends Controller
                 'refno'            => $validatedData['asset_number'] ?? 'REF-' . time(),
                 'transid'          => 'ADREF-' . uniqid(),
                 'sourceapp'        => 'ADREF System', //ADREF_APP
-                'sourceurl'        => url('/assets/' . ($id ?? '') . '/asset-status'),
+                'sourceurl'        => url('/assets/viewer/' . ($id ?? '') ),
                 'status'           => 'PENDING',
                 'created_at'       => now()->toDateTimeString(),
                 
@@ -1864,4 +1861,21 @@ class AssetController extends Controller
         return redirect()->back()->with('success', 'Scrap asset successfully updated.');
     }
     // END SCRAPS CONTROLLERS
+
+    // Asset Transaction Viewer
+    public function viewer($id) {
+
+        $asset = Asset::with([
+            'accounting_information',
+            'asid_information',
+            'manager_information',
+            'mepeo_information.wasteClassification',
+            'mepeo_information.wasteCharacteristic',
+            'mcd_information',
+        ])->findOrFail($id);
+        // dd($asset);
+        return Inertia::render('viewer', [
+            'asset' => $asset,
+        ]);
+    }
 }

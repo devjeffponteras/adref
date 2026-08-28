@@ -415,4 +415,11 @@ export default function MepeoEvaluate({ asset, wasteClassifications = [], wasteC
     );
 }
 
-MepeoEvaluate.layout = (page: React.ReactNode) => page;
+
+MepeoEvaluate.layout = {
+  breadcrumbs: [
+    {
+      title: 'MEPEO Evaluation',
+    },
+  ],
+};
