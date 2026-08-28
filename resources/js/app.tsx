@@ -13,6 +13,8 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
+            case name === 'viewer': // Add your viewer component route name here
+            case name.startsWith('viewer/'): // Handles nested routes like viewer/index if applicable
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

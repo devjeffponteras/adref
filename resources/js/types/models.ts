@@ -21,6 +21,8 @@ export interface Asset {
     brand_make: string | null;
     serial_plate_id_number: string | null;
     end_user_department: string;
+    reasons_for_disposal: string;
+    asset_location: string;
     description: string | null;
     asset_classification_id: AssetClassification | null;
     status: string;
@@ -32,6 +34,7 @@ export interface Asset {
     asset_disposal?: AssetDisposal | null;
     asset_scraps?: AssetScraps | null;
     asset_bidding?: AssetBidding | null;
+    accounting_information?: AccountingInfo | null;
 }
 
 export interface Approver {
@@ -62,6 +65,19 @@ export interface MepeoInfo {
     id: number;
     waste_classification_id: number;
     waste_characteristic_id: number;
+    waste_classification: WasteClassification | null;
+    waste_characteristic: WasteCharacteristic | null;
+    remarks: string;
+}
+
+export interface WasteClassification {
+    id: number;
+    name: string
+}
+
+export interface WasteCharacteristic {
+    id: number;
+    name: string
 }
 
 export interface McdInfo {
@@ -90,6 +106,16 @@ export interface AsidInfo {
     checked_by: string;
     disposition: string;
     reviewed_by: string;
+}
+
+export interface AccountingInfo {
+    id: number;
+    asset_id: number;
+    asset_number: number;
+    acquisition_cost: number;
+    book_value: number;
+    remarks: string;
+    checked_by: string;
 }
 
 export interface AssetDisposal {

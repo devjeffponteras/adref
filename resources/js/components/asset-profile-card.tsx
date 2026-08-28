@@ -20,18 +20,19 @@ interface AttachedFile {
 
 interface AssetProfileCardProps {
   asset: {
-    accountable_personnel: string;
-    control_number: string;
-    brand_make: string;
-    model: string;
-    serial_plate_id_number: string;
-    end_user_department: string;
-    asset_location: string;
-    reasons_for_disposal: string;
+    accountable_personnel: string | null;
+    control_number: string | null;
+    brand_make: string | null;
+    model: string | null;
+    description: string | null;
+    serial_plate_id_number: string | null;
+    end_user_department: string | null;
+    asset_location: string | null;
+    reasons_for_disposal: string | null;
     assessment_reports?: string[] | AttachedFile[] | null;
     asset_photos?: string[] | AttachedFile[] | null;
-    user?: User;
-    classification?: AssetClassification;
+    user?: User | null;
+    classification?: AssetClassification | null;
   };
 }
 
@@ -74,7 +75,7 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
 
   const reportsList = normalizeAttachments(asset.assessment_reports);
   const photosList = normalizeAttachments(asset.asset_photos);
-
+  // console.log(asset);
   return (
     <div className="bg-white rounded-2xl border border-emerald-100/60 shadow-md shadow-emerald-900/3 overflow-hidden main-info-card">
       {/* Header */}
@@ -145,7 +146,12 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
 
             <div>
               <span className="text-gray-400 block text-xs font-medium uppercase tracking-wider mb-0.5">Asset Classification Category</span>
-              <span className="text-gray-800 font-medium">{asset.classification?.name || 'Unclassified Row'}</span>
+              <span className="text-gray-800 font-medium">{asset.classification?.name || 'Uncategorized'}</span>
+            </div>
+
+            <div>
+              <span className="text-gray-400 block text-xs font-medium uppercase tracking-wider mb-0.5">Description</span>
+              <span className="text-gray-800 font-medium">{asset.description || 'Asset no description'}</span>
             </div>
           </div>
 
@@ -167,7 +173,7 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-gray-700 font-bold truncate">Report Document #{idx + 1}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed break-words">
+                        <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed wrap-break-word">
                           {item.description}
                         </p>
 
@@ -211,7 +217,7 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-gray-700 font-bold truncate">Condition Photo #{idx + 1}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed break-words">
+                        <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed wrap-break-word">
                           {item.description}
                         </p>
 

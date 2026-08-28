@@ -471,7 +471,7 @@ export default function EditAsset({ asset, classifications = [], accountable_per
                 className="px-5 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
               >
                 <Save className="h-4 w-4" />
-                {processing ? 'Updating...' : 'Update Asset'}
+                {processing ? 'Updating...' : 'Update Asset & Submit'}
               </button>
             </div>
           </form>
@@ -480,3 +480,11 @@ export default function EditAsset({ asset, classifications = [], accountable_per
     </>
   );
 }
+
+EditAsset.layout = {
+    breadcrumbs: [
+        {
+            title: 'Asset Request Details',
+        },
+    ],
+};

@@ -64,6 +64,7 @@ interface Props {
         serial_plate_id_number: string;
         model: string;
         brand_make: string;
+        description: string;
         status: string;
         approvals: assetStatus[];
         user?: UserProfile | null;
@@ -189,6 +190,8 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
 
                     <h1 className="font-extrabold text-2xl tracking-tight mb-5 drop-shadow-xs">
                         {asset.brand_make || 'Generic'} <span className="font-light text-emerald-100/80">{asset.model || 'Asset Profile'}</span>
+                        <br />
+                        <small className='text-[10px] font-black tracking-widest text-emerald-400 opacity-90 my-1 flex flex-col'>DESCRIPTION <span className='text-white'> {asset.description}</span></small>
                     </h1>
 
                     { ((isReturned || !isRejected) && !isOnGoing && !isCompleted && (asset?.user_id == String(auth?.user?.id))) && 
@@ -418,7 +421,7 @@ export default function AssetTimeline({ asset, currentUserId }: Props) {
                                     {isDisposed
                                         ? 'This asset has completed the entire evaluation lifecycle and has been officially executed for disposal by ASID.'
                                         : isCompleted 
-                                        ? 'This asset disposal request has successfully passed all evaluation stages and is now officially signed off for disposal processing by all required departments. Final execution will go through ASID Official.' 
+                                        ? 'This asset disposal request has successfully passed all evaluation stages and is now officially signed off for disposal processing by all required departments. Final execution will go through ASID Officials.' 
                                         : 'This asset disposal request has been disapproved by an evaluator and halted from further processing.'}
                                 </p>
                             </div>
