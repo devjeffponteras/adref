@@ -1865,17 +1865,29 @@ class AssetController extends Controller
     // Asset Transaction Viewer
     public function viewer($id) {
 
-        $asset = Asset::with([
-            'accounting_information',
-            'asid_information',
-            'manager_information',
-            'mepeo_information.wasteClassification',
-            'mepeo_information.wasteCharacteristic',
-            'mcd_information',
-        ])->findOrFail($id);
+        $is_temp = null;
+        $asset = null;
+
+        $is_temp = TemporaryAssetRequest::where('transid', $id)
+                ->with('user')
+                ->first(); 
+        // dd($is_temp);
+        if (!$is_temp) {
+                $asset = Asset::with([
+                'accounting_information',
+                'asid_information',
+                'manager_information',
+                'mepeo_information.wasteClassification',
+                'mepeo_information.wasteCharacteristic',
+                'mcd_information',
+                'user',
+            ])->findOrFail($id);
+
+        }
         // dd($asset);
         return Inertia::render('viewer', [
             'asset' => $asset,
+            'is_temp' => $is_temp,
         ]);
     }
 }
