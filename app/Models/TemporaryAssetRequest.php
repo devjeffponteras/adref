@@ -43,6 +43,6 @@ class TemporaryAssetRequest extends Model
      */
     public function user(): BelongsTo
     {
-        return $table->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
