@@ -91,6 +91,7 @@ export default function Viewer({ asset, is_temp }: Props) {
     : null;
 
   const displayAsset = asset ?? temporaryAssetProfile;
+  const managerInfo = asset?.manager_information;
 
   const rawSections = [
     {
@@ -133,7 +134,7 @@ export default function Viewer({ asset, is_temp }: Props) {
       color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
       sourceObject: asset?.asid_information,
       data: [
-        { label: 'Reviewed & Noted By', value: asset?.asid_information?.reviewed_by },
+        { label: 'Checked By', value: asset?.asid_information?.checked_by },
         { label: 'Remarks', value: asset?.asid_information?.remarks, fullWidth: true },
       ],
     },
@@ -143,8 +144,11 @@ export default function Viewer({ asset, is_temp }: Props) {
       color: 'text-purple-600 bg-purple-50 border-purple-100',
       sourceObject: asset?.manager_information,
       data: [
-        { label: 'Reviewed & Noted By', value: asset?.manager_information?.manager_reviewd_by },
-        { label: 'Disposition / Remarks', value: asset?.manager_information?.manager_disposition, fullWidth: true },
+        { label: 'Reviewed & Noted By', value: asset?.manager_information?.reviewed_by },
+        ...(managerInfo && managerInfo.bidding_price != null && managerInfo.bidding_price > 0
+          ? [{ label: 'Bidding Price', value: `Php ${managerInfo.bidding_price}` }]
+          : []),
+        { label: 'Disposition', value: asset?.manager_information?.asset_direction, fullWidth: true },
       ],
     },
   ];

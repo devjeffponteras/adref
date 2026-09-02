@@ -157,7 +157,8 @@ class AdminController extends Controller
     }
 
     public function biddingStore(Request $request, $id)
-    {dd($id);
+    {
+        // dd($id);
         $asset = Asset::where('status', 'Completed')->findOrFail($id);
 
         AssetBidding::create([
