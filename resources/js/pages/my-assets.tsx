@@ -15,6 +15,7 @@ interface AssetDisposal {
 
 interface ManagerInformation {
     id: number;
+    asset_direction: string;
     manager_disposition: string;
 }
 
@@ -42,7 +43,7 @@ interface MyAssetsProps {
 export default function MyAssets({ assets = [] }: MyAssetsProps) {
 
     const [search, setSearch] = useState('');
-    const [sortField, setSortField] = useState<keyof Asset | 'classification'>('id'); 
+    const [sortField, setSortField] = useState<keyof Asset | 'classification' | 'disposition'>('id'); 
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc'); 
     const [isRefreshing, setIsRefreshing] = useState(false);
     
@@ -83,6 +84,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
             (asset.status?.toLowerCase() || '').includes(search.toLowerCase()) || 
             asset.accountable_personnel.toLowerCase().includes(search.toLowerCase()) ||
             asset.end_user_department.toLowerCase().includes(search.toLowerCase()) ||
+            (asset.manager_information?.asset_direction.toLowerCase() || '').includes(search.toLowerCase()) || 
             (asset.classification?.name?.toLowerCase() || '').includes(search.toLowerCase())
         );
 
@@ -93,6 +95,9 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
             if (sortField === 'classification') {
                 valA = a.classification?.name?.toLowerCase() || '';
                 valB = b.classification?.name?.toLowerCase() || '';
+            } else if (sortField === 'disposition') {
+                valA = a.manager_information?.asset_direction?.toLowerCase() || '';
+                valB = b.manager_information?.asset_direction?.toLowerCase() || '';
             } else {
                 valA = a[sortField as keyof Asset];
                 valB = b[sortField as keyof Asset];
@@ -146,7 +151,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
         return numbers;
     }, [totalPages]);
 
-    const handleSort = (field: keyof Asset | 'classification') => {
+    const handleSort = (field: keyof Asset | 'classification' | 'disposition') => {
         if (sortField === field) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
         } else {
@@ -174,6 +179,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
             'Accountable Personnel': item.accountable_personnel,
             'End User Department': item.end_user_department,
             'Asset Location': item.asset_location || 'N/A', 
+            'Disposition': item.manager_information?.asset_direction || 'N/A', 
             'Date Created': formatDate(item.created_at)
         }));
 
@@ -245,7 +251,7 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                 <tr>
                                     <th className="px-6 py-4 w-28">Action</th>
                                     
-                                    <th onClick={() => handleSort('serial_plate_id_number')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
+                                    <th onClick={() => handleSort('model')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
                                         <div className="flex items-center gap-1.5">Asset Details<ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
 
@@ -257,16 +263,16 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                         <div className="flex items-center gap-1.5">Classification <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
 
-                                    <th onClick={() => handleSort('model')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
+                                    <th onClick={() => handleSort('accountable_personnel')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
                                         <div className="flex items-center gap-1.5">Requested By<ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
 
-                                    <th onClick={() => handleSort('accountable_personnel')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
+                                    <th onClick={() => handleSort('disposition')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
                                         <div className="flex items-center gap-1.5">Disposition <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
 
                                     <th onClick={() => handleSort('created_at')} className="px-6 py-4 cursor-pointer hover:bg-gray-100 select-none transition-colors">
-                                        <div className="flex items-center gap-1.5">Date Added <ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
+                                        <div className="flex items-center gap-1.5">Request Date<ArrowUpDown className="h-3 w-3 text-gray-400" /></div>
                                     </th>
                                 </tr>
                             </thead>
@@ -336,8 +342,8 @@ export default function MyAssets({ assets = [] }: MyAssetsProps) {
                                                 <div className="text-xs text-gray-400">{asset.end_user_department}</div>
                                             </td>
 
-                                            <td className="px-6 py-3.5 font-mono font-medium text-base text-gray-900 uppercase">
-                                                {asset.manager_information?.manager_disposition || <span className="text-gray-300 text-xs italic">--</span>}
+                                            <td className="px-6 py-3.5 font-mono font-medium text-sm text-gray-900 uppercase">
+                                                {asset.manager_information?.asset_direction || <span className="text-gray-300 text-xs italic">--</span>}
                                             </td>
 
                                             <td className="px-6 py-3.5 text-gray-500 whitespace-nowrap">

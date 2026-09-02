@@ -95,7 +95,8 @@ export interface McdInfo {
 export interface ManagerInfo {
     id: number;
     asset_direction: string;
-    manager_reviewd_by: string;
+    manager_reviewed_by: string;
+    reviewed_by: string;
     manager_disposition: string;
     bidding_price: number;
 }
