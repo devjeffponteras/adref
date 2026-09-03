@@ -86,6 +86,7 @@ export interface McdInfo {
     role: string;
     par_number: string;
     remarks: string;
+    photo: string | null;
     approver_id: number;
     status: string;
     manager_remarks: string;

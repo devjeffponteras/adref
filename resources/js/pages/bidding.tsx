@@ -283,7 +283,7 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                                 </td>
                                                 
                                                 <td className="py-4 pr-6 text-center whitespace-nowrap">
-                                                    {hasCurrentUserBidded(listing.asset) ? (
+                                                    {/* {hasCurrentUserBidded(listing.asset) ? (
                                                         <button 
                                                             type="button" 
                                                             disabled
@@ -291,7 +291,7 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                                         >
                                                             Done Bid
                                                         </button>
-                                                    ) : (
+                                                    ) : ( */}
                                                         <button 
                                                             type="button" 
                                                             onClick={() => handleOpenBidModal(listing)}
@@ -300,8 +300,9 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                                             <Gavel className="w-3.5 h-3.5 mr-1" />
                                                             Post Bid Entry
                                                         </button>
-                                                    )}
+                                                    {/* )} */}
                                                 </td>
+
                                             </tr>
                                         ))}
                                     </tbody>

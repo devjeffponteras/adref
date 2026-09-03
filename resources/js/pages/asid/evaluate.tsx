@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { CircleCheck, ArrowLeftCircle, XIcon } from 'lucide-react';
+import { CircleCheck, ArrowLeftCircle, XIcon, Eye } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 
 interface User {
@@ -30,6 +30,7 @@ interface McdInformation {
     asset_id: number;
     par_number: string;
     remarks: string;
+    photo: string | null;
 }
 
 interface AccountingInformation {
@@ -310,6 +311,19 @@ export default function AsidEvaluate({ asset, wasteClassifications = [], wasteCh
                                 disabled
                                 className="w-full p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
                             />
+                        </div>
+
+                        <div className="flex items-end">
+                            {asset.mcd_information?.photo && (
+                                <button
+                                    type="button"
+                                    onClick={() => window.open(`/storage/${asset.mcd_information?.photo}`, '_blank', 'noopener,noreferrer')}
+                                    className="inline-flex items-center rounded-lg border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                                >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Photo
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

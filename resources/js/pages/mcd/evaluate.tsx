@@ -1,5 +1,5 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import { XIcon, CircleCheck, ArrowLeftCircle, Send } from 'lucide-react';
+import { XIcon, CircleCheck, ArrowLeftCircle, Send, Eye } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -18,6 +18,7 @@ interface McdInformation {
     asset_id: number;
     par_number: string;
     remarks: string;
+    photo: string | null;
 }
 
 interface AccountingInformation {
@@ -88,6 +89,7 @@ export default function McdEvaluate({ asset, par_numbers = [] }: EvaluateProps) 
 
         par_number: asset.mcd_information?.par_number || '',
         par_remarks: asset.mcd_information?.remarks || '',
+        photo: null as File | null,
     });
 
     // Close dropdown on click outside
@@ -141,7 +143,7 @@ export default function McdEvaluate({ asset, par_numbers = [] }: EvaluateProps) 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/mcd-evaluate/${asset.id}/action`);
+        post(`/mcd-evaluate/${asset.id}/action`, { forceFormData: true });
     };
 
     return (
@@ -337,6 +339,35 @@ export default function McdEvaluate({ asset, par_numbers = [] }: EvaluateProps) 
                         </div>
 
                         <div>
+                            {isLocked ? (
+                                asset.mcd_information?.photo && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Photo</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.open(`/storage/${asset.mcd_information?.photo}`, '_blank', 'noopener,noreferrer')}
+                                            className="inline-flex items-center rounded-lg border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                                        >
+                                            <Eye className="mr-2 h-4 w-4" />
+                                            View Photo
+                                        </button>
+                                    </div>
+                                )
+                            ) : (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Photo</label>
+                                    <input
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                                        onChange={e => setData('photo', e.target.files?.[0] ?? null)}
+                                        className="w-full p-2 text-sm text-gray-700 border border-gray-300 rounded-lg file:mr-3 file:border-0 file:bg-emerald-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-emerald-700"
+                                    />
+                                </div>
+                            )}
+                            {!isLocked && errors.photo && <p className="text-xs text-red-500 mt-1">{errors.photo}</p>}
+                        </div>
+
+                        <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
                             <textarea
                                 rows={3}
@@ -352,6 +383,7 @@ export default function McdEvaluate({ asset, par_numbers = [] }: EvaluateProps) 
                             ></textarea>
                             {errors.par_remarks && <p className="text-xs text-red-500 mt-1">{errors.par_remarks}</p>}
                         </div>
+                        
                     </div>
 
                     <div className="flex items-center justify-between mt-6">

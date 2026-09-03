@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { CircleCheck, ArrowLeftCircle, XIcon } from 'lucide-react';
+import { CircleCheck, ArrowLeftCircle, XIcon, Eye } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 
 interface User {
@@ -18,6 +18,14 @@ interface AsidInformation {
     checked_by: string;
     disposition: string;
     reviewed_by: string;
+}
+
+interface McdInformation {
+    id: number;
+    asset_id: number;
+    par_number: string;
+    remarks: string;
+    photo: string | null;
 }
 
 interface ManagerInformation {
@@ -49,6 +57,7 @@ interface AssetData {
     user?: User;
     classification?: AssetClassification;
     asid_information?: AsidInformation | null;
+    mcd_information?: McdInformation | null;
     manager_information?: ManagerInformation | null;
 }
 
@@ -91,6 +100,48 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
             
                 <AssetProfileCard asset={asset} />
 
+                {/* MCD - PAR section */}
+                <div className="w-full bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-4">
+                    <h3 className="text-gray-900 font-bold text-lg tracking-tight mb-6">
+                        PAR Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">PAR Number</label>
+                            <input
+                                type="text"
+                                value={asset.mcd_information?.par_number || ''}
+                                disabled
+                                placeholder="N/A"
+                                className="w-full p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
+                            <input
+                                type="text"
+                                value={asset.mcd_information?.remarks || ''}
+                                disabled
+                                placeholder="N/A"
+                                className="w-full p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
+                            />
+                        </div>
+
+                        {asset.mcd_information?.photo && (
+                            <button
+                                type="button"
+                                onClick={() => window.open(`/storage/${asset.mcd_information?.photo}`, '_blank', 'noopener,noreferrer')}
+                                className="inline-flex w-fit items-center rounded-lg border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                            >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Photo
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {/* Main Form Container Card */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6 mt-4">
                     
@@ -105,7 +156,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                     </h3>
 
                     {/* Section 1: Remarks & Checked By */}
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
                         <div className="xl:col-span-6 flex flex-col gap-1.5">
                             <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                 Remarks

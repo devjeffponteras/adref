@@ -238,7 +238,7 @@ export default function MepeoDashboard({ assetStatuses }: DashboardProps) {
                                         <div className="flex items-center">Department {renderSortIcon('department')}</div>
                                     </th>
                                     <th scope="col" onClick={() => handleSort('submitted_by')} className="px-4 py-3.5 font-semibold cursor-pointer group hover:bg-slate-200/60 transition-colors">
-                                        <div className="flex items-center">Submitted By {renderSortIcon('submitted_by')}</div>
+                                        <div className="flex items-center">Brand & Model {renderSortIcon('submitted_by')}</div>
                                     </th>
                                     <th scope="col" onClick={() => handleSort('date')} className="py-3.5 pl-6 pr-3 font-semibold cursor-pointer group hover:bg-slate-200/60 transition-colors">
                                         <div className="flex items-center">Application Date &amp; Time {renderSortIcon('date')}</div>
@@ -274,10 +274,9 @@ export default function MepeoDashboard({ assetStatuses }: DashboardProps) {
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
                                                     <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
-                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
                                                 </td>
                                                 <td className="px-4 py-4 font-medium text-gray-700">
-                                                    {item.approver?.name || 'System Auto'}
+                                                    {item.asset?.brand_make} {item.asset?.model}
                                                 </td>
                                                 <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
                                                     {formattedDate}
