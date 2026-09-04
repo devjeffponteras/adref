@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { CircleCheck, ArrowLeftCircle, XIcon } from 'lucide-react';
+import { CircleCheck, ArrowLeftCircle, XIcon, Eye } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 
 interface User {
@@ -20,12 +20,21 @@ interface AsidInformation {
     reviewed_by: string;
 }
 
+interface McdInformation {
+    id: number;
+    asset_id: number;
+    par_number: string;
+    remarks: string;
+    photo: string | null;
+}
+
 interface ManagerInformation {
     id: number;
     asset_direction: string;
     manager_disposition: string;
     bidding_price: number;
     bidding_cycle?: number | string | null;
+    biddingCycleDetails?: BiddingCycle | null;
     reviewed_by: string;
 }
 
@@ -49,15 +58,35 @@ interface AssetData {
     user?: User;
     classification?: AssetClassification;
     asid_information?: AsidInformation | null;
+    mcd_information?: McdInformation | null;
     manager_information?: ManagerInformation | null;
 }
 
 interface AssetProps {
     asset: AssetData;
+    biddingCycles: BiddingCycle[];
 }
 
-export default function AsidEvaluateManager({ asset }: AssetProps) {
+interface BiddingCycle {
+    id: number;
+    date_from: string;
+    date_to: string;
+}
+
+export default function AsidEvaluateManager({ asset, biddingCycles = [] }: AssetProps) {
     const { auth } = usePage().props as any;
+
+    const formatCycleDate = (date: string) => {
+        const parsedDate = new Date(date.includes('T') ? date : `${date}T00:00:00`);
+
+        return Number.isNaN(parsedDate.getTime())
+            ? date
+            : parsedDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+    };
 
     const isLockedAsid = !!asset?.asid_information;
     const isLockedManager = !!asset?.manager_information;
@@ -91,6 +120,48 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
             
                 <AssetProfileCard asset={asset} />
 
+                {/* MCD - PAR section */}
+                <div className="w-full bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-4">
+                    <h3 className="text-gray-900 font-bold text-lg tracking-tight mb-6">
+                        PAR Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">PAR Number</label>
+                            <input
+                                type="text"
+                                value={asset.mcd_information?.par_number || ''}
+                                disabled
+                                placeholder="N/A"
+                                className="w-full p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
+                            <input
+                                type="text"
+                                value={asset.mcd_information?.remarks || ''}
+                                disabled
+                                placeholder="N/A"
+                                className="w-full p-2 text-sm border rounded-lg shadow-2xs bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
+                            />
+                        </div>
+
+                        {asset.mcd_information?.photo && (
+                            <button
+                                type="button"
+                                onClick={() => window.open(`/storage/${asset.mcd_information?.photo}`, '_blank', 'noopener,noreferrer')}
+                                className="inline-flex w-fit items-center rounded-lg border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                            >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Photo
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {/* Main Form Container Card */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6 mt-4">
                     
@@ -105,7 +176,7 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                     </h3>
 
                     {/* Section 1: Remarks & Checked By */}
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-end">
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
                         <div className="xl:col-span-6 flex flex-col gap-1.5">
                             <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                 Remarks
@@ -298,19 +369,24 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                         <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                             Bidding Cycle
                                         </label>
-                                        <input 
-                                            type="number" 
+                                        <select 
                                             name='bidding_cycle'
                                             disabled={isLockedManager}
                                             value={data.bidding_cycle}
                                             onChange={(e) => setData('bidding_cycle', e.target.value === '' ? '' : Number(e.target.value))}
-                                            placeholder="Enter cycle number (e.g., 1)"
                                             className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                                 ${isLockedManager
                                                     ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
                                                     : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                                 }`}
-                                        />
+                                        >
+                                            <option value="" disabled>Select bidding cycle</option>
+                                            {biddingCycles.map((cycle) => (
+                                                <option key={cycle.id} value={cycle.id}>
+                                                    Cycle {cycle.id}: {formatCycleDate(cycle.date_from)} to {formatCycleDate(cycle.date_to)}
+                                                </option>
+                                            ))}
+                                        </select>
                                         {errors.bidding_cycle && <span className="text-red-500 text-xs">{errors.bidding_cycle}</span>}
                                     </div>
                                 </>

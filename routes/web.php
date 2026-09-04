@@ -49,6 +49,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('disposals', [AssetController::class, 'disposals'])->name('disposals');
 
+    Route::get('admin/bidding/cycle', [AdminController::class, 'biddingCycleIndex'])->name('bidding-cycle.index');
+    Route::post('admin/bidding/cycle', [AdminController::class, 'biddingCycleStore'])->name('bidding-cycle.store');
+    Route::get('admin/bidding/sold', [AdminController::class, 'soldAssets'])->name('sold-assets.index');
+
     Route::get('admin/user-management/index', [AdminController::class, 'userManagementIndex'])->name('user-management.index');
     Route::get('admin/user-management/create', [AdminController::class, 'userManagementCreate'])->name('user-management.create');
     Route::post('admin/user-management/store', [AdminController::class, 'userManagementStore'])->name('user-management.store');

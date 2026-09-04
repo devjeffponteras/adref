@@ -28,6 +28,7 @@ class McdInformation extends Model implements Auditable
         'role',
         'par_number',
         'remarks',
+        'photo',
         'approver_id',
         'status',
         'manager_remarks',

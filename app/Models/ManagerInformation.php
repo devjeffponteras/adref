@@ -18,6 +18,7 @@ class ManagerInformation extends Model implements Auditable
         'user_id',
         'asset_direction',
         'bidding_price',
+        'bidding_cycle',
         'manager_disposition',
         'reviewed_by',
     ];
@@ -30,5 +31,10 @@ class ManagerInformation extends Model implements Auditable
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function biddingCycleDetails(): BelongsTo
+    {
+        return $this->belongsTo(BiddingCycle::class, 'bidding_cycle');
     }
 }

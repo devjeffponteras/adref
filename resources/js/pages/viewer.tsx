@@ -6,6 +6,7 @@ import {
   FileText,
   ShieldAlert,
   UserCheck,
+  Eye,
 } from 'lucide-react';
 import { AssetProfileCard } from '@/components/asset-profile-card';
 import type { Asset } from '@/types/models';
@@ -249,6 +250,16 @@ export default function Viewer({ asset, is_temp }: Props) {
                         </div>
                       ))}
                     </dl>
+                      {section.title === 'MCD Evaluator' && asset.mcd_information?.photo && (
+                        <button
+                          type="button"
+                          onClick={() => window.open(`/storage/${asset.mcd_information?.photo}`, '_blank', 'noopener,noreferrer')}
+                          className="mt-5 inline-flex items-center rounded-lg border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Photo
+                        </button>
+                      )}
                   </div>
                 );
               })}

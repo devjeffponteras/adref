@@ -6,6 +6,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\BiddingCycle;
 
 class Bidding extends Model implements Auditable 
 {
@@ -66,5 +68,10 @@ class Bidding extends Model implements Auditable
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function biddingCycleDetails(): BelongsTo
+    {
+        return $this->belongsTo(BiddingCycle::class, 'bidding_cycle');
     }
 }

@@ -11,6 +11,7 @@ use App\Models\AssetClassification;
 use App\Models\AssetStatus;
 use App\Models\AssetScrap;
 use App\Models\Bidding;
+use App\Models\BiddingCycle;
 use App\Models\Form;
 use App\Models\McdInformation;
 use App\Models\MepeoInformation;
@@ -865,15 +866,18 @@ class AssetController extends Controller
     // Manager Functions
     public function managerEvaluate(Request $request, $id)
     {
-        $asset = Asset::findOrFail($id);
+        $asset = Asset::with('mcd_information')->findOrFail($id);
         $asidInformation = AsidInformation::where('asset_id', $id)->first();
-        $managerInformation = ManagerInformation::where('asset_id', $id)->first();
+        $managerInformation = ManagerInformation::with('biddingCycleDetails')
+            ->where('asset_id', $id)
+            ->first();
 
         $asset->asid_information = $asidInformation;
         $asset->manager_information = $managerInformation;
 
         return Inertia::render('manager/evaluate', [
             'asset' => $asset,
+            'biddingCycles' => BiddingCycle::orderBy('date_from')->orderBy('id')->get(),
         ]);
     }
 
@@ -1291,21 +1295,32 @@ class AssetController extends Controller
 
     public function mcdEvaluateAction(Request $request, $id)
     {
+        // dd($request);
         $asset = Asset::findOrFail($id);
 
         $validatedData = $request->validate([
             'par_number' => 'nullable|string|max:1000',
             'par_remarks' => 'nullable|string|max:1000',
+            'photo' => 'nullable|file|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
+        $mcdInfo = McdInformation::where('asset_id', $asset->id)->first();
+        $oldPhotoPath = $mcdInfo?->photo;
+        $newPhotoPath = null;
+
+        if ($request->hasFile('photo')) {
+            $newPhotoPath = $request->file('photo')->store('mcd-photos', 'public');
+        }
+
         try {
-            DB::transaction(function () use ($asset, $validatedData) {
+            DB::transaction(function () use ($asset, $validatedData, $newPhotoPath, $oldPhotoPath) {
                 McdInformation::updateOrCreate(
                     ['asset_id' => $asset->id],
                     [
                         'role'        => 'mcd',
                         'par_number'  => $validatedData['par_number'] ?? null,
                         'remarks'     => $validatedData['par_remarks'] ?? null,
+                        'photo'       => $newPhotoPath ?? $oldPhotoPath,
                         'approver_id' => Auth::id(),
                         // Set status to 'On-going' or 'Pending' to reflect handoff to the manager
                         'status'      => 'On-going', 
@@ -1316,10 +1331,18 @@ class AssetController extends Controller
                 // $asset->update(['status' => 'Pending Manager Approval']);
             });
 
+
+            if ($newPhotoPath && $oldPhotoPath) {
+                Storage::disk('public')->delete($oldPhotoPath);
+            }
             return redirect()->route('mcd-dashboard')
                 ->with('success', 'MCD evaluation phase pushed to MCD manager. Asset on standby for manager updates.');
 
         } catch (\Exception $e) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
             Log::error("Failed transaction sequence processing MCD evaluation for Asset ID {$id}: " . $e->getMessage());
 
             return back()->withErrors([
@@ -1617,19 +1640,24 @@ class AssetController extends Controller
         $assetOnBidding = AssetBidding::with([
             'asset.accounting_information',
             'asset.manager_information',
+            'asset.manager_information.biddingCycleDetails',
             'asset.bids' => function ($query) {
                 $query->where('user_id', Auth::id());
             },
+            'asset.bids.biddingCycleDetails',
         ])->get();
-
+// dd($assetOnBidding);
         return Inertia::render('bidding', [
             'assetOnBidding' => $assetOnBidding,
+            'biddingCycles' => BiddingCycle::orderBy('date_from')->orderBy('id')->get(),
         ]);
     }
 
     public function userBiddingEntry(Request $request, $id)
     {
-        $asset = Asset::where('status', 'Approved')->findOrFail($id);
+        $asset = Asset::whereHas('biddingListing', function ($query) {
+            $query->where('status', 'active');
+        })->findOrFail($id);
 
         $validated = $request->validate([
             'bidder_name' => 'nullable|string|max:255',

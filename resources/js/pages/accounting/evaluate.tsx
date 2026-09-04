@@ -260,9 +260,14 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
                             <label className="block text-xs font-bold text-gray-700 mb-1">Checked by</label>
                             <input 
                                 type="text"
-                                disabled
+                                disabled={isLocked}
                                 value={data.checked_by}
-                                className="w-full p-2 text-sm text-gray-600 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed shadow-2xs"
+                                onChange={e => setData('checked_by', e.target.value)}
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                    ${isLocked 
+                                        ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                        : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' 
+                                    }`}
                             />
                         </div>
 

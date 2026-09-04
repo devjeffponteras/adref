@@ -57,7 +57,7 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $assets = Asset::with(['mepeo_information', 'manager_information', 'assetDisposal', 'mepeo_information', 'asset_scraps', 'biddingListing'])
+        $assets = Asset::with(['mepeo_information', 'manager_information', 'assetDisposal', 'mepeo_information', 'asset_scraps', 'biddingListing', 'bids'])
             ->orderBy('created_at', 'desc')
             ->get();
 
