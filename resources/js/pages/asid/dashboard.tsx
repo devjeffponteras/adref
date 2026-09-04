@@ -186,6 +186,8 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
 
     const approvedAssets = assets || [];
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+    const [biddingCategory, setBiddingCategory] = useState('');
+    const { setData: setPublishData, post: publishAsset, processing: publishingAsset } = useForm({ category: '' });
     const { data, setData, post, processing, errors, reset } = useForm<AssetDisposalForm>({
         asset_id: null,
         others: '',
@@ -235,15 +237,17 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
     // --- Core Action Handlers ---
     const handleOpenConfirmModal = (asset: Asset) => {
         setSelectedAsset(asset);
+        setBiddingCategory('');
     };
 
     const handleCloseModal = () => {
         setSelectedAsset(null);
+        setBiddingCategory('');
     };
 
     const handleConfirmPublish = () => {
-        if (!selectedAsset) return;
-        post(`/admin/bidding/store/${selectedAsset.id}`, {
+        if (!selectedAsset || !biddingCategory) return;
+        publishAsset(`/admin/bidding/store/${selectedAsset.id}`, {
             onSuccess: () => handleCloseModal(),
         });
     };
@@ -342,6 +346,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
             item?.status === 'Completed' &&
             item?.manager_information?.asset_direction === 'For Bidding' &&
             item?.mepeo_information?.waste_classification_id != 13 &&
+            !item?.bidding_listing &&
             !item?.asset_disposal
         );
     }, [assetsInfo]);
@@ -609,7 +614,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                             </p>
                                                         </td> */}
                                                         <td className="py-4 px-5 text-right align-middle">
-                                                            {item?.asset_bidding ? 
+                                                            {item?.bidding_listing ? 
                                                             <button
                                                                 type="button"
                                                                 disabled
@@ -1222,8 +1227,8 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
 
             {/* Confirmation Modal */}
             {selectedAsset && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-100 animate-scale-up">
+                <div className="bidding-publish-confirm-modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+                    <div className="bg-white rounded-2xl max-w-2xl max-h-[90vh] w-full p-6 shadow-xl border border-gray-100 animate-scale-up overflow-y-auto">
                         <div className="flex items-center justify-between mb-4">
                             <div className="inline-flex items-center gap-2">
                                 <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
@@ -1240,13 +1245,83 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                         </div>
 
                         <div className="mb-6">
+                            {(() => {
+                                const firstPhoto = selectedAsset.asset_photos?.[0];
+                                const photoPath = typeof firstPhoto === 'string'
+                                    ? firstPhoto
+                                    : firstPhoto?.file_path || firstPhoto?.path || firstPhoto?.url;
+                                const photoUrl = photoPath
+                                    ? (photoPath.startsWith('http') ? photoPath : `/storage/${photoPath.replace(/^\//, '')}`)
+                                    : null;
+
+                                return photoUrl ? (
+                                    <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                                        <img
+                                            src={photoUrl}
+                                            alt={`Asset ${selectedAsset.control_number || 'photo'}`}
+                                            className="h-48 w-full object-contain"
+                                        />
+                                    </div>
+                                ) : null;
+                            })()}
+
                             <p className="text-sm text-gray-500 mt-2">
                                 Are you sure you want to open bidding for asset <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 text-xs">{selectedAsset.control_number}</span>?
                             </p>
-                            <div className="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs text-gray-600">
-                                <span className="font-semibold text-gray-800">Item:</span> {selectedAsset.brand_make} {selectedAsset.model} <br/>
-                                <span className="font-semibold text-gray-800">Accountable Personnel:</span> {selectedAsset.accountable_personnel}
+                            <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-900">Asset Details</h4>
+                                <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-xs text-gray-600 sm:grid-cols-2">
+                                    <div><span className="font-semibold text-gray-800">Asset Control Number:</span> {selectedAsset.control_number || 'N/A'}</div>
+                                    <div><span className="font-semibold text-gray-800">Item Description:</span> {selectedAsset.brand_make || ''} {selectedAsset.model || 'N/A'}</div>
+                                    <div><span className="font-semibold text-gray-800">Bidding Cycle:</span> {selectedAsset.manager_information?.bidding_cycle ?? '1'}</div>
+                                    <div><span className="font-semibold text-gray-800">Minimum Bid:</span> ₱{Number(selectedAsset.manager_information?.bidding_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                    <div><span className="font-semibold text-gray-800">Accountable Personnel:</span> {selectedAsset.accountable_personnel || 'N/A'}</div>
+                                    <div><span className="font-semibold text-gray-800">Department:</span> {selectedAsset.end_user_department || 'N/A'}</div>
+                                    <div className="sm:col-span-2"><span className="font-semibold text-gray-800">Description:</span> {selectedAsset.description || 'N/A'}</div>
+                                </div>
                             </div>
+
+                            <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-3">
+                                <label htmlFor="bidding-category" className="mb-2 block text-xs font-bold uppercase tracking-wider text-emerald-900">
+                                    Bidding Category
+                                </label>
+                                <select
+                                    id="bidding-category"
+                                    value={biddingCategory}
+                                    onChange={(event) => {
+                                        setBiddingCategory(event.target.value);
+                                        setPublishData('category', event.target.value);
+                                    }}
+                                    className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-200"
+                                >
+                                    <option value="" disabled>Select bidding category</option>
+                                    <option value="PMC MMPRC EMPLOYEES">Bidding for PMC and MMPRC Employees</option>
+                                    <option value="EVERYONE OUTSIDERS CONTRACTORS">Bidding for Everyone Including Outsiders and Contractors</option>
+                                    <option value="PGECC">Bidding by Philsaga Group Employees Credit Cooperative (PGECC)</option>
+                                    <option value="ALL EMPLOYEES OUTSIDERS CONTRACTORS">Open to All Employees Including Outsiders and Contractors</option>
+                                </select>
+                            </div>
+
+                            {selectedAsset.bids && selectedAsset.bids.length > 0 && (
+                                <div className="mt-3 space-y-2">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">Submitted Bid Entries</h4>
+                                    {selectedAsset.bids.map((bid) => (
+                                        <div key={bid.id} className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-xs text-gray-600">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+                                                <div><span className="font-semibold text-gray-800">Bidder:</span> {bid.bidder_name || 'N/A'}</div>
+                                                <div><span className="font-semibold text-gray-800">Contact:</span> {bid.bidder_contact_number || 'N/A'}</div>
+                                                <div><span className="font-semibold text-gray-800">Classification:</span> {bid.bidder_classification || 'N/A'}</div>
+                                                <div><span className="font-semibold text-gray-800">Department:</span> {bid.department || 'N/A'}</div>
+                                                <div><span className="font-semibold text-gray-800">Date Hired:</span> {bid.date_hired || 'N/A'}</div>
+                                                <div><span className="font-semibold text-gray-800">Bidding Cycle:</span> {bid.bidding_cycle || '1'}</div>
+                                                <div><span className="font-semibold text-gray-800">Offer:</span> ₱{Number(bid.bidding_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                                <div><span className="font-semibold text-gray-800">Reference No.:</span> {bid.reference_number || 'N/A'}</div>
+                                                <div className="sm:col-span-2"><span className="font-semibold text-gray-800">Remarks:</span> {bid.remarks || 'N/A'}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-end space-x-3">
@@ -1261,10 +1336,10 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                             <button
                                 type="button"
                                 onClick={handleConfirmPublish}
-                                disabled={processing}
+                                disabled={publishingAsset || !biddingCategory}
                                 className="px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center"
                             >
-                                {processing ? (
+                                {publishingAsset ? (
                                     <>
                                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
                                         Publishing...

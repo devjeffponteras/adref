@@ -34,6 +34,7 @@ interface ManagerInformation {
     manager_disposition: string;
     bidding_price: number;
     bidding_cycle?: number | string | null;
+    biddingCycleDetails?: BiddingCycle | null;
     reviewed_by: string;
 }
 
@@ -63,10 +64,29 @@ interface AssetData {
 
 interface AssetProps {
     asset: AssetData;
+    biddingCycles: BiddingCycle[];
 }
 
-export default function AsidEvaluateManager({ asset }: AssetProps) {
+interface BiddingCycle {
+    id: number;
+    date_from: string;
+    date_to: string;
+}
+
+export default function AsidEvaluateManager({ asset, biddingCycles = [] }: AssetProps) {
     const { auth } = usePage().props as any;
+
+    const formatCycleDate = (date: string) => {
+        const parsedDate = new Date(date.includes('T') ? date : `${date}T00:00:00`);
+
+        return Number.isNaN(parsedDate.getTime())
+            ? date
+            : parsedDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+    };
 
     const isLockedAsid = !!asset?.asid_information;
     const isLockedManager = !!asset?.manager_information;
@@ -349,19 +369,24 @@ export default function AsidEvaluateManager({ asset }: AssetProps) {
                                         <label className="text-xs font-bold uppercase tracking-wide text-gray-600">
                                             Bidding Cycle
                                         </label>
-                                        <input 
-                                            type="number" 
+                                        <select 
                                             name='bidding_cycle'
                                             disabled={isLockedManager}
                                             value={data.bidding_cycle}
                                             onChange={(e) => setData('bidding_cycle', e.target.value === '' ? '' : Number(e.target.value))}
-                                            placeholder="Enter cycle number (e.g., 1)"
                                             className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
                                                 ${isLockedManager
                                                     ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
                                                     : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
                                                 }`}
-                                        />
+                                        >
+                                            <option value="" disabled>Select bidding cycle</option>
+                                            {biddingCycles.map((cycle) => (
+                                                <option key={cycle.id} value={cycle.id}>
+                                                    Cycle {cycle.id}: {formatCycleDate(cycle.date_from)} to {formatCycleDate(cycle.date_to)}
+                                                </option>
+                                            ))}
+                                        </select>
                                         {errors.bidding_cycle && <span className="text-red-500 text-xs">{errors.bidding_cycle}</span>}
                                     </div>
                                 </>

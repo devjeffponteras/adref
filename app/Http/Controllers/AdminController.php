@@ -12,6 +12,8 @@ use App\Models\Department;
 use App\Models\User;
 use App\Models\AssetStatus;
 use App\Models\AssetApproval;
+use App\Models\BiddingCycle;
+use App\Models\Bidding;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -153,6 +155,7 @@ class AdminController extends Controller
         return Inertia::render('admin/bidding/index', [
             'assets' => $assets,
             'assetOnBidding' => $assetOnBidding,
+            'biddingCycles' => BiddingCycle::orderBy('date_from')->orderBy('id')->get(),
         ]);
     }
 
@@ -161,11 +164,64 @@ class AdminController extends Controller
         // dd($id);
         $asset = Asset::where('status', 'Completed')->findOrFail($id);
 
+        $validated = $request->validate([
+            'category' => 'nullable|string|max:255',
+        ]);
+
         AssetBidding::create([
             'asset_id' => $asset->id,
+            'category' => $validated['category'] ?? null,
         ]);
 
         return redirect()->back()->with('success', 'Asset successfully published for bidding entry!');
+    }
+
+    public function biddingCycleIndex(): Response
+    {
+        return Inertia::render('admin/bidding/cycle', [
+            'biddingCycles' => BiddingCycle::orderByDesc('date_from')->orderByDesc('id')->get(),
+        ]);
+    }
+
+    public function biddingCycleStore(Request $request)
+    {
+        $validated = $request->validate([
+            'date_from' => 'required|date',
+            'date_to' => 'required|date|after_or_equal:date_from',
+        ]);
+
+        BiddingCycle::create($validated);
+
+        return redirect()->route('bidding-cycle.index')->with('success', 'Bidding cycle added successfully!');
+    }
+
+    public function soldAssets(): Response
+    {
+        $soldAssets = Bidding::with(['asset', 'biddingCycleDetails', 'processor'])
+            ->whereHas('biddingCycleDetails', function ($query) {
+                $query->whereDate('date_to', '<', today());
+            })
+            ->get()
+            ->groupBy(function (Bidding $bid) {
+                return $bid->asset_id . '-' . $bid->bidding_cycle;
+            })
+            ->map(function ($bids) {
+                $winner = $bids->sortByDesc(function (Bidding $bid) {
+                    return (float) $bid->bidding_price;
+                })->first();
+
+                return [
+                    'asset' => $winner->asset,
+                    'cycle' => $winner->biddingCycleDetails,
+                    'bid_count' => $bids->count(),
+                    'winner' => $winner,
+                ];
+            })
+            ->values();
+
+        return Inertia::render('admin/bidding/sold', [
+            'soldAssets' => $soldAssets,
+        ]);
     }
 
     // updated controller para ma set up and workflow og tarong

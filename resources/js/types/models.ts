@@ -34,7 +34,10 @@ export interface Asset {
     asset_disposal?: AssetDisposal | null;
     asset_scraps?: AssetScraps | null;
     asset_bidding?: AssetBidding | null;
+    bidding_listing?: AssetBidding | null;
     accounting_information?: AccountingInfo | null;
+    bids?: Bidding[];
+    asset_photos?: (string | AssetPhoto)[] | null;
 }
 
 export interface Approver {
@@ -100,6 +103,7 @@ export interface ManagerInfo {
     reviewed_by: string;
     manager_disposition: string;
     bidding_price: number;
+    bidding_cycle?: number | string | null;
 }
 
 export interface AsidInfo {
@@ -137,4 +141,29 @@ export interface AssetBidding {
     id: number;
     asset_id: number;
     status: string;
+    category?: string | null;
+}
+
+export interface AssetPhoto {
+    file_path?: string;
+    path?: string;
+    url?: string;
+    description?: string | null;
+}
+
+export interface Bidding {
+    id: number;
+    asset_id: number;
+    user_id: number;
+    bidder_name: string | null;
+    bidder_contact_number: string | null;
+    bidder_classification: string | null;
+    department: string | null;
+    date_hired: string | null;
+    bidding_cycle: number | string | null;
+    bidding_price: number | string;
+    bid_status: string | null;
+    remarks: string | null;
+    reference_number: string | null;
+    submitted_at: string | null;
 }

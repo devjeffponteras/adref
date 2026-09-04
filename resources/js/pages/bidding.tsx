@@ -13,12 +13,15 @@ interface ManagerInfo {
     id: number;
     bidding_price: number | string | null;
     bidding_cycle: number | string | null;
+    bidding_cycle_details?: BiddingCycle | null;
 }
 
 interface BidRecord {
     id: number;
     user_id: number;
     asset_id: number;
+    bidding_cycle?: number | string | null;
+    bidding_cycle_details?: BiddingCycle | null;
 }
 
 interface Asset {
@@ -41,8 +44,15 @@ interface AssetBiddingData {
     asset?: Asset;
 }
 
+interface BiddingCycle {
+    id: number;
+    date_from: string;
+    date_to: string;
+}
+
 interface BiddingProps {
     assetOnBidding: AssetBiddingData[];
+    biddingCycles?: BiddingCycle[];
 }
 
 interface PageProps extends Record<string, unknown> {
@@ -60,7 +70,7 @@ interface PageProps extends Record<string, unknown> {
 
 type SortableFields = 'control_number' | 'asset_name' | 'department' | 'min_bid';
 
-export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: BiddingProps) {
+export default function Bidding({ assetOnBidding: propsAssetOnBidding = [], biddingCycles = [] }: BiddingProps) {
 
     const { props } = usePage<PageProps>();
     const authUser = props.auth?.user;
@@ -79,6 +89,18 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
     // Pagination States
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const formatCycleDate = (date: string) => {
+        const parsedDate = new Date(date.includes('T') ? date : `${date}T00:00:00`);
+
+        return Number.isNaN(parsedDate.getTime())
+            ? date
+            : parsedDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+    };
 
     const { data, setData, post, processing, reset, errors } = useForm({
         bidder_name: '',
@@ -453,8 +475,29 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [] }: Bi
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Bidding Cycle</label>
-                                        <div className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 truncate">
-                                            {selectedListing.asset?.manager_information?.bidding_cycle ?? '1'}
+                                        <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700">
+                                            {(() => {
+                                                const managerInformation = selectedListing.asset?.manager_information;
+                                                const submittedBid = selectedListing.asset?.bids?.[0];
+                                                const cycleId = submittedBid?.bidding_cycle ?? managerInformation?.bidding_cycle ?? 1;
+                                                const cycle = submittedBid?.bidding_cycle_details
+                                                    || managerInformation?.bidding_cycle_details
+                                                    || biddingCycles.find((item) => Number(item.id) === Number(cycleId));
+
+                                                return cycle ? (
+                                                    <div className="space-y-0.5">
+                                                        <div>Cycle {cycle.id}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            Date From: {formatCycleDate(cycle.date_from)}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            Date To: {formatCycleDate(cycle.date_to)}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    `Cycle ${cycleId ?? '1'} (dates unavailable)`
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>

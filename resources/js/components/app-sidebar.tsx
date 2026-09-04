@@ -10,7 +10,8 @@ import {
     LucideUserCog2,
     Gavel,
     FastForward,
-    ListChecks
+    ListChecks,
+    Recycle
 } from 'lucide-react';
 
 import AppLogo from '@/components/app-logo';
@@ -115,6 +116,18 @@ const mainNavItems: NavItem[] = [
         title: 'Workflow Transactions',
         href: '/admin/workflow/index',
         icon: ListChecks,
+        roles: ['admin'],
+    },
+    {
+        title: 'Bidding Cycle',
+        href: '/admin/bidding/cycle',
+        icon: Recycle,
+        roles: ['admin'],
+    },
+    {
+        title: 'Sold Assets',
+        href: '/admin/bidding/sold',
+        icon: PackageOpen,
         roles: ['admin'],
     },
 

@@ -20,6 +20,7 @@ class AssetBidding extends Model implements Auditable
     protected $fillable = [
         'asset_id',
         'status',
+        'category',
         'listed_at',
     ];
 

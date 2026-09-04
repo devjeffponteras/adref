@@ -39,6 +39,13 @@ interface ManagerInformation {
     id: number;
     asset_id: number;
     bidding_price: number | string | null;
+    bidding_cycle: number | string | null;
+}
+
+interface BiddingCycle {
+    id: number;
+    date_from: string;
+    date_to: string;
 }
 
 interface BidderRecord {
@@ -82,6 +89,7 @@ interface AssetBiddingData {
 interface BiddingProps {
     assets: Asset[];
     assetOnBidding: AssetBiddingData[]; 
+    biddingCycles?: BiddingCycle[];
 }
 
 type SortableKeys = 'control_number' | 'department' | 'min_bid';
@@ -90,7 +98,7 @@ interface SortConfig {
     direction: 'asc' | 'desc';
 }
 
-export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
+export default function BiddingIndex({ assets, assetOnBidding, biddingCycles = [] }: BiddingProps) {
 
     const { flash } = usePage().props as any;
 
@@ -121,6 +129,19 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
 
     const handleCloseBiddersModal = () => {
         setSelectedBiddingItem(null);
+    };
+
+    const getBiddingCycle = (item: AssetBiddingData) => {
+        const cycleId = item.asset?.manager_information?.bidding_cycle;
+        return biddingCycles.find((cycle) => Number(cycle.id) === Number(cycleId));
+    };
+
+    const isBiddingExpired = (item: AssetBiddingData) => {
+        const cycle = getBiddingCycle(item);
+        if (!cycle?.date_to) return false;
+
+        const cycleEndDate = new Date(cycle.date_to.includes('T') ? cycle.date_to : `${cycle.date_to}T23:59:59`);
+        return cycleEndDate < new Date();
     };
 
     const handleConfirmPublish = () => {
@@ -413,9 +434,13 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-5 align-middle">
-                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize">
-                                                            <Activity className="h-3 w-3 mr-1 animate-pulse" />
-                                                            {item.status}
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border capitalize ${
+                                                            isBiddingExpired(item)
+                                                                ? 'bg-gray-100 text-gray-600 border-gray-300'
+                                                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        }`}>
+                                                            <Activity className={`h-3 w-3 mr-1 ${isBiddingExpired(item) ? '' : 'animate-pulse'}`} />
+                                                            {isBiddingExpired(item) ? 'Inactive' : 'Active'}
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-5 align-middle font-medium text-gray-900">
@@ -657,9 +682,9 @@ export default function BiddingIndex({ assets, assetOnBidding }: BiddingProps) {
                                                 <tr key={bidder.id} className="hover:bg-slate-50/60 transition-colors duration-150">
                                                     <td className="py-3 px-4">
                                                         <div className="flex items-center space-x-2">
-                                                            {index === 0 && (
-                                                                <span className="hidden px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 border border-amber-200 text-amber-800 rounded">
-                                                                    Highest
+                                                            {index === 0 && isBiddingExpired(selectedBiddingItem) && (
+                                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 border border-amber-200 text-amber-800 rounded">
+                                                                    Winner
                                                                 </span>
                                                             )}
                                                             <span className="font-semibold text-gray-900">{bidder.bidder_name}</span>

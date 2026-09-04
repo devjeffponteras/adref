@@ -11,6 +11,7 @@ use App\Models\AssetClassification;
 use App\Models\AssetStatus;
 use App\Models\AssetScrap;
 use App\Models\Bidding;
+use App\Models\BiddingCycle;
 use App\Models\Form;
 use App\Models\McdInformation;
 use App\Models\MepeoInformation;
@@ -867,13 +868,16 @@ class AssetController extends Controller
     {
         $asset = Asset::with('mcd_information')->findOrFail($id);
         $asidInformation = AsidInformation::where('asset_id', $id)->first();
-        $managerInformation = ManagerInformation::where('asset_id', $id)->first();
+        $managerInformation = ManagerInformation::with('biddingCycleDetails')
+            ->where('asset_id', $id)
+            ->first();
 
         $asset->asid_information = $asidInformation;
         $asset->manager_information = $managerInformation;
 
         return Inertia::render('manager/evaluate', [
             'asset' => $asset,
+            'biddingCycles' => BiddingCycle::orderBy('date_from')->orderBy('id')->get(),
         ]);
     }
 
@@ -1636,13 +1640,16 @@ class AssetController extends Controller
         $assetOnBidding = AssetBidding::with([
             'asset.accounting_information',
             'asset.manager_information',
+            'asset.manager_information.biddingCycleDetails',
             'asset.bids' => function ($query) {
                 $query->where('user_id', Auth::id());
             },
+            'asset.bids.biddingCycleDetails',
         ])->get();
-
+// dd($assetOnBidding);
         return Inertia::render('bidding', [
             'assetOnBidding' => $assetOnBidding,
+            'biddingCycles' => BiddingCycle::orderBy('date_from')->orderBy('id')->get(),
         ]);
     }
 
