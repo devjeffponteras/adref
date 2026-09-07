@@ -1,6 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Calendar, Loader, FileWarning, RefreshCw, Gavel, XIcon, FolderOpen, Send, Layers, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { WelcomeNote } from '@/components/welcome-note';
 import { bidding } from '@/routes';
 
@@ -22,6 +22,7 @@ interface BidRecord {
     asset_id: number;
     bidding_cycle?: number | string | null;
     bidding_cycle_details?: BiddingCycle | null;
+    bidding_classification: string | null;
 }
 
 interface Asset {
@@ -42,6 +43,7 @@ interface AssetBiddingData {
     status: string;
     listed_at: string;
     asset?: Asset;
+    category?: string | null;
 }
 
 interface BiddingCycle {
@@ -102,16 +104,22 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [], bidd
             });
     };
 
+    useEffect(() => {
+        if (selectedListing?.category) {
+            setData('bidder_classification', selectedListing.category);
+        }
+        }, [selectedListing]);
+    
     const { data, setData, post, processing, reset, errors } = useForm({
         bidder_name: '',
         bidder_contact_number: '',
         bidding_cycle: '1',
-        bidder_classification: '',
         department: '',
         date_hired: '',
         bidding_price: '',
         remarks: '',
-        reference_number: ''
+        reference_number: '',
+        bidder_classification: selectedListing?.category || '',
     });
 
     const hasCurrentUserBidded = (asset?: Asset) => {
@@ -505,13 +513,21 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [], bidd
 
                             <div>
                                 <div className="w-full sm:w-1/2">
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Bidder Classification</label>
-                                    <select value={data.bidder_classification} onChange={e => setData('bidder_classification', e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-hidden">
-                                        <option value="">Select Classification..</option>
-                                        <option value="PMC Employee">PMC Employee</option>
-                                        <option value="MMPRC Employee">MMPRC Employee</option>
-                                        <option value="Contractor">Contractor</option>
-                                        <option value="Outsider">Outsider / Third-Party</option>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Bidder Classification
+                                    </label>
+                                    <select 
+                                    disabled={Boolean(selectedListing?.category)} 
+                                    value={data.bidder_classification} 
+                                    onChange={e => setData('bidder_classification', e.target.value)} 
+                                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-hidden disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    >
+                                    <option value="" disabled>Select Classification..</option>
+                                    <option value="PMC Employee">PMC Employee</option>
+                                    <option value="MMPRC Employee">MMPRC Employee</option>
+                                    <option value="Contractor">Contractors</option>
+                                    <option value="PGECC">PGECC</option>
+                                    <option value="Outsider">Outsider / Third-Party</option>
                                     </select>
                                 </div>
                             </div>

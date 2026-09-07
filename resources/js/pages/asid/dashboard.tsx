@@ -1295,10 +1295,11 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                     className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-200"
                                 >
                                     <option value="" disabled>Select bidding category</option>
-                                    <option value="PMC MMPRC EMPLOYEES">Bidding for PMC and MMPRC Employees</option>
-                                    <option value="EVERYONE OUTSIDERS CONTRACTORS">Bidding for Everyone Including Outsiders and Contractors</option>
+                                    <option value="PMC Employee">Bidding for PMC Employees</option>
+                                    <option value="MMPRC Employee">Bidding for MMPRC Employees</option>
+                                    <option value="Contractor">Bidding for Everyone Including Outsiders and Contractors</option>
                                     <option value="PGECC">Bidding by Philsaga Group Employees Credit Cooperative (PGECC)</option>
-                                    <option value="ALL EMPLOYEES OUTSIDERS CONTRACTORS">Open to All Employees Including Outsiders and Contractors</option>
+                                    <option value="Outsider">Open to All Employees Including Outsiders and Contractors</option>
                                 </select>
                             </div>
 

@@ -60,7 +60,7 @@ class AssetSyncService
         $failedCount = 0;
 
         // Fetch ONLY pending items to conserve memory and DB bandwidth
-        $pendingRequests = TemporaryAssetRequest::where('status', 'Pending')
+        $pendingRequests = TemporaryAssetRequest::whereIn('status', ['pending', 'HOLD'])
             ->whereNotNull('refno')
             ->get();
 
@@ -135,6 +135,60 @@ class AssetSyncService
                             });
 
                             $updatedCount++;
+                        // } elseif ($normalizedRemoteStatus === 'HOLD') {
+                        //     DB::transaction(function () use ($tempRequest, $assetStatusData) {
+
+                        //         $tempRequest->update([
+                        //                 'status'     => 'HOLD',
+                        //                 'updated_at' => now(),
+                        //             ]);
+
+
+                        //             $assetData = [
+                        //                 'accountable_personnel'   => $tempRequest->accountable_personnel ?? data_get($assetStatusData, 'accountable_personnel'),
+                        //                 'model'                   => $tempRequest->model ?? data_get($assetStatusData, 'model'),
+                        //                 'brand_make'              => $tempRequest->brand_make ?? data_get($assetStatusData, 'brand_make'),
+                        //                 'serial_plate_id_number'  => $tempRequest->serial_plate_id_number ?? data_get($assetStatusData, 'serial_plate_id_number'),
+                        //                 'end_user_department'     => $tempRequest->end_user_department ?? data_get($assetStatusData, 'end_user_department'),
+                        //                 'asset_classification_id' => $tempRequest->asset_classification_id ?? data_get($assetStatusData, 'asset_classification_id'),
+                        //                 'others_description'      => $tempRequest->others_description ?? data_get($assetStatusData, 'others_description'),
+                        //                 'asset_location'          => $tempRequest->asset_location ?? data_get($assetStatusData, 'asset_location'),
+                        //                 'description'             => $tempRequest->description ?? data_get($assetStatusData, 'description'),
+                        //                 'reasons_for_disposal'    => $tempRequest->reasons_for_disposal ?? data_get($assetStatusData, 'reasons_for_disposal'),
+                                        
+                        //                 // Retain original requestor ID even in background execution
+                        //                 'user_id'                 => $tempRequest->user_id ?? auth()->id() ?? 1,
+                        //                 'status'                  => 'Returned',
+                        //                 'control_number'          => null,
+
+                        //                 'assessment_reports'      => $tempRequest->assessment_reports ?? data_get($assetStatusData, 'assessment_reports'),
+                        //                 'asset_photos'            => $tempRequest->asset_photos ?? data_get($assetStatusData, 'asset_photos'),
+                        //             ];
+
+                        //             $asset = Asset::create($assetData);
+
+                        //             for ($i = 1; $i <= 7; $i++) {
+                        //                 $asset->approvals()->create([
+                        //                     'seq_no'        => $i,
+                        //                     'is_current'    => ($i === 1),
+                        //                     'status'        => ($i === 1) ? 'On-going' : 'Pending',
+                        //                     'approver_id'   => null,
+                        //                     'approval_date' => null,
+                        //                     'remarks'       => null,
+                        //                 ]);
+                        //             }
+
+                        //             AssetStatus::create([
+                        //                 'asset_id'      => $asset->id,
+                        //                 'seq_no'        => 1,
+                        //                 'status'        => 'Pending',
+                        //                 'approver_id'   => null,
+                        //                 'approval_date' => null,
+                        //                 'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
+                        //             ]);
+                        //         });
+
+                        //         $updatedCount++;
                         } elseif (strcasecmp((string) $tempRequest->status, (string) $remoteStatus) !== 0) {
                             // Update status if remote status changed (e.g., REJECTED / DISAPPROVED)
                             $tempRequest->update([

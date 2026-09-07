@@ -181,7 +181,7 @@ export default function Viewer({ asset, is_temp }: Props) {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700/80">
-                  Temporary Asset Request
+                  Asset for Disposal Request
                 </p>
                 <h2 className="mt-1 text-lg font-bold text-zinc-800">
                   {is_temp.accountable_personnel || 'Temporary Asset Request'}
