@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Head, router, Link, usePage } from '@inertiajs/react';
 import { WelcomeNote } from '@/components/welcome-note';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Upload, X, FileText, Image as ImageIcon, CheckCircle2, Save } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Upload, X, FileText, Image as ImageIcon, CheckCircle2, Save, Edit } from 'lucide-react';
 import type { AssetStatusData } from '@/types/models';
 
 interface Filters {
@@ -13,10 +13,23 @@ interface Filters {
 
 interface UserDashboardProps {
     assets?: AssetStatusData[];
+    temporaryAssetRequests?: TemporaryAssetRequest[];
     filters: Filters;
 }
 
-export default function UserDashboard({ assets = [], filters }: UserDashboardProps) {
+interface TemporaryAssetRequest {
+    id: number;
+    refno: string | null;
+    transid: string | null;
+    status: string;
+    control_number: string | null;
+    accountable_personnel: string | null;
+    model: string | null;
+    brand_make: string | null;
+    end_user_department: string | null;
+}
+
+export default function UserDashboard({ assets = [], temporaryAssetRequests = [], filters }: UserDashboardProps) {
     const [search, setSearch] = useState<string>(filters?.search || '');
     const [perPage, setPerPage] = useState<number>(filters?.per_page || 10);
     const [sortBy, setSortBy] = useState<string>(filters?.sort_by || 'created_at');
@@ -270,6 +283,73 @@ export default function UserDashboard({ assets = [], filters }: UserDashboardPro
                                     )
                                 }
                                 </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Temporary Hold Requests Table */}
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 shadow-xs overflow-hidden mb-8">
+                    <div className="p-4 border-b border-zinc-200 bg-white">
+                        <h3 className="text-base font-semibold text-zinc-800">
+                            On Hold Asset for Disposal Applications
+                        </h3>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                            Temporary asset requests currently on hold from WORKFLOW.
+                        </p>
+                    </div>
+
+                    <div className="overflow-x-auto bg-white">
+                        <table className="w-full text-left text-xs text-zinc-700">
+                            <thead className="bg-zinc-100/80 text-zinc-600 font-semibold uppercase tracking-wider border-b border-zinc-200">
+                                <tr>
+                                    <th className="p-3">Reference No.</th>
+                                    <th className="p-3">Transaction ID</th>
+                                    <th className="p-3">Brand &amp; Model</th>
+                                    <th className="p-3">Accountable Personnel</th>
+                                    <th className="p-3">Department</th>
+                                    <th className="p-3">Status</th>
+                                    <th className="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100">
+                                {temporaryAssetRequests.length > 0 ? (
+                                    temporaryAssetRequests.map((request) => (
+                                        <tr key={request.id} className="hover:bg-zinc-50/80 transition-colors text-sm">
+                                            <td className="p-3 text-zinc-700">{request.refno || 'N/A'}</td>
+                                            <td className="p-3 text-zinc-700">{request.transid || 'N/A'}</td>
+                                            <td className="p-3 text-zinc-700">
+                                                {request.brand_make || request.model ? (
+                                                    `${request.brand_make || ''} ${request.model || ''}`.trim()
+                                                ) : (
+                                                    <span className="text-zinc-400">N/A</span>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-zinc-700">{request.accountable_personnel || 'N/A'}</td>
+                                            <td className="p-3 text-zinc-700">{request.end_user_department || 'N/A'}</td>
+                                            <td className="p-3">
+                                                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold uppercase text-amber-700">
+                                                    {request.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-zinc-700">
+                                                <Link
+                                                    href={`/asset/edit-hold-asset/${request.transid}`}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-xs transition-colors hover:border-emerald-300 hover:bg-emerald-100"
+                                                >
+                                                    <Edit className="h-3.5 w-3.5" />
+                                                    EDIT
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={7} className="p-6 text-center text-zinc-500">
+                                            No hold asset disposal applications found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
                         </table>
                     </div>
                 </div>

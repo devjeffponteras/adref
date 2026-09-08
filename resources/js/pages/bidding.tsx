@@ -514,7 +514,7 @@ export default function Bidding({ assetOnBidding: propsAssetOnBidding = [], bidd
                             <div>
                                 <div className="w-full sm:w-1/2">
                                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                                    Bidder Classification
+                                    Bidding Category
                                     </label>
                                     <select 
                                     disabled={Boolean(selectedListing?.category)} 

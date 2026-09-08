@@ -134,6 +134,11 @@ Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::post('assets/{id}/asset-approve', [AssetController::class, 'assetApprove'])->name('asset-approve');
 
     Route::match(['post', 'put'], 'asset/update-asset/{id}', [AssetController::class, 'update'])->name('update-asset');
+
+    // Process hold status .. giatay!
+    Route::get('asset/edit-hold-asset/{id}', [AssetController::class, 'editHoldAsset'])->name('edit-hold-asset');
+    Route::post('asset/update-temporary-hold-asset/{id}', [AssetController::class, 'updateTemporaryHoldAsset'])->name('update-temporary-hold-asset');
+
 });
 
 require __DIR__.'/settings.php';

@@ -15,7 +15,7 @@ interface AttachedFile {
   file_path?: string;
   url?: string;
   filename?: string;
-  description?: string;
+  description?: string | null;
 }
 
 interface AssetProfileCardProps {
@@ -29,10 +29,10 @@ interface AssetProfileCardProps {
     end_user_department: string | null;
     asset_location: string | null;
     reasons_for_disposal: string | null;
-    assessment_reports?: string[] | AttachedFile[] | null;
-    asset_photos?: string[] | AttachedFile[] | null;
+    assessment_reports?: (string | AttachedFile)[] | null;
+    asset_photos?: (string | AttachedFile)[] | null;
     userObject?: User | string | null;
-    user: string | null;
+    user?: User | string | null;
     classification?: AssetClassification | null;
   };
 }
@@ -111,7 +111,9 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
 
             <div>
               <span className="text-gray-400 block text-xs font-medium uppercase tracking-wider mb-0.5">Filer / Registrant</span>
-              <span className="text-gray-800 font-medium">{asset.user || 'N/A'}</span>
+              <span className="text-gray-800 font-medium">
+                {typeof asset.user === 'string' ? asset.user : asset.user?.name || 'N/A'}
+              </span>
             </div>
 
             <div>

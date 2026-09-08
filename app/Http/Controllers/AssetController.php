@@ -37,6 +37,9 @@ use App\Services\AssetSyncService;
 
 class AssetController extends Controller
 {
+    private string $wfsBaseUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api';
+    private string $wfsToken   = 'base64:b9+N8PTeBSicgIMx4MbuYCuZBaQ9sL3ecibeX06FYgg=';
+
     /**
      * Display a listing of the end user's personal assets.
      */
@@ -551,7 +554,7 @@ class AssetController extends Controller
         // diria ta mag try og kuha sa workflow status via API
         if ($asset->manager_information && $asset->accounting_information?->asset_number) {
             // dd($asset->accounting_information?->asset_number);
-            $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
+            $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
 
             try {
                 $response = Http::timeout(10)->get($apiUrl);
@@ -957,7 +960,7 @@ class AssetController extends Controller
             ]);
         }
 
-        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_transmit';
+        $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_transmit';
         $user = auth()->user();
 
         $payload = [
@@ -1013,7 +1016,7 @@ class AssetController extends Controller
 
         if ($asset->accounting_information && !empty($asset->accounting_information->asset_number)) {
             
-            $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
+            $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
 
                 // Mao ni ang lisod na part kay pwede 1 or multiple ang data from api -- iwit nlng ni
                 // $newApiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getStatus/' . $asset_status['id'];
@@ -1803,8 +1806,19 @@ class AssetController extends Controller
             'checked_by'       => 'required|string|max:255',
         ]);
         // dd($request);
-        $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_transmit';
 
+        if ($request->is_hold === 'HOLD') {
+            $apiUrl  = $this->wfsBaseUrl . '/asset_updateStatus/' . $request->transid;
+
+            // update sa accounting information data -- goods na ang workflow!
+
+
+
+        } else {
+            $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_transmit';
+        }
+        // dd($apiUrl);
+        
         $payload = [
             'transaction' => [
                 // CRITICAL AUTH & LOOKUP FIELDS
@@ -1918,4 +1932,140 @@ class AssetController extends Controller
             'is_temp' => $is_temp,
         ]);
     }
+
+    /**
+     * Show the form for hold-edit the asset item.
+     */
+    public function editHoldAsset($id)
+    {
+        $classifications = AssetClassification::where('is_active', true)
+            ->select('id', 'name')
+            ->get();
+
+        $asset = TemporaryAssetRequest::where( 'transid', $id)
+            ->where('status', 'hold')
+            ->first();
+
+        // dd($asset);
+        return Inertia::render('user/hold-asset', [
+            'asset' => $asset,
+            'classifications' => $classifications,
+            'accountable_personnels' => config('dropdown_data.ACCOUNTABLE_PERSONNEL'),
+            'end_user_departments' => config('dropdown_data.END_USER_DEPARTMENT'),
+        ]);
+    }
+
+    /**
+     * Update the temporary hold asset item.
+     */
+    public function updateTemporaryHoldAsset(Request $request, $id)
+    {
+        $assetRequest = TemporaryAssetRequest::where('transid', $id)
+            ->firstOrFail();
+        // dd($assetRequest);
+        $validated = $request->validate([
+            'accountable_personnel'   => 'required|string|max:255',
+            'model'                   => 'nullable|string|max:255',
+            'brand_make'              => 'nullable|string|max:255',
+            'serial_plate_id_number'  => 'nullable|string|max:255',
+            'end_user_department'     => 'required|string|max:255',
+            'asset_classification_id' => 'required|string|max:255',
+            'others_description'      => 'nullable|string|max:255',
+            'asset_location'          => 'nullable|string|max:255',
+            'description'             => 'nullable|string',
+            'reasons_for_disposal'    => 'nullable|string',
+
+            // Multi-upload validation
+            'assessment_reports'               => 'required|array|min:1',
+            'assessment_reports.*.file'        => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+            'assessment_reports.*.description' => 'nullable|string|max:255',
+            
+            'asset_photos'                     => 'required|array|min:1',
+            'asset_photos.*.file'              => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'asset_photos.*.description'       => 'nullable|string|max:255',
+        ]);
+
+        $apiUrl  = $this->wfsBaseUrl . '/asset_updateStatus/' . $assetRequest->transid;
+        // dd($apiUrl);
+        $user = auth()->user();
+        $departmentName = $user?->department?->name ? strtoupper($user->department->name) : 'ADMIN';
+        $assetTitle = trim(($validated['brand_make'] ?? '') . ' ' . ($validated['model'] ?? ''));
+
+        $payload = [
+            'transaction' => [
+                'token'            => config('services.wfs.token'),
+                'type'             => 'ADREF',
+                'refno'            => $assetRequest->refno, // Keep existing refno
+                'transid'          => $assetRequest->transid, // Keep existing transid
+                'sourceapp'        => 'ADREF System',
+                'sourceurl'        => url('/assets/viewer/' . $assetRequest->transid),
+                'status'           => 'PENDING',
+                'created_at'       => now()->toDateTimeString(),
+                
+                'requestor'        => $user->name ?? 'System',
+                'email'            => $user->email ?? 'adrefadmin@philsaga.com',
+                'department'       => $departmentName,
+                'name'             => $assetTitle ?: 'ADREF',
+                'locsite'          => $validated['asset_location'] ?? 'Main Site',
+                'purpose'          => $validated['reasons_for_disposal'] ?? 'Asset Management Request for Approval',
+                'approval_url'     => url('/'),
+
+                'totalamount'      => 0,
+                'converted_amount' => 0,
+                'currency'         => 'PHP',
+
+                'is_multiple'      => false,
+                'is_initial'       => false,
+                'is_resubmitted'   => true,
+            ]
+        ];
+
+        try {
+            Log::debug('WFS Payload: ' . json_encode($payload));
+
+            $response = Http::timeout(15)->post($apiUrl, $payload);
+
+            Log::debug('WFS Response Status: ' . $response->status());
+
+            if ($response->successful()) {
+            // dd('success!');
+            $reportsJsonArray = $this->handleFileUploads($request, 'assessment_reports', 'reports');
+            $photosJsonArray  = $this->handleFileUploads($request, 'asset_photos', 'photos');
+
+                $assetRequest->update([
+                    'status'                  => 'pending',
+                    'control_number'          => null,
+                    'user_id'                 => auth()->id(),
+                    'accountable_personnel'   => $validated['accountable_personnel'],
+                    'model'                   => $validated['model'] ?? null,
+                    'brand_make'              => $validated['brand_make'] ?? null,
+                    'serial_plate_id_number'  => $validated['serial_plate_id_number'] ?? null,
+                    'end_user_department'     => $validated['end_user_department'],
+                    'asset_classification_id' => $validated['asset_classification_id'],
+                    'others_description'      => $validated['others_description'] ?? null,
+                    'asset_location'          => $validated['asset_location'] ?? null,
+                    'description'             => $validated['description'] ?? null,
+                    'reasons_for_disposal'    => $validated['reasons_for_disposal'] ?? null,
+                    'assessment_reports'      => $reportsJsonArray,
+                    'asset_photos'            => $photosJsonArray,
+                ]);
+
+                return redirect()->route('user-dashboard')->with('success', 'Asset request successfully re-submitted to WORKFLOW for approval!');
+            }
+            // dd($response);
+            Log::error('WFS Sync Failed: ' . $response->body());
+
+            $remoteMsg = $response->json('message') ?? $response->body();
+            $errBody   = $remoteMsg ?: 'Unknown error';
+
+            return redirect()->back()->withErrors([
+                'error' => 'Workflow transmission failed: ' . Str::limit(strip_tags((string) $errBody), 400)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('WFS Connection Error: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Could not connect to the workflow server.']);
+        }
+    }
+
 }

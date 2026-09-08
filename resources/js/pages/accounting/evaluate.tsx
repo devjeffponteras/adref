@@ -9,6 +9,7 @@ interface User {
 
 interface AssetStatusItem {
     status?: string;
+    transid?: string;
     [key: string]: any;
 }
 
@@ -73,8 +74,6 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
     const hasAccountingRecord = !!asset.accounting_information;
     const accountingRecordApproved = asset.accounting_information?.status === 'Approved';
 
-    const isLocked = !!asset.accounting_information;
-
     // Initialize Inertia form hook
     const { data, setData, post, processing, errors } = useForm({
         asset_number: asset.accounting_information?.asset_number || '',
@@ -87,6 +86,8 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
 
         // special na declaration for api helper ni..
         is_multiple: false,
+        is_hold: asset_status?.status?.toUpperCase(),
+        transid: asset_status?.transid,
     });
 
     const handleActionSubmit = (actionType: 'submit-workflow' | 'approve-workflow' | 'save-only') => {
@@ -99,10 +100,12 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
     };
 
     const hasPendingApiStatus  = asset_status?.status?.toUpperCase() === 'PENDING';
+    const hasHoldApiStatus  = asset_status?.status?.toUpperCase() === 'HOLD';
     const hasApprovedApiStatus = asset_status?.status?.toUpperCase() === 'FULLY APPROVED';
 
     const hideSubmitWorkflowBtn = hasApprovedApiStatus || hasPendingApiStatus;
-
+    const isLocked = !!asset.accounting_information && !hasHoldApiStatus;
+    // console.log(asset_status);
     return (
         <>
             <Head title="Asset Evaluation - Accounting" />
@@ -125,7 +128,12 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
                     </div>
                 )}
 
-                <AssetProfileCard asset={asset} />
+                <AssetProfileCard 
+                    asset={{
+                        ...asset,
+                        user: asset.user?.name ?? null
+                    }} 
+                />
 
                 <form onSubmit={(e) => e.preventDefault()} className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
                     <h2 className="text-lg font-bold text-gray-800 mb-6">
@@ -177,6 +185,8 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
                             checked={data.is_multiple} 
                             onChange={e => setData('is_multiple', e.target.checked)} 
                         />
+                        <input type="hidden" value={data.is_hold}/>
+                        <input type="hidden" value={data.transid}/>
 
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1">Acquisition Date</label>
