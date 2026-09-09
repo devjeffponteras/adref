@@ -892,7 +892,8 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                     {item.asset?.control_number}
                                                 </td>
                                                 <td className="px-4 py-4 font-mono text-sm font-semibold text-gray-700 bg-gray-50/40 group-hover:bg-transparent">
-                                                    {item.asset?.brand_make} 
+                                                    {item.asset?.brand_make}
+                                                    &nbsp;
                                                     {item.asset?.model}
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>

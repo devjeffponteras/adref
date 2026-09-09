@@ -82,12 +82,12 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
         book_value: asset.accounting_information?.book_value ? String(asset.accounting_information.book_value) : '',
         remarks: asset.accounting_information?.remarks || '',
         checked_by: 'Lou Agusin',
-        conformed_by: '',
+        conformed_by: asset.accounting_information?.conformed_by || 'N/A',
 
         // special na declaration for api helper ni..
         is_multiple: false,
-        is_hold: asset_status?.status?.toUpperCase(),
-        transid: asset_status?.transid,
+        is_hold: asset_status?.status?.toUpperCase() || '',
+        transid: asset_status?.transid || '',
     });
 
     const handleActionSubmit = (actionType: 'submit-workflow' | 'approve-workflow' | 'save-only') => {
@@ -105,7 +105,7 @@ export default function AccountingEvaluate({ asset, asset_status }: EvaluateProp
 
     const hideSubmitWorkflowBtn = hasApprovedApiStatus || hasPendingApiStatus;
     const isLocked = !!asset.accounting_information && !hasHoldApiStatus;
-    // console.log(asset_status);
+    console.log(asset);
     return (
         <>
             <Head title="Asset Evaluation - Accounting" />

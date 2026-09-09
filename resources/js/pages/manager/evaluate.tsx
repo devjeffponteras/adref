@@ -7,6 +7,11 @@ interface User {
     name: string;
 }
 
+interface DropdownOption {
+    id: number;
+    name: string;
+}
+
 interface AssetClassification {
     id: number;
     name: string;
@@ -38,6 +43,33 @@ interface ManagerInformation {
     reviewed_by: string;
 }
 
+interface AssetStatusItem {
+    status?: string;
+    transid?: string;
+    [key: string]: any;
+}
+
+interface MepeoInformation {
+    id: number;
+    asset_id: number;
+    approver_id: number;
+    waste_classification_id: number | string;
+    waste_characteristic_id: number | string;
+    remarks: string;
+}
+
+interface AccountingInformation {
+    id: number;
+    asset_id: number;
+    asset_number: string;
+    acquisition_date: string;
+    acquisition_cost: string;
+    book_value: string;
+    remarks: string;
+    checked_by: string;
+    conformed_by: string;
+}
+
 interface AssetData {
     id: number;
     user_id: number;
@@ -57,14 +89,19 @@ interface AssetData {
     created_at: string;
     user?: User;
     classification?: AssetClassification;
+    accounting_information?: AccountingInformation | null;
     asid_information?: AsidInformation | null;
     mcd_information?: McdInformation | null;
+    mepeo_information?: MepeoInformation | null;
     manager_information?: ManagerInformation | null;
 }
 
 interface AssetProps {
     asset: AssetData;
     biddingCycles: BiddingCycle[];
+    wasteClassifications: DropdownOption[];
+    wasteCharacteristics: DropdownOption[];
+    asset_status?: AssetStatusItem;
 }
 
 interface BiddingCycle {
@@ -73,8 +110,10 @@ interface BiddingCycle {
     date_to: string;
 }
 
-export default function AsidEvaluateManager({ asset, biddingCycles = [] }: AssetProps) {
+export default function AsidEvaluateManager({ asset, wasteClassifications = [], wasteCharacteristics = [], biddingCycles = [], asset_status }: AssetProps) {
     const { auth } = usePage().props as any;
+
+    const isLockedMepeo = !!asset.mepeo_information;
 
     const formatCycleDate = (date: string) => {
         const parsedDate = new Date(date.includes('T') ? date : `${date}T00:00:00`);
@@ -88,8 +127,15 @@ export default function AsidEvaluateManager({ asset, biddingCycles = [] }: Asset
             });
     };
 
+    const formatDateForInput = (dateString: string | undefined | null): string => {
+            if (!dateString) {
+                return '';
+            }
+        return dateString.split(' ')[0].split('T')[0];
+    };
+
     const isLockedAsid = !!asset?.asid_information;
-    const isLockedManager = !!asset?.manager_information;
+    const isLockedManager = !!asset?.manager_information && asset_status?.status?.toUpperCase() != 'HOLD';
 
     const { data, setData, post, processing, errors } = useForm({
         remarks: asset.asid_information?.remarks || (asset as any).asidInformation?.remarks || '',
@@ -102,14 +148,33 @@ export default function AsidEvaluateManager({ asset, biddingCycles = [] }: Asset
         manager_disposition: asset.manager_information?.manager_disposition || '',
         manager_reviewed_by: '',
 
+        asset_number: asset.accounting_information?.asset_number || '',
+        acquisition_date: formatDateForInput(asset.accounting_information?.acquisition_date || ''),
+        acquisition_cost: asset.accounting_information?.acquisition_cost ? String(asset.accounting_information.acquisition_cost) : '',
+        book_value: asset.accounting_information?.book_value ? String(asset.accounting_information.book_value) : '',
+        accounting_remarks: asset.accounting_information?.remarks || '',
+        accounting_checked_by: asset.accounting_information?.checked_by || 'Lou Agusin',
+        conformed_by: asset.accounting_information?.conformed_by || 'N/A',
+
+        // mepeo
+        waste_classification_id: asset.mepeo_information?.waste_classification_id || '',
+        waste_characteristic_id: asset.mepeo_information?.waste_characteristic_id || '',
+        mepeo_remarks: asset.mepeo_information?.remarks || '',
+
         // special na declaration for api helper ni..
         is_multiple: true,
+
+        // api helper for workflow asset status same sa Accounting Step
+        is_hold: asset_status?.status?.toUpperCase() || '',
+        transid: asset_status?.transid || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(`/manager-evaluate/${asset.id}/action`);
     };
+    
+    console.log(asset_status);
 
     return (
         <>
@@ -119,6 +184,136 @@ export default function AsidEvaluateManager({ asset, biddingCycles = [] }: Asset
             <div className="container-fluid p-4">
             
                 <AssetProfileCard asset={asset} />
+
+                {/* Accounting Section */}
+                <div className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
+                    <h2 className="text-lg font-bold text-gray-800 mb-6">Accounting Information
+                        <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider float-right">
+                            <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
+                            Approved
+                        </span>
+                    </h2>
+                    {/* First Row Grid Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        {/* Asset Number Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Asset Number</label>
+                            <input 
+                                type="text"
+                                placeholder="e.g. AD-26-01"
+                                value={data.asset_number}
+                                disabled
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${asset.accounting_information 
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                        }`}
+                            />
+                            {errors.asset_number && <p className="text-xs text-red-500 mt-1">{errors.asset_number}</p>}
+                        </div>
+
+                        {/* Acquisition Date Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Acquisition Date</label>
+                            <input 
+                                type="date"
+                                value={data.acquisition_date}
+                                disabled
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${asset.accounting_information 
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                        }`}
+                            />
+                            {errors.acquisition_date && <p className="text-xs text-red-500 mt-1">{errors.acquisition_date}</p>}
+                        </div>
+
+                        {/* Acquisition Cost Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Acquisition Cost</label>
+                            <div className="relative flex items-stretch rounded-lg shadow-2xs">
+                                <span className="flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">₱</span>
+                                <input 
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    disabled
+                                    value={data.acquisition_cost}
+                                    className={`w-full p-2 text-sm border shadow-2xs transition-colors duration-150 rounded-r-lg
+                                            ${asset.accounting_information 
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                            }`}
+                                />
+                            </div>
+                            {errors.acquisition_cost && <p className="text-xs text-red-500 mt-1">{errors.acquisition_cost}</p>}
+                        </div>
+
+                        {/* Book Value Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Book Value</label>
+                            <div className="relative flex items-stretch rounded-lg shadow-2xs">
+                                <span className="flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">₱</span>
+                                <input 
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    value={data.book_value}
+                                    disabled
+                                    className={`w-full p-2 text-sm border shadow-2xs transition-colors duration-150 rounded-r-lg
+                                            ${asset.accounting_information 
+                                                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                                : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                            }`}
+                                />
+                            </div>
+                            {errors.book_value && <p className="text-xs text-red-500 mt-1">{errors.book_value}</p>}
+                        </div>
+                    </div>
+
+                    {/* Second Row Grid Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        {/* Remarks Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
+                            <input 
+                                type="text"
+                                value={data.accounting_remarks}
+                                disabled
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                        ${asset.accounting_information 
+                                            ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' // Grayish when locked
+                                            : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500' // Normal state
+                                        }`}
+                            />
+                            {errors.accounting_remarks && <p className="text-xs text-red-500 mt-1">{errors.remarks}</p>}
+                        </div>
+
+                        {/* Checked By Input (Disabled/Read-only display placeholder) */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Checked by</label>
+                            <input 
+                                type="text"
+                                disabled
+                                value={data.checked_by}
+                                className="w-full p-2 text-sm text-gray-600 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed shadow-2xs"
+                            />
+                        </div>
+
+                        {/* Conformed By Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Conformed by</label>
+                            <input 
+                                type="text"
+                                value={data.conformed_by}
+                                disabled
+                                className="w-full p-2 text-sm text-gray-600 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed shadow-2xs"
+                                placeholder='N/A for now..'
+                            />
+                            {errors.conformed_by && <p className="text-xs text-red-500 mt-1">{errors.conformed_by}</p>}
+                        </div>
+                    </div>
+                </div>
 
                 {/* MCD - PAR section */}
                 <div className="w-full bg-white rounded-xl border border-gray-200 shadow-sm p-6 mt-4">
@@ -159,6 +354,83 @@ export default function AsidEvaluateManager({ asset, biddingCycles = [] }: Asset
                                 View Photo
                             </button>
                         )}
+                    </div>
+                </div>
+
+                {/* Mepeo Section */}
+                <div className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-bold text-gray-800">MEPEO Waste Information</h2>
+                        {isLockedMepeo && (
+                            <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider">
+                                <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>
+                                Approved
+                            </span>
+                        )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        
+                        {/* Waste Classification Dropdown Selection */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Waste Classification</label>
+                            <select
+                                value={data.waste_classification_id ?? ''}
+                                onChange={e => setData('waste_classification_id', e.target.value)}
+                                disabled={isLockedMepeo}
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150 h-9.5
+                                    ${isLockedMepeo 
+                                        ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                        : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                    }`}
+                            >
+                                <option value="">-- Select Classification --</option>
+                                {wasteClassifications.map(option => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Waste Characteristic Dropdown Selection */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Waste Characteristics and Forms</label>
+                            <select
+                                value={data.waste_characteristic_id}
+                                onChange={e => setData('waste_characteristic_id', e.target.value)}
+                                disabled={isLockedMepeo}
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150 h-9.5
+                                    ${isLockedMepeo 
+                                        ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' 
+                                        : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                    }`}
+                            >
+                                <option value="">-- Select Characteristic --</option>
+                                {wasteCharacteristics.map(option => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Mepeo Remarks Text Input */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Remarks</label>
+                            <input 
+                                type="text"
+                                placeholder="Type Remarks.."
+                                value={data.mepeo_remarks}
+                                onChange={e => setData('mepeo_remarks', e.target.value)}
+                                disabled={isLockedMepeo}
+                                className={`w-full p-2 text-sm border rounded-lg shadow-2xs transition-colors duration-150
+                                    ${isLockedMepeo 
+                                        ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                                        : 'bg-white text-gray-700 border-gray-300 focus:outline-emerald-500 focus:border-emerald-500'
+                                    }`}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -324,6 +596,10 @@ export default function AsidEvaluateManager({ asset, biddingCycles = [] }: Asset
                                 
                                 {errors.asset_direction && <span className="text-red-500 text-xs">{errors.asset_direction}</span>}
                             </div>
+
+                            {/* Manual API variable helpers */}
+                            <input type="hidden" value={data.is_hold} onChange={(e) => setData('is_hold', e.target.value)}/>
+
                         </div>
 
                         {/* Section 2: Reviewed and Noted By & Conditional Bidding Fields */}

@@ -871,21 +871,49 @@ class AssetController extends Controller
     {
         $asset = Asset::with('mcd_information')->findOrFail($id);
         $asidInformation = AsidInformation::where('asset_id', $id)->first();
+        $accountingInformation = AccountingInformation::where('asset_id', $id)->first();
+        $mepeoInformation = MepeoInformation::where('asset_id', $id)->first();
         $managerInformation = ManagerInformation::with('biddingCycleDetails')
             ->where('asset_id', $id)
             ->first();
 
         $asset->asid_information = $asidInformation;
+        $asset->mepeo_information = $mepeoInformation;
+        $asset->accounting_information = $accountingInformation;
         $asset->manager_information = $managerInformation;
+
+        $wasteClassifications = WasteClassification::all(['id', 'name']);
+        $wasteCharacteristics = WasteCharacteristic::all(['id', 'name']);
+
+        $asset_status = null;
+        // dd($id);
+        if ($managerInformation) {
+            // need to fetch real column from WORKFLOW this is wrong below..
+            $apiUrl =  $this->wfsBaseUrl . '/asset_getInfo/' . $id;
+
+            try {
+                $response = Http::timeout(10)->get($apiUrl);
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $asset_status = $data['asset_status'] ?? [];
+                }
+            } catch (\Exception $e) {
+                Log::error('Asset Status API Error: ' . $e->getMessage());
+            }
+
+        }
 
         return Inertia::render('manager/evaluate', [
             'asset' => $asset,
             'biddingCycles' => BiddingCycle::orderBy('date_from')->orderBy('id')->get(),
+            'wasteClassifications' => $wasteClassifications,
+            'wasteCharacteristics' => $wasteCharacteristics,
+            'asset_status' => $asset_status
         ]);
     }
 
     public function managerEvaluateAction(Request $request, $id)
-    {
+    {   
         $validated = $request->validate([
             'asset_direction' => 'required',
             'bidding_price' => 'nullable|numeric',
@@ -960,14 +988,19 @@ class AssetController extends Controller
             ]);
         }
 
-        $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_transmit';
+        if($request->is_hold === 'HOLD') {
+            $apiUrl  = $this->wfsBaseUrl . '/asset_updateStatus/' . $request->transid;
+        } else {
+            $apiUrl = $this->wfsBaseUrl . '/asset_transmit';
+        }
+        
         $user = auth()->user();
 
         $payload = [
             'transaction' => [
                 'token'            => 'base64:b9+N8PTeBSicgIMx4MbuYCuZBaQ9sL3ecibeX06FYgg=',
                 'type'             => 'ADREF',
-                'refno'            => $asset->id ?? 'REF-' . time(),
+                'refno'            => (string) ($asset->id ?? 'REF-' . time()),
                 'transid'          => 'ADREF-' . uniqid(),
                 'sourceapp'        => 'ADREF System',
                 'sourceurl'        => url('/assets/viewer/' . ($id ?? '') ),
@@ -980,13 +1013,13 @@ class AssetController extends Controller
                 'locsite'          => 'Main Site',
                 'purpose'          => $asset->reasons_for_disposal ?? 'Asset Management Request',
                 'approval_url'     => url('/assets/' . ($id ?? ''). '/asset-status'),
-                'totalamount'      => $validated['bidding_price'] ?? 0, //kani ang mag reflect sa WFS
-                'converted_amount' => $accounting_info->book_value ?? 0,
+                'totalamount'      => (string) ($validated['bidding_price'] ?? 0), //kani ang mag reflect sa WFS
+                'converted_amount' => (string) ($accounting_info->book_value ?? 0),
                 'currency'         => 'PHP',
                 'is_multiple'      => $request->boolean('is_multiple'),
             ]
         ];
-
+        // dd($payload);
         try {
             $response = Http::timeout(15)->post($apiUrl, $payload);
 
@@ -1790,7 +1823,7 @@ class AssetController extends Controller
         return redirect()->back()->with('success', 'Document and its physical file were completely removed!');
     }
 
-    // WorkFlow Controllers
+    // WorkFlow Controllers (Accounting Step to Workflow)
     // IMPORTANT NOTES Ni SIYA PARA MUANDAR TARONG!
     // The Security Token (token): The value you pass in transaction.token must exist in the old database's allowed_transactions table.
     // The Transaction Type (type): The value you pass in transaction.type must match the name column in the allowed_transactions table for that token.
@@ -1805,17 +1838,12 @@ class AssetController extends Controller
             'remarks'          => 'nullable|string|max:1000',
             'checked_by'       => 'required|string|max:255',
         ]);
-        // dd($request);
+        // dd($validatedData);
 
         if ($request->is_hold === 'HOLD') {
             $apiUrl  = $this->wfsBaseUrl . '/asset_updateStatus/' . $request->transid;
-
-            // update sa accounting information data -- goods na ang workflow!
-
-
-
         } else {
-            $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_transmit';
+            $apiUrl = $this->wfsBaseUrl . '/asset_transmit';
         }
         // dd($apiUrl);
         
@@ -1856,19 +1884,46 @@ class AssetController extends Controller
             $response = Http::timeout(15)->post($apiUrl, $payload);
 
             if ($response->successful()) {
+
                 $responseData = $response->json();
+
+                if ($request->is_hold === 'HOLD') {
+                    // update sa accounting information data -- goods na ang workflow!
+                    AccountingInformation::where('asset_id', $id)
+                    ->update([
+                        'role'             => 'accounting',
+                        'asset_number'     => $validatedData['asset_number'] ?? null,
+                        'acquisition_date' => $validatedData['acquisition_date'] ?? null,
+                        'acquisition_cost' => $validatedData['acquisition_cost'] ?? null,
+                        'book_value'       => $validatedData['book_value'] ?? null,
+                        'remarks'          => $validatedData['remarks'] ?? null,
+                        'checked_by'       => $validatedData['checked_by'] ?? null,
+                        'conformed_by'     => 'Ivan Moreno',
+                        'status'           => 'On-going',
+                        'approver_id'      => Auth::id(),
+                    ]);
+                }
                 
                 return redirect()->back()->with('success', 'Data successfully transmitted to Workflow system!');
             }
 
-            Log::error('WFS Sync Failed: ' . $response->body());
-            return redirect()->back()->withErrors([
-                'error' => 'Workflow transmission failed: ' . ($response->json()['message'] ?? 'Unknown error')
+            Log::error('WFS Sync Failed', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('WFS Connection Error: ' . $e->getMessage());
+            $errorMessage = $response->json('message') ?? 'Unknown error';
+
+            return redirect()->back()->withErrors([
+                'error' => 'Workflow transmission failed: ' . $errorMessage
+            ]);
+
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            Log::error('WFS Request Exception: ' . $e->getMessage());
             return redirect()->back()->withErrors(['error' => 'Could not connect to the workflow server.']);
+        } catch (\Throwable $e) {
+            Log::error('WFS Unexpected Error: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'An unexpected error occurred while processing your request.']);
         }
     }
     // End WorkFlow Controllers
