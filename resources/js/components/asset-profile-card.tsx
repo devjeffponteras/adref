@@ -15,7 +15,7 @@ interface AttachedFile {
   file_path?: string;
   url?: string;
   filename?: string;
-  description?: string;
+  description?: string | null;
 }
 
 interface AssetProfileCardProps {
@@ -29,9 +29,10 @@ interface AssetProfileCardProps {
     end_user_department: string | null;
     asset_location: string | null;
     reasons_for_disposal: string | null;
-    assessment_reports?: string[] | AttachedFile[] | null;
-    asset_photos?: string[] | AttachedFile[] | null;
-    user?: User | null;
+    assessment_reports?: (string | AttachedFile)[] | null;
+    asset_photos?: (string | AttachedFile)[] | null;
+    userObject?: User | string | null;
+    user?: User | string | null;
     classification?: AssetClassification | null;
   };
 }
@@ -76,6 +77,7 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
   const reportsList = normalizeAttachments(asset.assessment_reports);
   const photosList = normalizeAttachments(asset.asset_photos);
   // console.log(asset);
+
   return (
     <div className="bg-white rounded-2xl border border-emerald-100/60 shadow-md shadow-emerald-900/3 overflow-hidden main-info-card">
       {/* Header */}
@@ -109,7 +111,9 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
 
             <div>
               <span className="text-gray-400 block text-xs font-medium uppercase tracking-wider mb-0.5">Filer / Registrant</span>
-              <span className="text-gray-800 font-medium">{asset.user?.name || 'N/A'}</span>
+              <span className="text-gray-800 font-medium">
+                {typeof asset.user === 'string' ? asset.user : asset.user?.name || 'N/A'}
+              </span>
             </div>
 
             <div>
@@ -236,7 +240,7 @@ export function AssetProfileCard({ asset }: AssetProfileCardProps) {
                               download
                               className="text-[11px] inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium transition-colors bg-white px-2 py-0.5 rounded shadow-xs border border-gray-100"
                             >
-                              <Download className="w-2.5 h-2.5" /> Save File
+                              <Download className="w-2.5 h-2.5" /> Download
                             </a>
                           )}
                         </div>

@@ -41,6 +41,8 @@ interface AccountingInformation {
     acquisition_cost: string;
     book_value: string;
     remarks: string;
+    checked_by: string;
+    conformed_by: string;
 }
 
 interface MepeoInformation {
@@ -95,10 +97,9 @@ interface AssetProps {
 }
 
 const formatDateForInput = (dateString: string | undefined | null): string => {
-    if (!dateString) {
-return '';
-}
-
+        if (!dateString) {
+            return '';
+        }
     return dateString.split(' ')[0].split('T')[0];
 };
 
@@ -121,8 +122,8 @@ export default function AsidEvaluate({ asset, wasteClassifications = [], wasteCh
         acquisition_cost: asset.accounting_information?.acquisition_cost ? String(asset.accounting_information.acquisition_cost) : '',
         book_value: asset.accounting_information?.book_value ? String(asset.accounting_information.book_value) : '',
         accounting_remarks: asset.accounting_information?.remarks || '',
-        accounting_checked_by: 'Lou Agusin',
-        conformed_by: '',
+        accounting_checked_by: asset.accounting_information?.checked_by || 'Lou Agusin',
+        conformed_by: asset.accounting_information?.conformed_by || 'N/A',
 
         par_number: asset.mcd_information?.par_number || '',
         par_remarks: asset.mcd_information?.remarks || '',
@@ -331,7 +332,7 @@ export default function AsidEvaluate({ asset, wasteClassifications = [], wasteCh
                 {/* Mepeo Section */}
                 <div className="w-full bg-white border border-gray-200 rounded-xl shadow-xs p-6 my-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-gray-800">Waste Information</h2>
+                        <h2 className="text-lg font-bold text-gray-800">MEPEO Waste Information</h2>
                         {isLockedMepeo && (
                             <span className="inline-flex items-center bg-emerald-100/80 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider">
                                 <CircleCheck className='h-3 w-3 mr-1'></CircleCheck>

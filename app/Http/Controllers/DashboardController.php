@@ -188,6 +188,11 @@ class DashboardController extends Controller
     public function userDashboard(Request $request): Response
     {
         $assets = Asset::with('manager_information', 'asset_scraps')->get();
+        $temporaryAssetRequests = TemporaryAssetRequest::query()
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'hold')
+            ->latest()
+            ->get();
 
         // $scraps = Asset::with('asset_scraps')->where('user_id', auth()->user()->id)->get();
         // $assets = Asset::where('user_id', auth()->id())
@@ -201,7 +206,8 @@ class DashboardController extends Controller
         // ->get();
         // dd($assets);
         return Inertia::render('user/dashboard', [
-            'assets' => $assets
+            'assets' => $assets,
+            'temporaryAssetRequests' => $temporaryAssetRequests,
         ]);
     }
 }

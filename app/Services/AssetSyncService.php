@@ -21,7 +21,7 @@ class AssetSyncService
         $assetStatusData = [];
 
         if ($asset->manager_information && $asset->accounting_information?->asset_number) {
-            $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
+            $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_getInfo/' . $asset->accounting_information->asset_number;
 
             try {
                 $response = Http::timeout(10)->get($apiUrl);
@@ -60,12 +60,12 @@ class AssetSyncService
         $failedCount = 0;
 
         // Fetch ONLY pending items to conserve memory and DB bandwidth
-        $pendingRequests = TemporaryAssetRequest::where('status', 'Pending')
+        $pendingRequests = TemporaryAssetRequest::whereIn('status', ['pending', 'HOLD'])
             ->whereNotNull('refno')
             ->get();
 
         foreach ($pendingRequests as $tempRequest) {
-            $apiUrl = 'http://172.16.20.28/PMC-WFS/public/api/asset_getInfo/' . $tempRequest->refno;
+            $apiUrl = 'http://172.16.20.28/PMC-WFS-ADREF/public/api/asset_getInfo/' . $tempRequest->refno;
 
             try {
                 $response = Http::timeout(10)->get($apiUrl);
@@ -131,6 +131,16 @@ class AssetSyncService
                                     'approver_id'   => null,
                                     'approval_date' => null,
                                     'remarks'       => 'Asset initialized in the inventory tracking system. Control Number Pending for Assignment.',
+                                ]);
+                            });
+
+                            $updatedCount++;
+                        } elseif ($normalizedRemoteStatus === 'HOLD') {
+                            DB::transaction(function () use ($tempRequest, $assetStatusData) {
+
+                            $tempRequest->update([
+                                    'status'     => 'hold',
+                                    'updated_at' => now(),
                                 ]);
                             });
 

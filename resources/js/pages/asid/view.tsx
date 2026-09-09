@@ -115,12 +115,13 @@ return;
                 <AssetProfileCard 
                     asset={{
                         ...asset,
-                        control_number: asset.control_number || ''
+                        control_number: asset.control_number || '',
+                        user: asset.user?.name ?? null
                     }} 
                 />
 
                 {/* --- MIDDLE REGION: MULTI-FILE DISPLAY ARCHITECTURE not* useful for now --- */}
-                <div className="hidden grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+                <div className="hidden">
                     
                     {/* Assessment Reports Section */}
                     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">

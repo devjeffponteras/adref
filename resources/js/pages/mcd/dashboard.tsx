@@ -280,10 +280,10 @@ export default function McdDashboard({ assetStatuses }: DashboardProps) {
                                                 </td>
                                                 <td className="px-4 py-4 max-w-xs truncate text-gray-500 group-hover:text-gray-700" title={item.remarks || ''}>
                                                     <div className="font-medium text-gray-800">{item.asset?.end_user_department || 'Asset Department'}</div>
-                                                    <div className="text-xs text-gray-400 truncate max-w-50">{item.remarks || '—'}</div>
                                                 </td>
                                                  <td className="px-4 py-4 font-medium text-gray-700 capitalize">
-                                                    {item.asset?.brand_make || 'Brand'} 
+                                                    {item.asset?.brand_make || 'Brand'}
+                                                    &nbsp;
                                                     {item.asset?.model || 'Model'}
                                                 </td>
                                                 <td className="py-4 pl-6 pr-3 font-medium text-gray-900 group-hover:text-emerald-900 transition-colors">
