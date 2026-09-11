@@ -294,60 +294,6 @@ class AssetController extends Controller
             'asset_photos.*.description'       => 'nullable|string|max:255',
         ]);
 
-        // $reportsJsonArray = [];
-        // if (!empty($validated['assessment_reports'])) {
-        //     foreach ($validated['assessment_reports'] as $index => $item) {
-        //         if ($request->hasFile("assessment_reports.{$index}.file")) {
-        //             $file = $request->file("assessment_reports.{$index}.file");
-        //             $path = $file->store('reports', 'public');
-                    
-        //             $reportsJsonArray[] = [
-        //                 'file_path'   => $path,
-        //                 'description' => $item['description'] ?? null
-        //             ];
-        //         }
-        //     }
-        // }
-
-        // $photosJsonArray = [];
-        // if (!empty($validated['asset_photos'])) {
-        //     foreach ($validated['asset_photos'] as $index => $item) {
-        //         if ($request->hasFile("asset_photos.{$index}.file")) {
-        //             $file = $request->file("asset_photos.{$index}.file");
-        //             $path = $file->store('photos', 'public');
-                    
-        //             $photosJsonArray[] = [
-        //                 'file_path'   => $path,
-        //                 'description' => $item['description'] ?? null
-        //             ];
-        //         }
-        //     }
-        // }
-
-        // Tago for now
-        // $assetData = [
-        //     'accountable_personnel'   => $validated['accountable_personnel'],
-        //     'model'                   => $validated['model'],
-        //     'brand_make'              => $validated['brand_make'],
-        //     'serial_plate_id_number'  => $validated['serial_plate_id_number'],
-        //     'end_user_department'     => $validated['end_user_department'],
-            
-        //     'asset_classification_id' => $validated['asset_classification_id'],
-        //     'others_description'      => $validated['others_description'],
-
-        //     'asset_location'          => $validated['asset_location'],
-        //     'description'             => $validated['description'],
-        //     'reasons_for_disposal'    => $validated['reasons_for_disposal'],
-
-        //     'user_id'                 => auth()->id(),
-        //     'status'                  => 'Pending',
-        //     'control_number'          => null,
-
-        //     // Bundled into the same table payload:
-        //     'assessment_reports'      => $reportsJsonArray,
-        //     'asset_photos'            => $photosJsonArray,
-        // ];
-
         // kuha ta sa config/services, bago lang ko kabalo heheh
         $apiUrl = config('services.wfs.url');
         // dd($apiUrl);
@@ -387,7 +333,7 @@ class AssetController extends Controller
                 'is_resubmitted'   => false,
             ]
         ];
-
+        // dd($payload);
         try {
             Log::debug('WFS Payload: ' . json_encode($payload));
             $response = Http::timeout(15)->post($apiUrl, $payload);

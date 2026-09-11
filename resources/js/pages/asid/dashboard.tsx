@@ -335,7 +335,7 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
         item.asset.control_number.trim() !== '' && 
         Number(item.seq_no) > 3
     );
-
+    console.log(historyTransactions);
     const scrapTransactions = assetsInfo.filter(item => 
         item?.asset_scraps && item.asset_scraps.id !== null
         
@@ -910,12 +910,12 @@ export default function AsidDashboard({ assetStatuses, assets, assetOnBidding, a
                                                     <Link 
                                                         href={`/asid-evaluate/${item.asset_id}`} 
                                                         className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors outline-1 px-3 py-2 rounded ${
-                                                        item.asset.status === 'Completed'
+                                                        item.asset?.asid_information
                                                             ? 'text-zinc-600 hover:text-zinc-700 outline-zinc-300 hover:bg-zinc-50'
                                                             : 'text-amber-500 hover:text-amber-700 outline-amber-300 hover:bg-amber-50'
                                                         }`}
                                                     >
-                                                        {item.asset.status === 'Completed' ? 'View Logs' : 'Evaluate'}
+                                                        {item.asset?.asid_information  ? 'View Logs' : 'Evaluate'}
                                                     </Link>
                                                 </td>
                                             </tr>

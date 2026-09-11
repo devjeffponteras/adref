@@ -33,7 +33,7 @@ type FilterType = 'all' | 'pending' | 'ongoing' | 'approved';
 
 export default function Disposals({ assets = [] }: MyAssetsProps) {
 
-    console.log("Inertia Received Assets:", assets);
+    // console.log("Inertia Received Assets:", assets);
 
     const [search, setSearch] = useState('');
     const [sortField, setSortField] = useState<keyof Asset | 'classification'>('id'); 

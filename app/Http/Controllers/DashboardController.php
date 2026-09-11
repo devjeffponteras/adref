@@ -53,11 +53,11 @@ class DashboardController extends Controller
 
     public function asidDashboard(Request $request): Response
     {
-        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.classification', 'asset.assetDisposal'])
+        $assetStatuses = AssetStatus::with(['asset', 'asset.user', 'approver', 'asset.asid_information', 'asset.classification', 'asset.assetDisposal'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $assets = Asset::with(['mepeo_information', 'manager_information', 'assetDisposal', 'mepeo_information', 'asset_scraps', 'biddingListing', 'bids'])
+        $assets = Asset::with(['mepeo_information', 'manager_information', 'asid_information', 'assetDisposal', 'mepeo_information', 'asset_scraps', 'biddingListing', 'bids'])
             ->orderBy('created_at', 'desc')
             ->get();
 
